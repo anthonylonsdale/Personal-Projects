@@ -168,7 +168,6 @@ def formatting_excel(excel_id):
 
 # not yet implemented
 def options_calculations():
-    options_list = []
     todays_date = dt.date.today()
     rel_date = rel.relativedelta(days=1, weekday=rel.FR)
     next_friday = todays_date + rel_date
@@ -176,9 +175,11 @@ def options_calculations():
         options_seesaw[stock] = {'overvalued_call_options': 0, 'undervalued_call_options': 0,
                                  'overvalued_put_options': 0, 'undervalued_put_options': 0}
         df_calls = pd.read_excel("Options Data.xlsx", sheet_name=stock + ' Call Contracts')
-        Dividend = str(quote_data[stock][-1]['dividend'])
-        Spot = str(quote_data[stock][-1]['current price'])
-        Rate = '0.01'
+        dividend = str(quote_data[stock][-1]['dividend'])
+        spot = str(quote_data[stock][-1]['current price'])
+        rate = '0.01'
+        time_dt = next_friday - todays_date
+        time_to_expiry = str(time_dt)
         for i in range(len(df_calls.index)-1):
             """
             the subprocess returns nan for implied volatility of 0, just skip the options with imp. vol == 0
@@ -193,21 +194,19 @@ def options_calculations():
             if df_calls['Open Interest'][i] == '-' or int(df_calls['Open Interest'][i]) < 10:
                 continue
 
-            Strike = str(df_calls['Strike'][i])
-            time = next_friday - todays_date
-            Time = str(time)
-            Sigma = str(volatility)
+            strike = str(df_calls['Strike'][i])
+            sigma = str(volatility)
             iterations = '1000'
 
             output = subprocess.check_output(
                 [r"C:\Users\fabio\OneDrive\Documents\C++ Experiments\C++ Options Pricing\projects"
                  r"\options_pricing\callpricing.exe",
-                 Spot, Strike, Rate, Time, Sigma, Dividend, iterations])
+                 spot, strike, rate, time_to_expiry, sigma, dividend, iterations])
             output_string = output.decode(encoding='utf-8', errors='strict')
             # print(output_string)
             option_price = float(output_string)
 
-            print(Strike, option_price)
+            print(strike, option_price)
             # if calculated option price is higher than the actual price, the actual option is undervalued
             if option_price > float(df_calls['Last Price'][i]):
                 options_seesaw[stock]['undervalued_call_options'] += 1
@@ -227,22 +226,21 @@ def options_calculations():
             if df_puts['Open Interest'][i] == '-' or int(df_puts['Open Interest'][i]) < 10:
                 continue
 
-            Strike = str(df_puts['Strike'][i])
-            time = next_friday - todays_date
-            Time = str(time)
-            Sigma = str(volatility)
+            strike = str(df_puts['Strike'][i])
+
+            sigma = str(volatility)
             iterations = '1000'
 
             output = subprocess.check_output(
                 [r"C:\Users\fabio\OneDrive\Documents\C++ Experiments\C++ Options Pricing\projects"
                  r"\options_pricing\putpricing.exe",
-                 Spot, Strike, Rate, Time, Sigma, Dividend, iterations])
+                 spot, strike, rate, time_to_expiry, sigma, dividend, iterations])
 
             output_string = output.decode(encoding='utf-8', errors='strict')
             # print(output_string)
             option_price = float(output_string)
 
-            print(Strike, option_price)
+            print(strike, option_price)
             if option_price > float(df_puts['Last Price'][i]):
                 options_seesaw[stock]['undervalued_put_options'] += 1
             if option_price < float(df_puts['Last Price'][i]):
@@ -384,15 +382,14 @@ def analysis_operations():
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
                 if position == (len(quote_data[stock]) - 1) and quote_data[stock][position]['current price'] < \
                         stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term increase in ' + stock + ' price'
+                    stock_price_movement[stock] = 'short-term increase in price'
     for stock in stock_shortlist:
         for position, item in enumerate(quote_data[stock]):
             if dt.datetime.strptime(quote_data[stock][position]['time'], "%Y-%m-%d %H:%M:%S") > \
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
-                # if current price is lower than quote price
                 if position == (len(quote_data[stock]) - 1) and quote_data[stock][position]['current price'] > \
                         stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term decrease in ' + stock + ' price'
+                    stock_price_movement[stock] = 'short-term decrease in price'
     print(stock_price_movement)
 
     for stock in stock_price_movement:
@@ -524,6 +521,14 @@ def cleanup():
                 if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
                     trade_data[element].remove(item)
+            for position, item in enumerate(quote_data[element]):
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                        dt.datetime.now() - dt.timedelta(seconds=300):
+                    quote_data[element].remove(item)
+            for position, item in enumerate(ti_data[element]):
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                        dt.datetime.now() - dt.timedelta(seconds=300):
+                    ti_data[element].remove(item)
 
 
 def check():
