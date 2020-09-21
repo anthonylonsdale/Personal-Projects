@@ -562,7 +562,7 @@ if __name__ == '__main__':
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
     account = api.get_account()
-    account_balance = account.buying_power
+    account_balance = float(account.buying_power)
     print('Trading Account status:', account.status)
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
     # Get when the market opens or opened today
