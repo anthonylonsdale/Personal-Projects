@@ -168,6 +168,7 @@ def formatting_excel(excel_id):
 
 # not yet implemented
 def options_calculations():
+    options_list = []
     todays_date = dt.date.today()
     rel_date = rel.relativedelta(days=1, weekday=rel.FR)
     next_friday = todays_date + rel_date
@@ -178,11 +179,21 @@ def options_calculations():
         Dividend = str(quote_data[stock][-1]['dividend'])
         Spot = str(quote_data[stock][-1]['current price'])
         Rate = '0.01'
-        for i in df_calls.index:
-            Strike = str(df_calls['Strike'][i])
-            vol_percentage = df_calls['Implied Volatility'][i]
+        for i in range(len(df_calls.index)-1):
+            """
+            the subprocess returns nan for implied volatility of 0, just skip the options with imp. vol == 0
+            also skip the options we dont care about, any open with open interest of less than 10 can have a manipulated
+            price
+            """
+            vol_percentage = str(df_calls['Implied Volatility'][i])
             vol = vol_percentage.split("%")[0]
-            volatility = float(vol) / 100
+            volatility = float(vol.replace(",", "")) / 100
+            if volatility == 0.00:
+                continue
+            if df_calls['Open Interest'][i] == '-' or int(df_calls['Open Interest'][i]) < 10:
+                continue
+
+            Strike = str(df_calls['Strike'][i])
             time = next_friday - todays_date
             Time = str(time)
             Sigma = str(volatility)
@@ -192,8 +203,6 @@ def options_calculations():
                 [r"C:\Users\fabio\OneDrive\Documents\C++ Experiments\C++ Options Pricing\projects"
                  r"\options_pricing\callpricing.exe",
                  Spot, Strike, Rate, Time, Sigma, Dividend, iterations])
-            print(output)
-            print(type(output))
             output_string = output.decode(encoding='utf-8', errors='strict')
             # print(output_string)
             option_price = float(output_string)
@@ -209,13 +218,16 @@ def options_calculations():
     #######################################################################################################
         print('--------------------------------------------------------------------------------------------')
         df_puts = pd.read_excel("Options Data.xlsx", sheet_name=stock + ' Put Contracts')
-        for i in df_puts.index:
-            strike_price = float(df_puts['Strike'][i])
-            vol_percentage = df_puts['Implied Volatility'][i]
+        for i in range(len(df_puts.index)):
+            vol_percentage = str(df_puts['Implied Volatility'][i])
             vol = vol_percentage.split("%")[0]
-            volatility = float(vol) / 100
+            volatility = float(vol.replace(",", "")) / 100
+            if volatility == 0.00:
+                continue
+            if df_puts['Open Interest'][i] == '-' or int(df_puts['Open Interest'][i]) < 10:
+                continue
 
-            Strike = str(strike_price)
+            Strike = str(df_puts['Strike'][i])
             time = next_friday - todays_date
             Time = str(time)
             Sigma = str(volatility)
@@ -225,13 +237,12 @@ def options_calculations():
                 [r"C:\Users\fabio\OneDrive\Documents\C++ Experiments\C++ Options Pricing\projects"
                  r"\options_pricing\putpricing.exe",
                  Spot, Strike, Rate, Time, Sigma, Dividend, iterations])
-            print(output)
-            print(type(output))
+
             output_string = output.decode(encoding='utf-8', errors='strict')
             # print(output_string)
             option_price = float(output_string)
 
-            print(strike_price, option_price)
+            print(Strike, option_price)
             if option_price > float(df_puts['Last Price'][i]):
                 options_seesaw[stock]['undervalued_put_options'] += 1
             if option_price < float(df_puts['Last Price'][i]):
@@ -265,20 +276,16 @@ def main_data_engine():
         t4 = th.Thread(target=options)
         t4.daemon = True
         t4.start()
-        t2.join()
-        t3.join()
-        t4.join()
         time.sleep(30)
         socket.keep_running = False
         socket.close()
         t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
     except Exception as error:
         print(error)
         socket.close()
-
-
-def options_analysis():
-    pass
 
 
 def ticker_operations():
@@ -428,33 +435,35 @@ def analysis_operations():
 
 def trade_execution_operations():
     try:
-        # long trades
         for element in strongbuy:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.04) // price)
-            limit_price = int(1.025 * price)
-            stop_loss = int(0.99 * price)
-            limit_price2 = int(.985 * price)
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            limit_price = 1.01 * price
+            stop_loss = 0.9925 * price
+            limit_price2 = .9910 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             strongbuy[element] = []
         for element in buy:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.03) // price)
-            limit_price = int(1.015 * price)
-            stop_loss = int(0.99 * price)
-            limit_price2 = int(0.985 * price)
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            limit_price = 1.008 * price
+            stop_loss = 0.9930 * price
+            limit_price2 = 0.9920 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             buy[element] = []
         for element in weakbuy:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.025) // price)
-            limit_price = int(1.01 * price)
-            stop_loss = int(0.9925 * price)
-            limit_price2 = int(0.99 * price)
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            limit_price = 1.006 * price
+            stop_loss = 0.9940 * price
+            limit_price2 = 0.9930 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
@@ -462,30 +471,33 @@ def trade_execution_operations():
         # short trades
         for element in strongsell:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.04) // price)
-            limit_price = int(.975 * price)
-            stop_loss = int(1.01 * price)
-            limit_price2 = int(1.015 * price)
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            limit_price = .99 * price
+            stop_loss = 1.075 * price
+            limit_price2 = 1.090 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             strongsell[element] = []
         for element in sell:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.03) // price)
-            limit_price = int(.985 * price)
-            stop_loss = int(1.01 * price)
-            limit_price2 = int(1.015 * price)
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            limit_price = .992 * price
+            stop_loss = 1.070 * price
+            limit_price2 = 1.080 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             sell[element] = []
         for element in weaksell:
             price = stock_prices[element]
-            round_lot = int((account_balance * 0.025) // price)
-            limit_price = int(.99 * price)
-            stop_loss = int(1.075 * price)
-            limit_price2 = int(1.01 * price)
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            limit_price = .994 * price
+            stop_loss = 1.060 * price
+            limit_price2 = 1.070 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
@@ -601,8 +613,6 @@ if __name__ == '__main__':
                     print('Warning! No trades gathered! Program restarting...')
                     break
                 ##############################
-                options_calculations()
-                options_analysis()
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
