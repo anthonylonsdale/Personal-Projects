@@ -134,7 +134,7 @@ def main_data_engine():
         t3 = th.Thread(target=tech_indicators)
         t3.daemon = True
         t3.start()
-        time.sleep(30)
+        time.sleep(20)
         socket.keep_running = False
         socket.close()
         t1.join()
@@ -289,79 +289,93 @@ def analysis_operations():
 
 
 def trade_execution_operations():
-    #try:
+    try:
+        if account_balance < 0.50 * float(account.equity):
+            return
         # long trades
-    for element in strongbuy:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.04) // price
-        round_lot = int(account_percentage)
-        limit_price = 1.01 * price
-        stop_loss = 0.9925 * price
-        limit_price2 = .9910 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        strongbuy[element] = []
-    for element in buy:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.03) // price
-        round_lot = int(account_percentage)
-        limit_price = 1.008 * price
-        stop_loss = 0.9930 * price
-        limit_price2 = 0.9920 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        buy[element] = []
-    for element in weakbuy:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.025) // price
-        round_lot = int(account_percentage)
-        limit_price = 1.006 * price
-        stop_loss = 0.9940 * price
-        limit_price2 = 0.9930 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        buy[element] = []
-    # short trades
-    for element in strongsell:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.04) // price
-        round_lot = int(account_percentage)
-        limit_price = .99 * price
-        stop_loss = 1.075 * price
-        limit_price2 = 1.090 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        strongsell[element] = []
-    for element in sell:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.03) // price
-        round_lot = int(account_percentage)
-        limit_price = .992 * price
-        stop_loss = 1.070 * price
-        limit_price2 = 1.080 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        sell[element] = []
-    for element in weaksell:
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.025) // price
-        round_lot = int(account_percentage)
-        limit_price = .994 * price
-        stop_loss = 1.060 * price
-        limit_price2 = 1.070 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        weaksell[element] = []
-    #except Exception as error:
-        #print(error)
-        #api.cancel_all_orders()
-        #print('There was an error with the trade execution, all orders have been suspended')
+        for element in strongbuy:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.01 * price
+            stop_loss = 0.9925 * price
+            limit_price2 = .9910 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            strongbuy[element] = []
+        for element in buy:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.008 * price
+            stop_loss = 0.9930 * price
+            limit_price2 = 0.9920 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            buy[element] = []
+        for element in weakbuy:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.006 * price
+            stop_loss = 0.9940 * price
+            limit_price2 = 0.9930 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            buy[element] = []
+        # short trades
+        for element in strongsell:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .99 * price
+            stop_loss = 1.075 * price
+            limit_price2 = 1.090 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            strongsell[element] = []
+        for element in sell:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .992 * price
+            stop_loss = 1.070 * price
+            limit_price2 = 1.080 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            sell[element] = []
+        for element in weaksell:
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .994 * price
+            stop_loss = 1.060 * price
+            limit_price2 = 1.070 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            weaksell[element] = []
+    except Exception as error:
+        print(error)
+        api.cancel_all_orders()
+        print('There was an error with the trade execution, all orders have been suspended')
 
 
 def check_trades():
@@ -380,7 +394,14 @@ def cleanup():
                 if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
                     trade_data[element].remove(item)
-
+            for position, item in enumerate(quote_data[element]):
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                        dt.datetime.now() - dt.timedelta(seconds=300):
+                    trade_data[element].remove(item)
+            for position, item in enumerate(ti_data[element]):
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                        dt.datetime.now() - dt.timedelta(seconds=300):
+                    trade_data[element].remove(item)
 
 def check():
     close = dt.datetime.strptime(market_close, '%Y-%m-%d %H:%M:%S.%f')
@@ -418,7 +439,7 @@ if __name__ == '__main__':
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
     account = api.get_account()
-    account_balance = float(account.buying_power)
+    account_balance = float(account.buying_power) / 4
     api.cancel_all_orders()
     api.close_all_positions()
     print('Trading Account status:', account.status)
