@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH -J New-Potential-Trial
+ 
+#SBATCH --ntasks=64
+#SBATCH --out=Forge-%j.out 
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --time=168:00:00
+ 
+#SBATCH --export=ALL
+
+module load lammps/23Oct2017
+
+mpirun lmp_forge < UO2_BasisThree300restartloop.lmp > UO2_6x4x300system3_2_Restartloop7long.dat
