@@ -39,9 +39,6 @@ if __name__ == '__main__':
                 time.sleep(5)
             receiving_number = str(inbound_nested_list[j][i])
             sending_number = str(outbound_number_list[i % 35])
-            message = client.messages.create(body="Thank you, Clay County Voters, for taking the time to review my "
-                                                  "qualifications. Your vote is valued and appreciated. It's time that "
-                                                  "residents have assessments that are fair and accurate. Thank you for"
-                                                  " your vote, CHRIS LONSDALE!",
+            message = client.messages.create(body="-------------------------------------------------------",
                                              from_=sending_number, to=receiving_number)
             print(message.sid)
