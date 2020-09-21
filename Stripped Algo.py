@@ -111,7 +111,6 @@ def tech_indicators():
             break
 
 
-
 def main_data_engine():
     """
     The purpose of this function is to ensure that all of our data collection APIs and functions dispatch at the same
@@ -239,7 +238,7 @@ def analysis_operations():
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
                 if position == (len(quote_data[stock]) - 1) and quote_data[stock][position]['current price'] < \
                         stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term increase in ' + stock + ' price'
+                    stock_price_movement[stock] = 'short-term increase in price'
     for stock in stock_shortlist:
         for position, item in enumerate(quote_data[stock]):
             if dt.datetime.strptime(quote_data[stock][position]['time'], "%Y-%m-%d %H:%M:%S") > \
@@ -247,7 +246,7 @@ def analysis_operations():
                 # if current price is lower than quote price
                 if position == (len(quote_data[stock]) - 1) and quote_data[stock][position]['current price'] > \
                         stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term decrease in ' + stock + ' price'
+                    stock_price_movement[stock] = 'short-term decrease in price'
     print(stock_price_movement)
 
     for stock in stock_price_movement:
@@ -397,11 +396,12 @@ def cleanup():
             for position, item in enumerate(quote_data[element]):
                 if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
-                    trade_data[element].remove(item)
+                    quote_data[element].remove(item)
             for position, item in enumerate(ti_data[element]):
                 if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
-                    trade_data[element].remove(item)
+                    ti_data[element].remove(item)
+
 
 def check():
     close = dt.datetime.strptime(market_close, '%Y-%m-%d %H:%M:%S.%f')
