@@ -1,3 +1,4 @@
+from win10toast import ToastNotifier
 import requests
 import websocket
 import json
@@ -6,8 +7,6 @@ import alpaca_trade_api as trade_api
 import pandas as pd
 import time
 import datetime as dt
-import openpyxl
-import os
 import clr
 
 
@@ -77,7 +76,9 @@ def stock_data_engine():
             quote['stock'] = stock
             quote['time'] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             quote_data[stock].append(quote)
+            print(quote)
             quote = {}
+
             df_quote = pd.DataFrame(quote_data[stock])
             df_quote.set_index('time', inplace=True)
             print(df_quote)
@@ -92,7 +93,7 @@ def tech_indicators():
             try:
                 timestamp_tech = time.strftime("%Y-%m-%d %H:%M:%S")
                 tech_url = 'https://finnhub.io/api/v1/scan/technical-indicator?symbol=' + stock + \
-                           '&resolution=' + resolution[i] + '&token=' + websocket_token
+                           '&resolution=' + resolution[i] + '&token=bsq43v0fkcbdt6un6ivg'
                 r = requests.get(tech_url)
                 ti = r.json()
                 technical = ti['technicalAnalysis']['count']
@@ -133,7 +134,7 @@ def main_data_engine():
         t3 = th.Thread(target=tech_indicators)
         t3.daemon = True
         t3.start()
-        time.sleep(20)
+        time.sleep(15)
         socket.keep_running = False
         socket.close()
         t1.join()
@@ -289,8 +290,11 @@ def analysis_operations():
 
 def trade_execution_operations():
     try:
-        if account_balance < 0.50 * float(account.equity):
-            return
+        positions = api.list_positions()
+        print(positions)
+        holdings = {p.symbol: p for p in positions}
+        holding_symbol = set(holdings.keys())
+        print(holding_symbol)
         # long trades
         for element in strongbuy:
             price = stock_prices[element]
@@ -298,12 +302,14 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = 1.01 * price
-            stop_loss = 0.9925 * price
-            limit_price2 = .9910 * price
+            limit_price = 1.002 * price
+            stop_loss = 0.9965 * price
+            limit_price2 = .9960 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             strongbuy[element] = []
         for element in buy:
             price = stock_prices[element]
@@ -311,12 +317,14 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = 1.008 * price
-            stop_loss = 0.9930 * price
-            limit_price2 = 0.9920 * price
+            limit_price = 1.0016 * price
+            stop_loss = 0.9975 * price
+            limit_price2 = 0.9970 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             buy[element] = []
         for element in weakbuy:
             price = stock_prices[element]
@@ -324,12 +332,14 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = 1.006 * price
-            stop_loss = 0.9940 * price
-            limit_price2 = 0.9930 * price
+            limit_price = 1.0012 * price
+            stop_loss = 0.9985 * price
+            limit_price2 = 0.9980 * price
             api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             buy[element] = []
         # short trades
         for element in strongsell:
@@ -338,12 +348,14 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = .99 * price
-            stop_loss = 1.075 * price
-            limit_price2 = 1.090 * price
+            limit_price = .998 * price
+            stop_loss = 1.0035 * price
+            limit_price2 = 1.0040 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             strongsell[element] = []
         for element in sell:
             price = stock_prices[element]
@@ -351,12 +363,14 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = .992 * price
-            stop_loss = 1.070 * price
-            limit_price2 = 1.080 * price
+            limit_price = .9984 * price
+            stop_loss = 1.0025 * price
+            limit_price2 = 1.0030 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             sell[element] = []
         for element in weaksell:
             price = stock_prices[element]
@@ -364,17 +378,18 @@ def trade_execution_operations():
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = .994 * price
-            stop_loss = 1.060 * price
-            limit_price2 = 1.070 * price
+            limit_price = .9988 * price
+            stop_loss = 1.0015 * price
+            limit_price2 = 1.0020 * price
             api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
+                                                                                             time.strftime("%H:%M:%S")))
             weaksell[element] = []
     except Exception as error:
         print(error)
-        api.cancel_all_orders()
-        print('There was an error with the trade execution, all orders have been suspended')
+        print('There was an error with the trade execution')
 
 
 def check_trades():
@@ -386,7 +401,7 @@ def check_trades():
 
 
 def cleanup():
-    # get rid of all trades from before 5 minutes ago
+    # get rid of elements in lists that are dated 5 minutes and beyond
     if (end - start) > 300:
         for element in stock_tickers:
             for position, item in enumerate(trade_data[element]):
@@ -394,11 +409,11 @@ def cleanup():
                         dt.datetime.now() - dt.timedelta(seconds=300):
                     trade_data[element].remove(item)
             for position, item in enumerate(quote_data[element]):
-                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
                     quote_data[element].remove(item)
             for position, item in enumerate(ti_data[element]):
-                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S.%f") < \
+                if dt.datetime.strptime(item['time'], "%Y-%m-%d %H:%M:%S") < \
                         dt.datetime.now() - dt.timedelta(seconds=300):
                     ti_data[element].remove(item)
 
@@ -411,37 +426,20 @@ def check():
         raise Exception('The market is closing in 10 minutes, all positions have been closed')
 
 
-def check_excel_file():
-    wb = openpyxl.Workbook()
-    wb.save('Options Data.xlsx')
-
-
 if __name__ == '__main__':
-    # we want to make sure a new excel file is used each time the program opens to reduce issues of corrupted files
-    cwd = os.getcwd() + r'\Options Data.xlsx'
-    if os.path.isfile(r"{}".format(cwd)):
-        os.remove("Options Data.xlsx")
-        check_excel_file()
-    else:
-        check_excel_file()
-    print("Input stock tickers separated by a space, the quotes and trades for each stock will be streamed")
-    print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
-    stock_tickers = input('Enter Ticker(s): ').upper().split()
+    key = "PKCPC6RJ84BG84W3PB60"
+    sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
+    url = "https://paper-api.alpaca.markets"
+    api = trade_api.REST(key, sec, url, api_version='v2')
     #############################################################################################################
+    notification = ToastNotifier()
     websocket.enableTrace(True)
-    websocket_token = "bsq43v0fkcbdt6un6ivg"
-    websocket_url = "wss://ws.finnhub.io?token=" + websocket_token
+    websocket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
     socket = websocket.WebSocketApp(websocket_url, on_message=on_message, on_error=on_error, on_close=on_close)
     socket.on_open = on_open
     #############################################################################################################
-    key = "PK5S3WI3U5I3OBCZV82C"
-    sec = "xfR7UlCNxngZbkriUvyIrk2rFNvR89IPw9epAK3d"
-    url = "https://paper-api.alpaca.markets"
-    api = trade_api.REST(key, sec, url, api_version='v2')
     account = api.get_account()
     account_balance = float(account.buying_power) / 4
-    api.cancel_all_orders()
-    api.close_all_positions()
     print('Trading Account status:', account.status)
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
     # Get when the market opens or opened today
@@ -451,6 +449,18 @@ if __name__ == '__main__':
     print("The market closes at {} o'clock EST today.".format(market_close[11:16:]),
           "Extended hours trading lasts for 4 hours before and after regular market hours.")
     #############################################################################################################
+    print("Input stock tickers separated by a space, the quotes and trades for each stock will be streamed")
+    print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
+    print("Enter in 'close' in order to close all current positions")
+    stock_tickers = input('Enter Ticker(s): ').upper().split()
+    while True:
+        if stock_tickers == ['CLOSE']:
+            api.cancel_all_orders()
+            api.close_all_positions()
+            stock_tickers = input('Positions have been closed, Enter Ticker(s): ').upper().split()
+            continue
+        else:
+            break
     try:
         while True:
             start = time.time()
@@ -468,10 +478,8 @@ if __name__ == '__main__':
             ti_data = {}
             quote_data = {}
             stock_list_length = {}
-            orders = []
             stock_price_movement = {}
             indicator_votes = {}
-            options_seesaw = {}
             for ticker in stock_tickers:
                 indicator_votes[ticker] = {'Bullish Votes': 0, 'Bearish Votes': 0, 'Neutral Votes': 0}
                 trade_data[ticker] = []
@@ -483,7 +491,6 @@ if __name__ == '__main__':
     ############################################################################################################
             while True:
                 check()
-                print('List of open positions:', api.list_positions())
                 main_data_engine()
                 print('Trades:', trade_data)
                 print('Quotes:', quote_data)
@@ -495,13 +502,15 @@ if __name__ == '__main__':
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
-                trade_execution_operations()
+                tradethread = th.Thread(target=trade_execution_operations)
+                tradethread.daemon = True
+                tradethread.start()
                 end = time.time()
                 print('Time Elapsed (in seconds):', int((end - start)))
                 cleanup()
     except Exception as e:
         print(e)
-        raise Exception('An error has occurred...')
+        notification.show_toast("Program Error", "Program Raised Error {}".format(e))
     finally:
         print('All pending orders will be cancelled and all positions will be liquidated immediately')
         api.cancel_all_orders()
