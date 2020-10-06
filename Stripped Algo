@@ -1,19 +1,19 @@
 from win10toast import ToastNotifier
-import requests
+from requests import get
 import websocket
-import json
+from json import loads
 import threading as th
 import alpaca_trade_api as trade_api
-import pandas as pd
+from pandas import DataFrame
 import time
 import datetime as dt
-import clr
+from clr import AddReference
 
 
 def on_message(ws, message):
     if message == '{"type":"ping"}':
         return
-    data = json.loads(message)
+    data = loads(message)
     stock_fundamentals = data['data'][0]
     time_integer = stock_fundamentals['t']
     timestamp = dt.datetime.fromtimestamp(time_integer / 1e3)
@@ -44,8 +44,8 @@ def on_open(ws):
 
 
 def stock_data_engine():
-    clr.AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
-                     r"scraper Class Library.dll")
+    AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
+                 r"scraper Class Library.dll")
     import CSharpwebscraper
     scraper = CSharpwebscraper.Webscraper()
     stock_info = scraper.Scraper(stock_tickers)
@@ -76,16 +76,13 @@ def stock_data_engine():
             quote['stock'] = stock
             quote['time'] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             quote_data[stock].append(quote)
-            print(quote)
             quote = {}
-
-            df_quote = pd.DataFrame(quote_data[stock])
+            df_quote = DataFrame(quote_data[stock])
             df_quote.set_index('time', inplace=True)
             print(df_quote)
 
 
 def tech_indicators():
-    # attempt to get the most accurate data possible from the API, retry with wider timescales if unsuccessful
     resolution = ['1', '5', '15', '30', '60', 'D', 'W', 'M']
     for stock in stock_tickers:
         i = 0
@@ -94,7 +91,7 @@ def tech_indicators():
                 timestamp_tech = time.strftime("%Y-%m-%d %H:%M:%S")
                 tech_url = 'https://finnhub.io/api/v1/scan/technical-indicator?symbol=' + stock + \
                            '&resolution=' + resolution[i] + '&token=bsq43v0fkcbdt6un6ivg'
-                r = requests.get(tech_url)
+                r = get(tech_url)
                 ti = r.json()
                 technical = ti['technicalAnalysis']['count']
                 technical['signal'] = ti['technicalAnalysis']['signal']
@@ -102,7 +99,7 @@ def tech_indicators():
                 technical['trending'] = ti['trend']['trending']
                 technical['time'] = timestamp_tech
                 ti_data[stock].append(technical)
-                df_tech = pd.DataFrame(ti_data[stock])
+                df_tech = DataFrame(ti_data[stock])
                 df_tech.set_index('signal', inplace=True)
                 print(df_tech)
             except KeyError:
@@ -113,17 +110,6 @@ def tech_indicators():
 
 
 def main_data_engine():
-    """
-    The purpose of this function is to ensure that all of our data collection APIs and functions dispatch at the same
-    time. Theoretically, as long as these functions finish at relatively the same time, we can include it in a thread,
-    potentially having dozens of sources to pull data from (although this would be a massive drain on the computer's
-    resources, the chrome web scraper rockets the usage of memory from ~20% to 60-70% when it is called). This is a
-    dynamic system so we can change what interval we take in order to gather all the relevant data. Unfortunately there
-    must be a balancing act, 10 seconds of data collection would mean a very accurate monitor and hold on the realtime
-    stock price, potentially significantly reducing losses due to being able to monitor trades many times a minute, but
-    this comes at a cost of only implementing data collection functions that are quick enough to run and finish within
-    the short time frame. The opposite is true if the interval is stretched out closer to a minute for example.
-    """
     try:
         t1 = th.Thread(target=socket.run_forever)
         t1.daemon = True
@@ -138,19 +124,14 @@ def main_data_engine():
         socket.keep_running = False
         socket.close()
         t1.join()
+        t2.join()
+        t3.join()
     except Exception as error:
         print(error)
         socket.close()
 
 
 def ticker_operations():
-    """
-    this is the best system I can come up with. Have a dynamic system of indicators being gathered and have each one
-    "vote" on an outcome, either bullish or bearish. Later on in the program we will use this to make our final decision
-    as to buy or not.
-    The Finnhub API gathers an aggregate of 17 different indicators, the Yahoo API uses a grouping of indicators as well
-    the goal is to extract the number of indicators from each source
-    """
     for element in stock_tickers:
         timestamp = dt.datetime.strptime(quote_data[element][-1]['time'][11::], '%H:%M:%S').time()
         indicator = quote_data[element][-1]['indicator']
@@ -186,12 +167,6 @@ def ticker_operations():
 
 
 def volume_operations():
-    """
-    The purpose of this function is twofold, organize all of the trades we are gathering from the websocket into 4
-    separate intervals in order to determine if there is significant volatility, as well as to use the last 25 trades
-    in order to determine what price the stock is currently trading at (over the course of the 1-2 seconds of analysis
-    that this program needs, the stock price is liable to change, albeit slightly, making this necessary)
-    """
     for element in stock_tickers:
         volume_past_30sec = 0
         volume_past_min = 0
@@ -221,9 +196,7 @@ def volume_operations():
         ##############################################################################
         stock_prices[element] = float("{:.2f}".format(stock_price / stock_list_length[element]))
         volume_terms[element] = volume_past_30sec, volume_past_min, volume_past_2min, volume_past_5min
-        # this establishes volumes for time intervals, such that if say the thirty second volume exceeds the minute
-        # volume, this is obviously a spike in volume and represents volatility which can be profitable
-        # obviously we can change the time interval and increase or decrease them as needed
+
     print('volume by stock ordered 30sec, 1min, 2min and 5min:', volume_terms)
     print('stock prices:', stock_prices)
 
@@ -290,12 +263,6 @@ def analysis_operations():
 
 def trade_execution_operations():
     try:
-        positions = api.list_positions()
-        print(positions)
-        holdings = {p.symbol: p for p in positions}
-        holding_symbol = set(holdings.keys())
-        print(holding_symbol)
-        # long trades
         for element in strongbuy:
             price = stock_prices[element]
             account_percentage = (account_balance * 0.04) // price
@@ -309,7 +276,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             strongbuy[element] = []
         for element in buy:
             price = stock_prices[element]
@@ -324,7 +291,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             buy[element] = []
         for element in weakbuy:
             price = stock_prices[element]
@@ -339,7 +306,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             buy[element] = []
         # short trades
         for element in strongsell:
@@ -355,7 +322,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             strongsell[element] = []
         for element in sell:
             price = stock_prices[element]
@@ -370,7 +337,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             sell[element] = []
         for element in weaksell:
             price = stock_prices[element]
@@ -385,7 +352,7 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                                                                             time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")))
             weaksell[element] = []
     except Exception as error:
         print(error)
@@ -458,9 +425,18 @@ if __name__ == '__main__':
             api.cancel_all_orders()
             api.close_all_positions()
             stock_tickers = input('Positions have been closed, Enter Ticker(s): ').upper().split()
-            continue
-        else:
+        while True:
+            for position, item in enumerate(stock_tickers):
+                try:
+                    asset = api.get_asset(item)
+                    if not asset.tradable:
+                        print(item, 'is not available to trade on Alpaca!')
+                        raise Exception
+                except Exception:
+                    stock_tickers[position] = input('Enter different ticker: ').upper()
+                    continue
             break
+        break
     try:
         while True:
             start = time.time()
