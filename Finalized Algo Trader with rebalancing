@@ -262,6 +262,71 @@ def analysis_operations():
 
 
 def trade_execution_operations():
+    for element in stock_tickers:
+        try:
+            # do not allow a stock to exceed 10% of the portfolio
+            position = api.get_position(element)
+            print(position)
+            market_value = float(getattr(position, "market_value"))
+            print(market_value)
+            qty = int(getattr(position, "qty"))
+            side = getattr(position, "side")
+            if market_value > (0.15 * account_balance) and side == "sell":
+                api.submit_order(symbol=element, qty=qty, side="buy", type='market', time_in_force='gtc')
+                continue
+            if market_value > (0.15 * account_balance) and side == "buy":
+                api.submit_order(symbol=element, qty=qty, side="sell", type='market', time_in_force='gtc')
+                continue
+        except Exception:
+            continue
+
+    """
+    for element in strongbuy:
+        if current_stock_position[element] == 'strongbuy':
+            strongbuy[element] = []
+        else:
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='sell', type='market', time_in_force='gtc')
+    for element in buy:
+        if current_stock_position[element] == 'buy':
+            buy[element] = []
+        else:
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='sell', type='market', time_in_force='gtc')
+    for element in weakbuy:
+        if current_stock_position[element] == 'weakbuy':
+            weakbuy[element] = []
+        else:
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='sell', type='market', time_in_force='gtc')
+    for element in strongsell:
+        if current_stock_position[element] == 'strongsell':
+            strongsell[element] = []
+        else:
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='buy', type='market', time_in_force='gtc')
+    for element in sell:
+        if current_stock_position[element] == 'sell':
+            sell[element] = []
+        else:
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='buy', type='market', time_in_force='gtc')
+    for element in weaksell:
+        if current_stock_position[element] == 'weaksell':
+            weaksell[element] = []
+
+            position = api.get_position(element)
+            qty = int(getattr(position, "qty"))
+            api.submit_order(symbol=element, qty=qty, side='buy', type='market', time_in_force='gtc')
+    """
+
+    
+
     try:
         for element in strongbuy:
             price = stock_prices[element]
@@ -276,7 +341,8 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'strongbuy'
             strongbuy[element] = []
         for element in buy:
             price = stock_prices[element]
@@ -291,7 +357,8 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'buy'
             buy[element] = []
         for element in weakbuy:
             price = stock_prices[element]
@@ -306,8 +373,9 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
-            buy[element] = []
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'weakbuy'
+            weakbuy[element] = []
         # short trades
         for element in strongsell:
             price = stock_prices[element]
@@ -322,7 +390,8 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'strongsell'
             strongsell[element] = []
         for element in sell:
             price = stock_prices[element]
@@ -337,7 +406,8 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'sell'
             sell[element] = []
         for element in weaksell:
             price = stock_prices[element]
@@ -352,7 +422,8 @@ def trade_execution_operations():
                              order_class='bracket', take_profit={'limit_price': limit_price},
                              stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
             notification.show_toast("Program Trades Executed", "Program Executed Trade of {} at {}".format(element,
-                                    time.strftime("%H:%M:%S")))
+                                    time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'sell'
             weaksell[element] = []
     except Exception as error:
         print(error)
@@ -456,7 +527,11 @@ if __name__ == '__main__':
             stock_list_length = {}
             stock_price_movement = {}
             indicator_votes = {}
+            current_stock_position = {}
+            stock_orders = {}
             for ticker in stock_tickers:
+                stock_orders[ticker] = []
+                current_stock_position[ticker] = []
                 indicator_votes[ticker] = {'Bullish Votes': 0, 'Bearish Votes': 0, 'Neutral Votes': 0}
                 trade_data[ticker] = []
                 ti_data[ticker] = []
@@ -486,7 +561,7 @@ if __name__ == '__main__':
                 cleanup()
     except Exception as e:
         print(e)
-        notification.show_toast("Program Error", "Program Raised Error {}".format(e))
+        notification.show_toast("Program Error", "Program Raised Error {}".format(e), duration=5)
     finally:
         print('All pending orders will be cancelled and all positions will be liquidated immediately')
         api.cancel_all_orders()
