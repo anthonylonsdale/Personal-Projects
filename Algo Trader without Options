@@ -196,7 +196,7 @@ def volume_operations():
         ##############################################################################
         stock_prices[element] = float("{:.2f}".format(stock_price / stock_list_length[element]))
         volume_terms[element] = volume_past_30sec, volume_past_min, volume_past_2min, volume_past_5min
-    
+
     print('volume by stock ordered 30sec, 1min, 2min and 5min:', volume_terms)
     print('stock prices:', stock_prices)
 
@@ -261,9 +261,9 @@ def analysis_operations():
         print('Stock Weak Sell List:', weaksell)
 
 
-def trade_execution_operations():
-    print("client_order_ids", client_order_ids)
+def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weaksell):
     print(api.list_orders())
+
     for stock in stock_tickers:
         # do not allow a stock to exceed 10% of the portfolio, cancel any new orders if it does
         # if position exists, the code will execute, if not it will pass
@@ -273,95 +273,84 @@ def trade_execution_operations():
             stock_position = api.get_position(stock)
             print(stock_position)
             position_value = getattr(stock_position, "market_value")
+            position_value = abs(float(position_value))
             # here's the order cancellation if position exceeds 10%
-            if position_value > (0.10 * account_balance):
-                for order in client_order_ids[stock]:
-                    trade = api.get_order_by_client_order_id(order)
-                    trade_id = getattr(trade, "id")
-                    api.cancel_order(trade_id)
-                client_order_ids[stock] = []
+            if position_value >= (0.10 * account_balance):
+                # prevent an increase in our existing condition
+                block_purchase[stock] = 'block'
+            print(block_purchase)
+        except:
+            continue
 
-            # here are the checks to see if the indicator has changed
+    for stock in stock_tickers:
+        try:
+            #check if position exists
+            api.get_position(stock)
             for element in strongbuy:
                 if current_stock_position[stock] == 'strongbuy':
-                    strongbuy[element] = []
+                    continue
+                # if indicator has changed, we need to liquidate
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
             for element in buy:
                 if current_stock_position[stock] == 'buy':
-                    buy[element] = []
+                    continue
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
             for element in weakbuy:
                 if current_stock_position[stock] == 'weakbuy':
-                    weakbuy[element] = []
+                    continue
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
             for element in strongsell:
                 if current_stock_position[stock] == 'strongsell':
-                    strongsell[element] = []
+                    continue
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
             for element in sell:
                 if current_stock_position[stock] == 'sell':
-                    sell[element] = []
+                    continue
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
             for element in weaksell:
                 if current_stock_position[stock] == 'weaksell':
-                    #  if the indicator remains the same, do not change the orders
-                    weaksell[element] = []
+                    continue
                 else:
-                    for order in client_order_ids[stock]:
-                        # if the indicator changes, cancel each order and close the position
-                        trade = api.get_order_by_client_order_id(order)
-                        trade_id = getattr(trade, "id")
-                        api.cancel_order(trade_id)
-                        client_order_ids[stock][order] = []
-                        if len(client_order_ids[stock]) == 0:
-                            api.close_position(stock)
-        except Exception:
-            pass
+                    for order in api.list_orders():
+                        if element == getattr(order, 'symbol'):
+                            order_id = getattr(order, "client_order_id")
+                            api.cancel_order(order_id)
+                    api.close_position(stock)
+        except Exception as e:
+            continue
 
     # try:
     # here are the new order executions
     for element in strongbuy:
-        order_id = str(dt.datetime.now()) + element + 'strongbuy'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
+        print("if Test! was printed then we should not be here")
         price = stock_prices[element]
         account_percentage = (account_balance * 0.04) // price
         round_lot = int(account_percentage)
@@ -376,10 +365,13 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
                                 element, time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'strongbuy'
-        client_order_ids[element].append(order_id)
-        strongbuy[element] = []
+    strongbuy = []
+
     for element in buy:
-        order_id = str(dt.datetime.now()) + element + 'buy'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
+        print("if Test! was printed then we should not be here")
         price = stock_prices[element]
         account_percentage = (account_balance * 0.03) // price
         round_lot = int(account_percentage)
@@ -394,10 +386,12 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(element,
                                 time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'buy'
-        client_order_ids[element].append(order_id)
-        buy[element] = []
+    buy = []
+
     for element in weakbuy:
-        order_id = str(dt.datetime.now()) + element + 'weakbuy'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
         price = stock_prices[element]
         account_percentage = (account_balance * 0.025) // price
         round_lot = int(account_percentage)
@@ -412,11 +406,13 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
                                 element, time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'weakbuy'
-        client_order_ids[element].append(order_id)
-        weakbuy[element] = []
+    weakbuy = []
+
     # short trades
     for element in strongsell:
-        order_id = str(dt.datetime.now()) + element + 'strongsell'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
         price = stock_prices[element]
         account_percentage = (account_balance * 0.04) // price
         round_lot = int(account_percentage)
@@ -431,10 +427,12 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
                                 element, time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'strongsell'
-        client_order_ids[element].append(order_id)
-        strongsell[element] = []
+    strongsell = []
+
     for element in sell:
-        order_id = str(dt.datetime.now()) + element + 'sell'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
         price = stock_prices[element]
         account_percentage = (account_balance * 0.03) // price
         round_lot = int(account_percentage)
@@ -449,10 +447,12 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(element,
                                 time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'sell'
-        client_order_ids[element].append(order_id)
-        sell[element] = []
+    sell = []
+
     for element in weaksell:
-        order_id = str(dt.datetime.now()) + element + 'weaksell'
+        if 'block' == block_purchase[element]:
+            print('Test!')
+            continue
         price = stock_prices[element]
         account_percentage = (account_balance * 0.025) // price
         round_lot = int(account_percentage)
@@ -467,8 +467,17 @@ def trade_execution_operations():
         notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(element,
                                 time.strftime("%H:%M:%S")), duration=4)
         current_stock_position[element] = 'weaksell'
-        client_order_ids[element].append(order_id)
-        weaksell[element] = []
+    weaksell = []
+
+    # for debugging purposes, all should be empty at this time
+    print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
+
+
+    for stock in stock_tickers:
+        if stock in block_purchase:
+            block_purchase[stock] = ''
+
+    print(block_purchase)
     """
     except Exception as error:
         print(error)
@@ -568,19 +577,19 @@ if __name__ == '__main__':
             ti_data = {}
             quote_data = {}
             stock_list_length = {}
-            stock_price_movement = {}
             indicator_votes = {}
             current_stock_position = {}
-            client_order_ids = {}
+            block_purchase = {}
+            stock_price_movement = {}
             for ticker in stock_tickers:
                 current_stock_position[ticker] = ''
                 indicator_votes[ticker] = {'Bullish Votes': 0, 'Bearish Votes': 0, 'Neutral Votes': 0}
-                client_order_ids[ticker] = []
                 trade_data[ticker] = []
                 ti_data[ticker] = []
                 quote_data[ticker] = []
                 stock_buylist[ticker] = []
                 stock_shortlist[ticker] = []
+                block_purchase[ticker] = ''
                 stock_price_movement[ticker] = ''
     ############################################################################################################
             while True:
@@ -596,7 +605,8 @@ if __name__ == '__main__':
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
-                tradethread = th.Thread(target=trade_execution_operations)
+                tradethread = th.Thread(target=trade_execution_operations, args=[strongbuy, buy, weakbuy, strongsell,
+                                                                                 sell, weaksell])
                 tradethread.daemon = True
                 tradethread.start()
                 end = time.time()
