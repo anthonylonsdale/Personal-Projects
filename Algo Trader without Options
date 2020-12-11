@@ -1,3 +1,10 @@
+# properly cuts off trading on a stock when it reaches <10% of the portfolio value
+# havent tested to see if it liquidates properly when the indicator changes
+# havent tested with multiple stocks
+# need to implement a cutoff for trades that just arent reaching their limit prices
+# after this is done i cant imagine much more needs to be done
+
+
 from win10toast import ToastNotifier
 from requests import get
 import websocket
