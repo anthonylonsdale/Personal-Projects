@@ -4,7 +4,6 @@
 # need to implement a cutoff for trades that just arent reaching their limit prices
 # after this is done i cant imagine much more needs to be done
 
-
 from win10toast import ToastNotifier
 from requests import get
 import websocket
@@ -269,6 +268,7 @@ def analysis_operations():
 
 
 def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weaksell):
+    print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
     print(api.list_orders())
 
     for stock in stock_tickers:
@@ -285,7 +285,6 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
             if position_value >= (0.10 * account_balance):
                 # prevent an increase in our existing condition
                 block_purchase[stock] = 'block'
-            print(block_purchase)
         except:
             continue
 
@@ -350,6 +349,23 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                     api.close_position(stock)
         except Exception as e:
             continue
+
+
+    """
+    # check orders and see if they should be sold
+    for stock in stock_tickers:
+        api.list_positions()
+        
+
+
+            if stock == getattr(order, 'symbol'):
+                # we are dealing with the orders for a stock
+                # now get the position
+                api.get_position(stock)
+                if getattr():
+    """
+
+
 
     # try:
     # here are the new order executions
@@ -546,27 +562,43 @@ if __name__ == '__main__':
     print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), 'CST')
     clock = api.get_clock()
     market_close = str(clock.next_close)[:16:] + str(':00.000000')
-    print("The market closes at {} o'clock EST today.".format(market_close[11:16:]),
-          "Extended hours trading lasts for 4 hours before and after regular market hours.")
-    #############################################################################################################
+    print("The market closes at {} o'clock EST today.".format(market_close[11:16:]))
     print("Input stock tickers separated by a space, the quotes and trades for each stock will be streamed")
     print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
     print("Enter in 'close' in order to close all current positions")
     stock_tickers = input('Enter Ticker(s): ').upper().split()
+    ####################################################################################################################
     while True:
-        if stock_tickers == ['CLOSE']:
-            api.cancel_all_orders()
-            api.close_all_positions()
-            stock_tickers = input('Positions have been closed, Enter Ticker(s): ').upper().split()
-        while True:
+        try:
+            if stock_tickers == ['CLOSE']:
+                api.cancel_all_orders()
+                api.close_all_positions()
+                stock_tickers = input('Positions have been closed, Enter Ticker(s): ').upper().split()
+
             for position, item in enumerate(stock_tickers):
-                asset = api.get_asset(item)
-                if not asset.tradable:
-                    print(item, 'is not available to trade on Alpaca!')
-                    stock_tickers[position] = input('Enter different ticker: ').upper()
-                continue
+                print(stock_tickers)
+                try:
+                    asset = api.get_asset(item)
+                    if not asset.tradable:
+                        print(item, 'is not available to trade on Alpaca!')
+                        stock_tickers[position] = input('Enter different ticker: ').upper()
+                    continue
+                except Exception as e:
+                    print(stock_tickers[position], 'is not a valid ticker!')
+                    stock_tickers[position] = input('Enter a different ticker: ').upper()
+
+            for stock in stock_tickers:
+                try:
+                    asset = api.get_asset(stock)
+                    if not asset.tradable:
+                        raise Exception("Not Tradable")
+                except Exception:
+                    raise Exception("Not Tradable")
             break
-        break
+        except Exception:
+            continue
+
+
     try:
         while True:
             start = time.time()
@@ -599,6 +631,8 @@ if __name__ == '__main__':
                 block_purchase[ticker] = ''
                 stock_price_movement[ticker] = ''
     ############################################################################################################
+            tradethread = th.Thread(target=trade_execution_operations, args=[strongbuy, buy, weakbuy, strongsell,
+                                                                             sell, weaksell])
             while True:
                 check()
                 main_data_engine()
@@ -609,11 +643,12 @@ if __name__ == '__main__':
                     print('Warning! No trades gathered! Program restarting...')
                     break
                 ##############################
+                # make sure trade thread is killed before we do data analysis
+                if tradethread.is_alive():
+                    tradethread.join()
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
-                tradethread = th.Thread(target=trade_execution_operations, args=[strongbuy, buy, weakbuy, strongsell,
-                                                                                 sell, weaksell])
                 tradethread.daemon = True
                 tradethread.start()
                 end = time.time()
