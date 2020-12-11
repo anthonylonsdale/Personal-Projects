@@ -644,8 +644,10 @@ if __name__ == '__main__':
                     break
                 ##############################
                 # make sure trade thread is killed before we do data analysis
-                if tradethread.is_alive():
+                try:
                     tradethread.join()
+                except:
+                    pass
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
