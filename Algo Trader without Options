@@ -70,7 +70,7 @@ def stock_data_engine():
             delimiter1 = '('
             delimiter2 = ')'
             div = str(stock_info[i])
-            dividend = div[div.find(delimiter1)+1: div.find(delimiter2)]
+            dividend = div[div.find(delimiter1) + 1: div.find(delimiter2)]
             if dividend == 'N/A':
                 dividend = 0
             else:
@@ -215,17 +215,17 @@ def analysis_operations():
     for stock in stock_buylist:
         for pos, i in enumerate(quote_data[stock]):
             if dt.datetime.strptime(quote_data[stock][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
-                                                                        (dt.datetime.now() - dt.timedelta(minutes=5)):
+                    (dt.datetime.now() - dt.timedelta(minutes=5)):
                 if pos == (len(quote_data[stock]) - 1) and quote_data[stock][pos]['current price'] < \
-                                                                                                    stock_prices[stock]:
+                        stock_prices[stock]:
                     stock_price_movement[stock] = 'short-term increase in price'
     for stock in stock_shortlist:
         for pos, i in enumerate(quote_data[stock]):
             if dt.datetime.strptime(quote_data[stock][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
-                                                                        (dt.datetime.now() - dt.timedelta(minutes=5)):
+                    (dt.datetime.now() - dt.timedelta(minutes=5)):
                 # if current price is lower than quote price
                 if pos == (len(quote_data[stock]) - 1) and quote_data[stock][pos]['current price'] > \
-                                                                                                    stock_prices[stock]:
+                        stock_prices[stock]:
                     stock_price_movement[stock] = 'short-term decrease in price'
     print(stock_price_movement)
 
@@ -274,7 +274,6 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
     for stock in stock_tickers:
         # do not allow a stock to exceed 10% of the portfolio, cancel any new orders if it does
         # if position exists, the code will execute, if not it will pass
-        # should be functional
         try:
             # here's the check to see if the position exists
             stock_position = api.get_position(stock)
@@ -290,7 +289,7 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
 
     for stock in stock_tickers:
         try:
-            #check if position exists
+            # check if position exists
             api.get_position(stock)
             for element in strongbuy:
                 if current_stock_position[stock] == 'strongbuy':
@@ -347,17 +346,17 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
                     api.close_position(stock)
-        except Exception as e:
+        except Exception:
             continue
 
+    #################################################################################################################
 
-    """
     # check orders and see if they should be sold
+    ### experimental
+    """
     for stock in stock_tickers:
         api.list_positions()
-        
-
-
+        for order in api.list_orders()
             if stock == getattr(order, 'symbol'):
                 # we are dealing with the orders for a stock
                 # now get the position
@@ -365,147 +364,142 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 if getattr():
     """
 
+    #################################################################################################################
+    try:
+        # here are the new order executions
+        for element in strongbuy:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.002 * price
+            stop_loss = 0.9985 * price
+            limit_price2 = .9980 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
+                                    element, time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'strongbuy'
+        strongbuy = []
 
+        for element in buy:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.0016 * price
+            stop_loss = 0.9986 * price
+            limit_price2 = 0.9984 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(
+                                    element, time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'buy'
+        buy = []
 
-    # try:
-    # here are the new order executions
-    for element in strongbuy:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        print("if Test! was printed then we should not be here")
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.04) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = 1.002 * price
-        stop_loss = 0.9985 * price
-        limit_price2 = .9980 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
-                                element, time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'strongbuy'
-    strongbuy = []
+        for element in weakbuy:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = 1.0012 * price
+            stop_loss = 0.9988 * price
+            limit_price2 = 0.9986 * price
+            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
+                                    element, time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'weakbuy'
+        weakbuy = []
 
-    for element in buy:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        print("if Test! was printed then we should not be here")
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.03) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = 1.0016 * price
-        stop_loss = 0.9986 * price
-        limit_price2 = 0.9984 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(element,
-                                time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'buy'
-    buy = []
+        # short trades
+        for element in strongsell:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.04) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .998 * price
+            stop_loss = 1.0015 * price
+            limit_price2 = 1.0020 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
+                                    element, time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'strongsell'
+        strongsell = []
 
-    for element in weakbuy:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.025) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = 1.0012 * price
-        stop_loss = 0.9988 * price
-        limit_price2 = 0.9986 * price
-        api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
-                                element, time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'weakbuy'
-    weakbuy = []
+        for element in sell:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.03) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .9984 * price
+            stop_loss = 1.0012 * price
+            limit_price2 = 1.0016 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(
+                                    element,time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'sell'
+        sell = []
 
-    # short trades
-    for element in strongsell:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.04) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = .998 * price
-        stop_loss = 1.0015 * price
-        limit_price2 = 1.0020 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
-                                element, time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'strongsell'
-    strongsell = []
+        for element in weaksell:
+            if 'block' == block_purchase[element]:
+                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+                continue
+            price = stock_prices[element]
+            account_percentage = (account_balance * 0.025) // price
+            round_lot = int(account_percentage)
+            if round_lot == 0:
+                round_lot += 1
+            limit_price = .9988 * price
+            stop_loss = 1.0010 * price
+            limit_price2 = 1.0012 * price
+            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
+                             order_class='bracket', take_profit={'limit_price': limit_price},
+                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(
+                                    element, time.strftime("%H:%M:%S")), duration=4)
+            current_stock_position[element] = 'weaksell'
+        weaksell = []
 
-    for element in sell:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.03) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = .9984 * price
-        stop_loss = 1.0012 * price
-        limit_price2 = 1.0016 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(element,
-                                time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'sell'
-    sell = []
+        # for debugging purposes, all should be empty at this time
+        # print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
 
-    for element in weaksell:
-        if 'block' == block_purchase[element]:
-            print('Test!')
-            continue
-        price = stock_prices[element]
-        account_percentage = (account_balance * 0.025) // price
-        round_lot = int(account_percentage)
-        if round_lot == 0:
-            round_lot += 1
-        limit_price = .9988 * price
-        stop_loss = 1.0010 * price
-        limit_price2 = 1.0012 * price
-        api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                         order_class='bracket', take_profit={'limit_price': limit_price},
-                         stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
-        notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(element,
-                                time.strftime("%H:%M:%S")), duration=4)
-        current_stock_position[element] = 'weaksell'
-    weaksell = []
+        for stock in stock_tickers:
+            if stock in block_purchase:
+                block_purchase[stock] = ''
 
-    # for debugging purposes, all should be empty at this time
-    print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
-
-
-    for stock in stock_tickers:
-        if stock in block_purchase:
-            block_purchase[stock] = ''
-
-    print(block_purchase)
-    """
+        # debugging
+        # print(block_purchase)
     except Exception as error:
         print(error)
         print('There was an error with the trade execution')
-        """
 
 
 def check_trades():
@@ -598,7 +592,6 @@ if __name__ == '__main__':
         except Exception:
             continue
 
-
     try:
         while True:
             start = time.time()
@@ -630,7 +623,7 @@ if __name__ == '__main__':
                 stock_shortlist[ticker] = []
                 block_purchase[ticker] = ''
                 stock_price_movement[ticker] = ''
-    ############################################################################################################
+            ############################################################################################################
             tradethread = th.Thread(target=trade_execution_operations, args=[strongbuy, buy, weakbuy, strongsell,
                                                                              sell, weaksell])
             while True:
@@ -644,10 +637,6 @@ if __name__ == '__main__':
                     break
                 ##############################
                 # make sure trade thread is killed before we do data analysis
-                try:
-                    tradethread.join()
-                except:
-                    pass
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
@@ -656,6 +645,7 @@ if __name__ == '__main__':
                 end = time.time()
                 print('Time Elapsed (in seconds):', int((end - start)))
                 cleanup()
+                tradethread.join()
     except Exception as e:
         notification.show_toast("Program Error", "Program Raised Error {}".format(e), duration=5)
     finally:
