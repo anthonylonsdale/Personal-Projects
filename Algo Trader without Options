@@ -1,7 +1,7 @@
 # properly cuts off trading on a stock when it reaches <10% of the portfolio value
-# havent tested to see if it liquidates properly when the indicator changes
-# havent tested with multiple stocks
-# need to implement a cutoff for trades that just arent reaching their limit prices
+# haven't tested to see if it liquidates properly when the indicator changes
+# haven't tested with multiple stocks
+# need to implement a cutoff for trades that just aren't reaching their limit prices
 # after this is done i cant imagine much more needs to be done
 
 from win10toast import ToastNotifier
@@ -25,13 +25,13 @@ def on_message(ws, message):
     timestamp = dt.datetime.fromtimestamp(time_integer / 1e3)
     timestamp = str("{}.{:03d}".format(timestamp.strftime('%Y-%m-%d %H:%M:%S'), timestamp.microsecond // 1000))
     stock_fundamentals['t'] = timestamp
-    stock = stock_fundamentals['s']
+    s = stock_fundamentals['s']
     stock_fundamentals['time'] = stock_fundamentals.pop('t')
     stock_fundamentals['price'] = stock_fundamentals.pop('p')
     stock_fundamentals['stock'] = stock_fundamentals.pop('s')
     stock_fundamentals['volume'] = stock_fundamentals.pop('v')
     print(stock_fundamentals)
-    trade_data[stock].append(stock_fundamentals)
+    trade_data[s].append(stock_fundamentals)
 
 
 def on_error(ws, error):
@@ -78,24 +78,24 @@ def stock_data_engine():
                 dividend = float(div_string) / 100
             quote['dividend'] = dividend
         if (i % 6) == 5:
-            stock = str(stock_info[i])
-            quote['stock'] = stock
+            st = str(stock_info[i])
+            quote['stock'] = st
             quote['time'] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            quote_data[stock].append(quote)
+            quote_data[st].append(quote)
             quote = {}
-            df_quote = DataFrame(quote_data[stock])
+            df_quote = DataFrame(quote_data[st])
             df_quote.set_index('time', inplace=True)
             print(df_quote)
 
 
 def tech_indicators():
     resolution = ['1', '5', '15', '30', '60', 'D', 'W', 'M']
-    for stock in stock_tickers:
+    for st in stock_tickers:
         i = 0
         while True:
             try:
                 timestamp_tech = time.strftime("%Y-%m-%d %H:%M:%S")
-                tech_url = 'https://finnhub.io/api/v1/scan/technical-indicator?symbol=' + stock + \
+                tech_url = 'https://finnhub.io/api/v1/scan/technical-indicator?symbol=' + st + \
                            '&resolution=' + resolution[i] + '&token=bsq43v0fkcbdt6un6ivg'
                 r = get(tech_url)
                 ti = r.json()
@@ -104,8 +104,8 @@ def tech_indicators():
                 technical['adx'] = ti['trend']['adx']
                 technical['trending'] = ti['trend']['trending']
                 technical['time'] = timestamp_tech
-                ti_data[stock].append(technical)
-                df_tech = DataFrame(ti_data[stock])
+                ti_data[st].append(technical)
+                df_tech = DataFrame(ti_data[st])
                 df_tech.set_index('signal', inplace=True)
                 print(df_tech)
             except KeyError:
@@ -187,22 +187,20 @@ def volume_operations():
                 stock_price += ite['price']
                 length.append(ite)
                 stock_list_length[element] = int(len(length))
-            if dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f") > dt.datetime.now() - dt.timedelta(
-                    seconds=30):
+            ##############################################################################
+            tradetime = dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f")
+            if tradetime > dt.datetime.now() - dt.timedelta(seconds=30):
                 volume_past_30sec += int(ite['volume'])
-            if dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f") > dt.datetime.now() - dt.timedelta(
-                    seconds=60):
+            if tradetime > dt.datetime.now() - dt.timedelta(seconds=60):
                 volume_past_min += int(ite['volume'])
-            if dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f") > dt.datetime.now() - dt.timedelta(
-                    seconds=120):
+            if tradetime > dt.datetime.now() - dt.timedelta(seconds=120):
                 volume_past_2min += int(ite['volume'])
-            if dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f") > dt.datetime.now() - dt.timedelta(
-                    seconds=300):
+            if tradetime > dt.datetime.now() - dt.timedelta(seconds=300):
                 volume_past_5min += int(ite['volume'])
         ##############################################################################
-        stock_prices[element] = float("{:.2f}".format(stock_price / stock_list_length[element]))
+        stock_prices[element] = float("{:.3f}".format(stock_price / stock_list_length[element]))
         volume_terms[element] = volume_past_30sec, volume_past_min, volume_past_2min, volume_past_5min
-
+        ##############################################################################
     print('volume by stock ordered 30sec, 1min, 2min and 5min:', volume_terms)
     print('stock prices:', stock_prices)
 
@@ -212,87 +210,82 @@ def analysis_operations():
     # this block is only to see if the stock has had an increase or decrease in short term price respectively
     # if the following conditions are met, then this represents a good trade opportunity
     # this portion works
-    for stock in stock_buylist:
-        for pos, i in enumerate(quote_data[stock]):
-            if dt.datetime.strptime(quote_data[stock][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
+    for sto in stock_buylist:
+        for pos, i in enumerate(quote_data[sto]):
+            if dt.datetime.strptime(quote_data[sto][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
-                if pos == (len(quote_data[stock]) - 1) and quote_data[stock][pos]['current price'] < \
-                        stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term increase in price'
-    for stock in stock_shortlist:
-        for pos, i in enumerate(quote_data[stock]):
-            if dt.datetime.strptime(quote_data[stock][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
+                if pos == (len(quote_data[sto]) - 1) and quote_data[sto][pos]['current price'] < \
+                        stock_prices[sto]:
+                    stock_price_movement[sto] = 'short-term increase in price'
+    for sto in stock_shortlist:
+        for pos, i in enumerate(quote_data[sto]):
+            if dt.datetime.strptime(quote_data[sto][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
                 # if current price is lower than quote price
-                if pos == (len(quote_data[stock]) - 1) and quote_data[stock][pos]['current price'] > \
-                        stock_prices[stock]:
-                    stock_price_movement[stock] = 'short-term decrease in price'
+                if pos == (len(quote_data[sto]) - 1) and quote_data[sto][pos]['current price'] > \
+                        stock_prices[sto]:
+                    stock_price_movement[sto] = 'short-term decrease in price'
     print(stock_price_movement)
-
-    for stock in stock_price_movement:
-        if 'increase' in stock_price_movement[stock]:
-            if len(stock_buylist[stock]) > 2:
-                if quote_data[stock][-1]['current price'] > quote_data[stock][-2]['current price'] > \
-                        quote_data[stock][-3]['current price']:
-                    if 'Very Bullish' in stock_buylist[stock][-1] and 'Very Bullish' in stock_buylist[stock][-2]:
-                        strongbuy[stock] = stock
-                elif quote_data[stock][-1]['current price'] > quote_data[stock][-2]['current price']:
-                    if 'Bullish' in stock_buylist[stock][-1] and 'Bullish' in stock_buylist[stock][-2]:
-                        buy[stock] = stock
+    ##############################################################################
+    for sto in stock_price_movement:
+        if 'increase' in stock_price_movement[sto]:
+            if len(stock_buylist[sto]) > 2:
+                if quote_data[sto][-1]['current price'] > quote_data[sto][-2]['current price'] > \
+                        quote_data[sto][-3]['current price']:
+                    if 'Very Bullish' in stock_buylist[sto][-1] and 'Very Bullish' in stock_buylist[sto][-2]:
+                        strong_buy[sto] = sto
+                elif quote_data[sto][-1]['current price'] > quote_data[sto][-2]['current price']:
+                    if 'Bullish' in stock_buylist[sto][-1] and 'Bullish' in stock_buylist[sto][-2]:
+                        buy[sto] = sto
                 else:
-                    weakbuy[stock] = stock
-        if 'decrease' in stock_price_movement[stock]:
-            if len(stock_shortlist[stock]) > 2:
-                if quote_data[stock][-1]['current price'] < quote_data[stock][-2]['current price'] < \
-                        quote_data[stock][-3]['current price']:
-                    if 'Very Bearish' in stock_shortlist[stock][-1] and 'Very Bearish' in stock:
-                        strongsell[stock] = stock
-                elif quote_data[stock][-1]['current price'] < quote_data[stock][-2]['current price']:
-                    if 'Bearish' in stock_shortlist[stock][-1] and 'Bearish' in stock_shortlist[stock][-2]:
-                        sell[stock] = stock
+                    weak_buy[sto] = sto
+        if 'decrease' in stock_price_movement[sto]:
+            if len(stock_shortlist[sto]) > 2:
+                if quote_data[sto][-1]['current price'] < quote_data[sto][-2]['current price'] < \
+                        quote_data[sto][-3]['current price']:
+                    if 'Very Bearish' in stock_shortlist[sto][-1] and 'Very Bearish' in sto:
+                        strong_sell[sto] = sto
+                elif quote_data[sto][-1]['current price'] < quote_data[sto][-2]['current price']:
+                    if 'Bearish' in stock_shortlist[sto][-1] and 'Bearish' in stock_shortlist[sto][-2]:
+                        sell[sto] = sto
                 else:
-                    weaksell[stock] = stock
-
-    if len(strongbuy) > 0:
-        print('Stock Strong Buy List:', strongbuy)
+                    weak_sell[sto] = sto
+        ##############################################################################
+    if len(strong_buy) > 0:
+        print('Stock Strong Buy List:', strong_buy)
     if len(buy) > 0:
         print('Stock Buy List:', buy)
-    if len(weakbuy) > 0:
-        print('Stock Weak Buy List:', weakbuy)
-    if len(strongsell) > 0:
-        print('Stock Strong Sell List:', strongsell)
+    if len(weak_buy) > 0:
+        print('Stock Weak Buy List:', weak_buy)
+    if len(strong_sell) > 0:
+        print('Stock Strong Sell List:', strong_sell)
     if len(sell) > 0:
         print('Stock Sell List:', sell)
-    if len(weaksell) > 0:
-        print('Stock Weak Sell List:', weaksell)
+    if len(weak_sell) > 0:
+        print('Stock Weak Sell List:', weak_sell)
 
 
-def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weaksell):
-    print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
+def trade_execution_operations():
+    global strong_buy, buy, weak_buy, strong_sell, sell, weak_sell
+
     print(api.list_orders())
-
-    for stock in stock_tickers:
-        # do not allow a stock to exceed 10% of the portfolio, cancel any new orders if it does
-        # if position exists, the code will execute, if not it will pass
+    for sto in stock_tickers:
         try:
-            # here's the check to see if the position exists
-            stock_position = api.get_position(stock)
+            stock_position = api.get_position(sto)
             print(stock_position)
             position_value = getattr(stock_position, "market_value")
             position_value = abs(float(position_value))
-            # here's the order cancellation if position exceeds 10%
             if position_value >= (0.10 * account_balance):
-                # prevent an increase in our existing condition
-                block_purchase[stock] = 'block'
-        except:
+                block_purchase[sto] = 'block'
+        except Exception as err:
             continue
-
-    for stock in stock_tickers:
+        ##############################################################################
+    for sto in stock_tickers:
         try:
             # check if position exists
-            api.get_position(stock)
-            for element in strongbuy:
-                if current_stock_position[stock] == 'strongbuy':
+            api.get_position(sto)
+            for element in strong_buy:
+                if current_stock_position[sto] == 'strongbuy':
                     continue
                 # if indicator has changed, we need to liquidate
                 else:
@@ -300,59 +293,59 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
+                    api.close_position(sto)
             for element in buy:
-                if current_stock_position[stock] == 'buy':
+                if current_stock_position[sto] == 'buy':
                     continue
                 else:
                     for order in api.list_orders():
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
-            for element in weakbuy:
-                if current_stock_position[stock] == 'weakbuy':
+                    api.close_position(sto)
+            for element in weak_buy:
+                if current_stock_position[sto] == 'weakbuy':
                     continue
                 else:
                     for order in api.list_orders():
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
-            for element in strongsell:
-                if current_stock_position[stock] == 'strongsell':
+                    api.close_position(sto)
+            for element in strong_sell:
+                if current_stock_position[sto] == 'strongsell':
                     continue
                 else:
                     for order in api.list_orders():
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
+                    api.close_position(sto)
             for element in sell:
-                if current_stock_position[stock] == 'sell':
+                if current_stock_position[sto] == 'sell':
                     continue
                 else:
                     for order in api.list_orders():
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
-            for element in weaksell:
-                if current_stock_position[stock] == 'weaksell':
+                    api.close_position(sto)
+            for element in weak_sell:
+                if current_stock_position[sto] == 'weaksell':
                     continue
                 else:
                     for order in api.list_orders():
                         if element == getattr(order, 'symbol'):
                             order_id = getattr(order, "client_order_id")
                             api.cancel_order(order_id)
-                    api.close_position(stock)
-        except Exception:
+                    api.close_position(sto)
+        except Exception as problem:
+            print(problem)
             continue
 
     #################################################################################################################
-
     # check orders and see if they should be sold
-    ### experimental
+    # experimental
     """
     for stock in stock_tickers:
         api.list_positions()
@@ -366,8 +359,12 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
 
     #################################################################################################################
     try:
+        AddReference(r"C:\Users\fabio\source\repos\Main Trade Executor Class Library\Main Trade Executor Class Lib"
+                     r"rary\bin\Release\Main Trade Executor Class Library.dll")
+        import CSharpTradeExecutor
+        trader = CSharpTradeExecutor.BracketOrders()
         # here are the new order executions
-        for element in strongbuy:
+        for element in strong_buy:
             if 'block' == block_purchase[element]:
                 print('{} Position has exceeded 10% of the portfolio value'.format(element))
                 continue
@@ -376,16 +373,17 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
             round_lot = int(account_percentage)
             if round_lot == 0:
                 round_lot += 1
-            limit_price = 1.002 * price
             stop_loss = 0.9985 * price
-            limit_price2 = .9980 * price
-            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = .9980 * price
+            limit_price = 1.002 * price
+
+            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'strongbuy'
-        strongbuy = []
+        strong_buy = []
 
         for element in buy:
             if 'block' == block_purchase[element]:
@@ -398,16 +396,17 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 round_lot += 1
             limit_price = 1.0016 * price
             stop_loss = 0.9986 * price
-            limit_price2 = 0.9984 * price
-            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = 0.9984 * price
+
+            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'buy'
         buy = []
 
-        for element in weakbuy:
+        for element in weak_buy:
             if 'block' == block_purchase[element]:
                 print('{} Position has exceeded 10% of the portfolio value'.format(element))
                 continue
@@ -418,17 +417,18 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 round_lot += 1
             limit_price = 1.0012 * price
             stop_loss = 0.9988 * price
-            limit_price2 = 0.9986 * price
-            api.submit_order(symbol=element, qty=round_lot, side='buy', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = 0.9986 * price
+
+            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'weakbuy'
-        weakbuy = []
+        weak_buy = []
 
         # short trades
-        for element in strongsell:
+        for element in strong_sell:
             if 'block' == block_purchase[element]:
                 print('{} Position has exceeded 10% of the portfolio value'.format(element))
                 continue
@@ -439,14 +439,15 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 round_lot += 1
             limit_price = .998 * price
             stop_loss = 1.0015 * price
-            limit_price2 = 1.0020 * price
-            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = 1.0020 * price
+
+            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'strongsell'
-        strongsell = []
+        strong_sell = []
 
         for element in sell:
             if 'block' == block_purchase[element]:
@@ -459,16 +460,17 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 round_lot += 1
             limit_price = .9984 * price
             stop_loss = 1.0012 * price
-            limit_price2 = 1.0016 * price
-            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = 1.0016 * price
+
+            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(
-                                    element,time.strftime("%H:%M:%S")), duration=4)
+                                    element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'sell'
         sell = []
 
-        for element in weaksell:
+        for element in weak_sell:
             if 'block' == block_purchase[element]:
                 print('{} Position has exceeded 10% of the portfolio value'.format(element))
                 continue
@@ -479,31 +481,26 @@ def trade_execution_operations(strongbuy, buy, weakbuy, strongsell, sell, weakse
                 round_lot += 1
             limit_price = .9988 * price
             stop_loss = 1.0010 * price
-            limit_price2 = 1.0012 * price
-            api.submit_order(symbol=element, qty=round_lot, side='sell', type='market', time_in_force='gtc',
-                             order_class='bracket', take_profit={'limit_price': limit_price},
-                             stop_loss={'stop_price': stop_loss, 'limit_price': limit_price2})
+            stoplosslimitprice = 1.0012 * price
+
+            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            trader.Trader(args)
+
             notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
             current_stock_position[element] = 'weaksell'
-        weaksell = []
+        weak_sell = []
 
-        # for debugging purposes, all should be empty at this time
-        # print(strongbuy, buy, weakbuy, strongsell, sell, weaksell)
+        for sto in stock_tickers:
+            if sto in block_purchase:
+                block_purchase[sto] = ''
 
-        for stock in stock_tickers:
-            if stock in block_purchase:
-                block_purchase[stock] = ''
-
-        # debugging
-        # print(block_purchase)
     except Exception as error:
         print(error)
         print('There was an error with the trade execution')
 
 
 def check_trades():
-    # if no trades are gathered, then the program needs to go back to the web socket and run again till we get trades
     if len(trade_data) == 0:
         print('No trades were gathered')
         return False
@@ -530,10 +527,16 @@ def cleanup():
 
 def check():
     close = dt.datetime.strptime(market_close, '%Y-%m-%d %H:%M:%S.%f')
-    if dt.datetime.now() > (close - dt.timedelta(minutes=61)):
-        api.close_all_positions()
-        api.cancel_all_orders()
-        raise Exception('The market is closing in 1 minute, all positions have been closed')
+    if local_timezone == 'EST':
+        if dt.datetime.now() > (close - dt.timedelta(minutes=1)):
+            api.close_all_positions()
+            api.cancel_all_orders()
+            raise Exception('The market is closing in 1 minute, all positions have been closed')
+    if local_timezone == 'CST':
+        if dt.datetime.now() > (close - dt.timedelta(minutes=61)):
+            api.close_all_positions()
+            api.cancel_all_orders()
+            raise Exception('The market is closing in 1 minute, all positions have been closed')
 
 
 if __name__ == '__main__':
@@ -553,7 +556,9 @@ if __name__ == '__main__':
     print('Trading Account status:', account.status)
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
     # Get when the market opens or opened today
-    print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), 'CST')
+    fulltimezone = str(dt.datetime.now(dt.timezone.utc).astimezone().tzinfo)
+    local_timezone = ''.join([c for c in fulltimezone if c.isupper()])
+    print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), local_timezone)
     clock = api.get_clock()
     market_close = str(clock.next_close)[:16:] + str(':00.000000')
     print("The market closes at {} o'clock EST today.".format(market_close[11:16:]))
@@ -570,7 +575,6 @@ if __name__ == '__main__':
                 stock_tickers = input('Positions have been closed, Enter Ticker(s): ').upper().split()
 
             for position, item in enumerate(stock_tickers):
-                print(stock_tickers)
                 try:
                     asset = api.get_asset(item)
                     if not asset.tradable:
@@ -578,6 +582,7 @@ if __name__ == '__main__':
                         stock_tickers[position] = input('Enter different ticker: ').upper()
                     continue
                 except Exception as e:
+                    print(e)
                     print(stock_tickers[position], 'is not a valid ticker!')
                     stock_tickers[position] = input('Enter a different ticker: ').upper()
 
@@ -589,7 +594,9 @@ if __name__ == '__main__':
                 except Exception:
                     raise Exception("Not Tradable")
             break
-        except Exception:
+        except Exception as stockinputerror:
+            print(stockinputerror)
+            print("There was a problem with the ticker(s) that you entered")
             continue
 
     try:
@@ -598,12 +605,12 @@ if __name__ == '__main__':
             stock_buylist = {}
             stock_shortlist = {}
             stock_prices = {}
-            strongbuy = {}
+            strong_buy = {}
             buy = {}
-            weakbuy = {}
-            weaksell = {}
+            weak_buy = {}
+            weak_sell = {}
             sell = {}
-            strongsell = {}
+            strong_sell = {}
             volume_terms = {}
             trade_data = {}
             ti_data = {}
@@ -624,31 +631,29 @@ if __name__ == '__main__':
                 block_purchase[ticker] = ''
                 stock_price_movement[ticker] = ''
             ############################################################################################################
-            tradethread = th.Thread(target=trade_execution_operations, args=[strongbuy, buy, weakbuy, strongsell,
-                                                                             sell, weaksell])
             while True:
+                tradethread = th.Thread(target=trade_execution_operations)
+                tradethread.daemon = True
                 check()
                 main_data_engine()
                 print('Trades:', trade_data)
                 print('Quotes:', quote_data)
                 print('Indicators:', ti_data)
                 if not check_trades():
-                    print('Warning! No trades gathered! Program restarting...')
-                    break
+                    print('Warning, No trades gathered! Program terminating...')
+                    raise SystemExit(0)
                 ##############################
-                # make sure trade thread is killed before we do data analysis
                 ticker_operations()
                 volume_operations()
                 analysis_operations()
-                tradethread.daemon = True
                 tradethread.start()
                 end = time.time()
                 print('Time Elapsed (in seconds):', int((end - start)))
                 cleanup()
                 tradethread.join()
-    except Exception as e:
-        notification.show_toast("Program Error", "Program Raised Error {}".format(e), duration=5)
+    # except Exception as e:
+        # notification.show_toast("Program Error", "Program Raised Error {}".format(e), duration=5)
     finally:
         print('All pending orders will be cancelled and all positions will be liquidated immediately')
-        api.cancel_all_orders()
-        api.close_all_positions()
+        # api.cancel_all_orders()
+        # api.close_all_positions()
