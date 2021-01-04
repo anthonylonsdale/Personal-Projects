@@ -1,0 +1,4 @@
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd-compute-14-39: error: *** STEP 672288.0 ON compute-14-39 CANCELLED AT 2020-12-07T22:39:21 DUE TO TIME LIMIT ***
+slurmstepd-compute-14-39: error: *** JOB 672288 ON compute-14-39 CANCELLED AT 2020-12-07T22:39:21 DUE TO TIME LIMIT ***
+srun: error: compute-14-39: task 0: Terminated

@@ -1,0 +1,7 @@
+#!/bin/bash
+#SBATCH --ntasks=8
+#SBATCH --export=ALL
+#SBATCH --out=Foundry-%j.out#SBATCH --time=0-00:15:00
+#SBATCH --mail-user=amlfhg@umsystem.edu
+module load lammps
+mpirun ~/bin/lmp_mpi < 5x5x5_frozen_50k.lmp > 5_50k_frozen.dat
