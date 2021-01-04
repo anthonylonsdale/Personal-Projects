@@ -1,0 +1,45 @@
+LAMMPS (30 Jun 2020)
+Lattice spacing in x,y,z = 2.8665 2.8665 2.8665
+Created orthogonal box = (0.0 0.0 0.0) to (14.3325 14.3325 14.3325)
+  2 by 2 by 2 MPI processor grid
+Created 250 atoms
+  create_atoms CPU = 0.252 seconds
+Setting atom values ...
+  250 settings made for spin
+Neighbor list info ...
+  update every 10 steps, delay 20 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 5.7733670002446
+  ghost atom cutoff = 5.7733670002446
+  binsize = 2.8866835001223, bins = 5.0 5.0 5.0
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair eam/alloy, perpetual, half/full from (2)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+  (2) pair spin/exchange, perpetual
+      attributes: full, newton on
+      pair build: full/bin/atomonly
+      stencil: full/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : metal
+  Current step  : 0
+  Time step     : 0.0001
+Per MPI rank memory allocation (min/avg/max) = 7.742 | 7.742 | 7.742 Mbytes
+Step Time v_magnorm v_tmag Temp v_emag KinEng PotEng Press TotEng 
+       0            0            1            0    700.02507   -27.791345     22.53085   -1097.7914   -27902.854   -1075.2605 
+    5000          0.5   0.68907466    578.89706    369.34248   -13.611393    11.887574   -1072.7804    9435.1595   -1060.8928 
+   10000            1   0.57262563    649.85042     367.2853   -10.871865    11.821362   -1069.7947    12745.748   -1057.9733 
+   15000          1.5   0.55199757    660.45854     397.7449   -10.555782    12.801728   -1070.0746    14374.124   -1057.2729 
+   20000            2   0.50693121    662.94007    398.29097   -9.4672024    12.819304   -1068.5759    15666.288   -1055.7566 
+   25000          2.5   0.48446959    699.89702     378.6975   -8.9295557    12.188673    -1067.349    16919.048   -1055.1603 
+   30000            3   0.44677707    716.02326    393.77122   -7.6811195    12.673832    -1066.443    16578.813   -1053.7692 
+   35000          3.5   0.40954571    849.31699    415.36916   -6.4872313    13.368979   -1065.7954    20981.134   -1052.4265 
+   40000            4   0.43865465    739.63156    403.85525   -7.2684234    12.998395    -1065.926    18610.576   -1052.9276 
+   45000          4.5    0.4407624    649.33498    377.54503   -8.2018315     12.15158   -1065.4833     20210.37   -1053.3317 
+   50000            5     0.492627    648.44261    420.35343   -9.4226466    13.529401   -1067.9391    17451.919   -1054.4097 
+   55000          5.5   0.49709855    656.79079    399.67996   -9.2355869     12.86401    -1067.158    17584.234    -1054.294 
+   60000            6    0.5175279    649.31328    403.96598   -9.8110222    13.001959   -1067.6793     15588.01   -1054.6774 
+   65000          6.5    0.5127288    610.71524    417.37817   -10.045748     13.43364   -1068.0902    16278.292   -1054.6566 
