@@ -1,9 +1,3 @@
-# properly cuts off trading on a stock when it reaches <10% of the portfolio value
-# haven't tested to see if it liquidates properly when the indicator changes
-# haven't tested with multiple stocks
-# need to implement a cutoff for trades that just aren't reaching their limit prices
-# after this is done i cant imagine much more needs to be done
-
 from win10toast import ToastNotifier
 from requests import get
 import websocket
@@ -227,29 +221,29 @@ def analysis_operations():
                     stock_price_movement[sto] = 'short-term decrease in price'
     print(stock_price_movement)
     ##############################################################################
-    for sto in stock_price_movement:
-        if 'increase' in stock_price_movement[sto]:
-            if len(stock_buylist[sto]) > 2:
-                if quote_data[sto][-1]['current price'] > quote_data[sto][-2]['current price'] > \
-                        quote_data[sto][-3]['current price']:
-                    if 'Very Bullish' in stock_buylist[sto][-1] and 'Very Bullish' in stock_buylist[sto][-2]:
-                        strong_buy[sto] = sto
-                elif quote_data[sto][-1]['current price'] > quote_data[sto][-2]['current price']:
-                    if 'Bullish' in stock_buylist[sto][-1] and 'Bullish' in stock_buylist[sto][-2]:
-                        buy[sto] = sto
+    for element in stock_price_movement:
+        if 'increase' in stock_price_movement[element]:
+            if len(stock_buylist[element]) > 2:
+                if quote_data[element][-1]['current price'] > quote_data[element][-2]['current price'] > \
+                        quote_data[element][-3]['current price']:
+                    if 'Very Bullish' in stock_buylist[element][-1] and 'Very Bullish' in stock_buylist[element][-2]:
+                        strong_buy.append(element)
+                elif quote_data[element][-1]['current price'] > quote_data[element][-2]['current price']:
+                    if 'Bullish' in stock_buylist[element][-1] and 'Bullish' in stock_buylist[element][-2]:
+                        buy.append(element)
                 else:
-                    weak_buy[sto] = sto
-        if 'decrease' in stock_price_movement[sto]:
-            if len(stock_shortlist[sto]) > 2:
-                if quote_data[sto][-1]['current price'] < quote_data[sto][-2]['current price'] < \
-                        quote_data[sto][-3]['current price']:
-                    if 'Very Bearish' in stock_shortlist[sto][-1] and 'Very Bearish' in sto:
-                        strong_sell[sto] = sto
-                elif quote_data[sto][-1]['current price'] < quote_data[sto][-2]['current price']:
-                    if 'Bearish' in stock_shortlist[sto][-1] and 'Bearish' in stock_shortlist[sto][-2]:
-                        sell[sto] = sto
+                    weak_buy.append(element)
+        if 'decrease' in stock_price_movement[element]:
+            if len(stock_shortlist[element]) > 2:
+                if quote_data[element][-1]['current price'] < quote_data[element][-2]['current price'] < \
+                        quote_data[element][-3]['current price']:
+                    if 'Very Bearish' in stock_shortlist[element][-1] and 'Very Bearish' in element:
+                        strong_sell.append(element)
+                elif quote_data[element][-1]['current price'] < quote_data[element][-2]['current price']:
+                    if 'Bearish' in stock_shortlist[element][-1] and 'Bearish' in stock_shortlist[element][-2]:
+                        sell.append(element)
                 else:
-                    weak_sell[sto] = sto
+                    weak_sell.append(element)
         ##############################################################################
     if len(strong_buy) > 0:
         print('Stock Strong Buy List:', strong_buy)
@@ -266,108 +260,107 @@ def analysis_operations():
 
 
 def trade_execution_operations():
-    global strong_buy, buy, weak_buy, strong_sell, sell, weak_sell
-
+    global strong_buy, buy, weak_buy, strong_sell, sell, weak_sell, current_stock_position
     print(api.list_orders())
-    for sto in stock_tickers:
-        try:
-            stock_position = api.get_position(sto)
-            print(stock_position)
-            position_value = getattr(stock_position, "market_value")
-            position_value = abs(float(position_value))
-            if position_value >= (0.10 * account_balance):
-                block_purchase[sto] = 'block'
-        except Exception as err:
-            continue
-        ##############################################################################
-    for sto in stock_tickers:
-        try:
-            # check if position exists
-            api.get_position(sto)
-            for element in strong_buy:
-                if current_stock_position[sto] == 'strongbuy':
-                    continue
-                # if indicator has changed, we need to liquidate
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-            for element in buy:
-                if current_stock_position[sto] == 'buy':
-                    continue
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-            for element in weak_buy:
-                if current_stock_position[sto] == 'weakbuy':
-                    continue
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-            for element in strong_sell:
-                if current_stock_position[sto] == 'strongsell':
-                    continue
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-            for element in sell:
-                if current_stock_position[sto] == 'sell':
-                    continue
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-            for element in weak_sell:
-                if current_stock_position[sto] == 'weaksell':
-                    continue
-                else:
-                    for order in api.list_orders():
-                        if element == getattr(order, 'symbol'):
-                            order_id = getattr(order, "client_order_id")
-                            api.cancel_order(order_id)
-                    api.close_position(sto)
-        except Exception as problem:
-            print(problem)
-            continue
+    block_purchase = []
 
-    #################################################################################################################
-    # check orders and see if they should be sold
-    # experimental
-    """
-    for stock in stock_tickers:
-        api.list_positions()
-        for order in api.list_orders()
-            if stock == getattr(order, 'symbol'):
-                # we are dealing with the orders for a stock
-                # now get the position
-                api.get_position(stock)
-                if getattr():
-    """
-
-    #################################################################################################################
-    try:
-        AddReference(r"C:\Users\fabio\source\repos\Main Trade Executor Class Library\Main Trade Executor Class Lib"
-                     r"rary\bin\Release\Main Trade Executor Class Library.dll")
-        import CSharpTradeExecutor
-        trader = CSharpTradeExecutor.BracketOrders()
-        # here are the new order executions
-        for element in strong_buy:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
+    if len(api.list_positions()) > 0:
+        for stockticker in stock_tickers:
+            try:
+                stock_position = api.get_position(stockticker)
+                print(stock_position)
+                position_value = getattr(stock_position, "market_value")
+                position_value = abs(float(position_value))
+                if position_value >= (0.10 * account_balance):
+                    block_purchase.append('block ' + stockticker)
+            except Exception as problem:
+                print(problem)
                 continue
+
+        for element in strong_buy:
+            # for an element in the strong_buy indicator list, if it is equal to the current stock position,
+            # then we wont liquidate, if not then we will liquidate
+            if element in current_stock_position:
+                continue 
+            else:
+                # this means that if we have an indicator that is different that we just calculated, we need to remove
+                # the old position and use the new analysis as it is more up to date on the strength of the stock
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+                
+        for element in buy:
+            if element in current_stock_position:
+                continue
+            else:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+                
+        for element in weak_buy:
+            if element in current_stock_position:
+                continue
+            else:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+                
+        for element in strong_sell:
+            if element in current_stock_position:
+                continue
+            else:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+
+        for element in sell:
+            if element in current_stock_position:
+                continue
+            else:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+                
+        for element in weak_sell:
+            if element in current_stock_position:
+                continue
+            else:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+
+    #################################################################################################################
+    # check orders and see if they should be sold, if we have idle bracket orders with a small fluctuating profit/loss
+    # just close them out
+    for element in stock_tickers:
+        api.list_positions()
+        for stockposition in api.list_positions():
+            if float(getattr(stockposition, "unrealized_intraday_plpc")) > 0.00075:
+                check_orders = api.list_orders(status='open')
+                for order in check_orders:
+                    api.cancel_order(order.id)
+                api.close_position(element)
+
+    #################################################################################################################
+    # code is necessary to import the c# trading program
+    AddReference(r"C:\Users\fabio\source\repos\Main Trade Executor Class Library\Main Trade Executor Class Lib"
+                 r"rary\bin\Release\Main Trade Executor Class Library.dll")
+    import CSharpTradeExecutor
+    trader = CSharpTradeExecutor.BracketOrders()
+
+    print(block_purchase)
+
+    for element in strong_buy:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.04) // price
             round_lot = int(account_percentage)
@@ -376,19 +369,23 @@ def trade_execution_operations():
             stop_loss = 0.9985 * price
             stoplosslimitprice = .9980 * price
             limit_price = 1.002 * price
-
-            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'strongbuy'
-        strong_buy = []
+            pos = str(element + 'strongbuy')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    strong_buy = []
 
-        for element in buy:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
-                continue
+    for element in buy:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.03) // price
             round_lot = int(account_percentage)
@@ -397,19 +394,23 @@ def trade_execution_operations():
             limit_price = 1.0016 * price
             stop_loss = 0.9986 * price
             stoplosslimitprice = 0.9984 * price
-
-            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'buy'
-        buy = []
+            pos = str(element + 'buy')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    buy = []
 
-        for element in weak_buy:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
-                continue
+    for element in weak_buy:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.025) // price
             round_lot = int(account_percentage)
@@ -418,20 +419,24 @@ def trade_execution_operations():
             limit_price = 1.0012 * price
             stop_loss = 0.9988 * price
             stoplosslimitprice = 0.9986 * price
-
-            args = [element, 'buy', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'weakbuy'
-        weak_buy = []
+            pos = str(element + 'weakbuy')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    weak_buy = []
 
-        # short trades
-        for element in strong_sell:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
-                continue
+    # short trades
+    for element in strong_sell:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.04) // price
             round_lot = int(account_percentage)
@@ -440,19 +445,23 @@ def trade_execution_operations():
             limit_price = .998 * price
             stop_loss = 1.0015 * price
             stoplosslimitprice = 1.0020 * price
-
-            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'strongsell'
-        strong_sell = []
+            pos = str(element + 'strongsell')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    strong_sell = []
 
-        for element in sell:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
-                continue
+    for element in sell:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.03) // price
             round_lot = int(account_percentage)
@@ -461,19 +470,23 @@ def trade_execution_operations():
             limit_price = .9984 * price
             stop_loss = 1.0012 * price
             stoplosslimitprice = 1.0016 * price
-
-            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'sell'
-        sell = []
+            pos = str(element + 'sell')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    sell = []
 
-        for element in weak_sell:
-            if 'block' == block_purchase[element]:
-                print('{} Position has exceeded 10% of the portfolio value'.format(element))
-                continue
+    for element in weak_sell:
+        try:
+            for pos, it in enumerate(block_purchase):
+                if element in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
             price = stock_prices[element]
             account_percentage = (account_balance * 0.025) // price
             round_lot = int(account_percentage)
@@ -482,22 +495,17 @@ def trade_execution_operations():
             limit_price = .9988 * price
             stop_loss = 1.0010 * price
             stoplosslimitprice = 1.0012 * price
-
-            args = [element, 'sell', str(round_lot), str(stop_loss), str(stoplosslimitprice), str(limit_price)]
+            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+                    str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
-
             notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(
                                     element, time.strftime("%H:%M:%S")), duration=4)
-            current_stock_position[element] = 'weaksell'
-        weak_sell = []
-
-        for sto in stock_tickers:
-            if sto in block_purchase:
-                block_purchase[sto] = ''
-
-    except Exception as error:
-        print(error)
-        print('There was an error with the trade execution')
+            pos = str(element + 'weaksell')
+            current_stock_position.append(pos)
+        except Exception as error:
+            print('There was an {} with the trade execution'.format(error))
+            continue
+    weak_sell = []
 
 
 def check_trades():
@@ -605,30 +613,27 @@ if __name__ == '__main__':
             stock_buylist = {}
             stock_shortlist = {}
             stock_prices = {}
-            strong_buy = {}
-            buy = {}
-            weak_buy = {}
-            weak_sell = {}
-            sell = {}
-            strong_sell = {}
+            strong_buy = []
+            buy = []
+            weak_buy = []
+            weak_sell = []
+            sell = []
+            strong_sell = []
             volume_terms = {}
             trade_data = {}
             ti_data = {}
             quote_data = {}
             stock_list_length = {}
             indicator_votes = {}
-            current_stock_position = {}
-            block_purchase = {}
+            current_stock_position = []
             stock_price_movement = {}
             for ticker in stock_tickers:
-                current_stock_position[ticker] = ''
                 indicator_votes[ticker] = {'Bullish Votes': 0, 'Bearish Votes': 0, 'Neutral Votes': 0}
                 trade_data[ticker] = []
                 ti_data[ticker] = []
                 quote_data[ticker] = []
                 stock_buylist[ticker] = []
                 stock_shortlist[ticker] = []
-                block_purchase[ticker] = ''
                 stock_price_movement[ticker] = ''
             ############################################################################################################
             while True:
@@ -655,5 +660,5 @@ if __name__ == '__main__':
         # notification.show_toast("Program Error", "Program Raised Error {}".format(e), duration=5)
     finally:
         print('All pending orders will be cancelled and all positions will be liquidated immediately')
-        # api.cancel_all_orders()
-        # api.close_all_positions()
+        api.cancel_all_orders()
+        api.close_all_positions()
