@@ -41,8 +41,8 @@ def webscraping(stock_tickers_involved, spyreturn):
     try:
         for stock in stock_tickers_involved:
             quote = {}
-            url = 'https://finance.yahoo.com/quote/' + stock + '?p=' + stock
-            driver.get(url)
+            stockurl = 'https://finance.yahoo.com/quote/' + stock + '?p=' + stock
+            driver.get(stockurl)
             html = driver.execute_script('return document.body.innerHTML;')
             soup = BeautifulSoup(html, 'lxml')
             beta = [entry.text for entry in soup.find_all('span', {'data-reactid': '144'})]
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     portfolio = api.get_portfolio_history(date_start=yesterday, date_end=todays_date, timeframe="1Min")
     #############################################################################
     order_list = api.list_orders(status='closed', limit=200)
-    df_orders = DataFrame([order._raw for order in order_list])
+    df_orders = DataFrame([order.raw for order in order_list])
     print(df_orders)
     df_orders.drop(df_orders.columns[[1, 5, 6, 7, 8, 9, 10, 11]], axis=1, inplace=True)
     print(df_orders)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     print(quote_data)
     #############################################################################
     for stock in stock_tickers_involved:
-        beta = float(quote_data[stock]['beta'])
+        beta = float(quote_data[stock][1])
         alphaMetric = (todayspandl - oneyearriskfrrate) - (beta * (spyreturn - oneyearriskfrrate))
         print(alphaMetric)
 
