@@ -278,62 +278,86 @@ def trade_execution_operations():
                 continue
 
         for element in strong_buy:
-            # for an element in the strong_buy indicator list, if it is equal to the current stock position,
-            # then we wont liquidate, if not then we will liquidate
-            if element in current_stock_position:
-                continue 
-            else:
-                # this means that if we have an indicator that is different that we just calculated, we need to remove
-                # the old position and use the new analysis as it is more up to date on the strength of the stock
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
-                
+            try:
+                # for an element in the strong_buy indicator list, if it is equal to the current stock position,
+                # then we wont liquidate, if not then we will liquidate
+                if element in current_stock_position:
+                    continue
+                else:
+                    # if we have an indicator that is different that we just calculated, we need to remove
+                    # the old position and use the new analysis as it is more up to date on the strength of the stock
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
+                continue
+
         for element in buy:
-            if element in current_stock_position:
+            try:
+                if element in current_stock_position:
+                    continue
+                else:
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
                 continue
-            else:
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
-                
+
         for element in weak_buy:
-            if element in current_stock_position:
+            try:
+                if element in current_stock_position:
+                    continue
+                else:
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
                 continue
-            else:
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
-                
+
         for element in strong_sell:
-            if element in current_stock_position:
+            try:
+                if element in current_stock_position:
+                    continue
+                else:
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
                 continue
-            else:
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
 
         for element in sell:
-            if element in current_stock_position:
+            try:
+                if element in current_stock_position:
+                    continue
+                else:
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
                 continue
-            else:
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
-                
+
         for element in weak_sell:
-            if element in current_stock_position:
+            try:
+                if element in current_stock_position:
+                    continue
+                else:
+                    check_orders = api.list_orders(status='open')
+                    for order in check_orders:
+                        api.cancel_order(order.id)
+                    api.close_position(element)
+            except Exception as problem:
+                print(problem)
                 continue
-            else:
-                check_orders = api.list_orders(status='open')
-                for order in check_orders:
-                    api.cancel_order(order.id)
-                api.close_position(element)
 
     #################################################################################################################
     # check orders and see if they should be sold, if we have idle bracket orders with a small fluctuating profit/loss
@@ -341,7 +365,7 @@ def trade_execution_operations():
     for element in stock_tickers:
         api.list_positions()
         for stockposition in api.list_positions():
-            if float(getattr(stockposition, "unrealized_intraday_plpc")) > 0.00075:
+            if float(getattr(stockposition, "unrealized_intraday_plpc")) > 0.001:
                 check_orders = api.list_orders(status='open')
                 for order in check_orders:
                     api.cancel_order(order.id)
@@ -613,12 +637,6 @@ if __name__ == '__main__':
             stock_buylist = {}
             stock_shortlist = {}
             stock_prices = {}
-            strong_buy = []
-            buy = []
-            weak_buy = []
-            weak_sell = []
-            sell = []
-            strong_sell = []
             volume_terms = {}
             trade_data = {}
             ti_data = {}
@@ -637,6 +655,12 @@ if __name__ == '__main__':
                 stock_price_movement[ticker] = ''
             ############################################################################################################
             while True:
+                strong_buy = []
+                buy = []
+                weak_buy = []
+                weak_sell = []
+                sell = []
+                strong_sell = []
                 tradethread = th.Thread(target=trade_execution_operations)
                 tradethread.daemon = True
                 check()
