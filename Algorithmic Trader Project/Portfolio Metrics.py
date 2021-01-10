@@ -1,3 +1,7 @@
+"""
+THIS PROGRAM IS MEANT TO BE RUN AT THE END OF A TRADING DAY
+DOESNT REALLY MATTER HOW LONG IT TAKES, SPEED ISN'T IMPORTANT
+"""
 import alpaca_trade_api as trade_api
 from pandas import DataFrame
 import datetime as dt
@@ -37,7 +41,7 @@ def formatting_excel():
     excel.Application.Quit()
 
 
-def webscraping(stock_tickers_involved, spyreturn):
+def webscraping(stock_tickers_involved):
     try:
         for stock in stock_tickers_involved:
             quote = {}
@@ -60,8 +64,8 @@ def webscraping(stock_tickers_involved, spyreturn):
         returnformatted = str(beta[0])
         rt = returnformatted[returnformatted.find(delimiter1) + 1: returnformatted.find(delimiter2)]
         return_string = rt.split("%")[0]
-        spyret = float(return_string) / 100
-        return spyret
+        spyreturn = float(return_string) / 100
+        return spyreturn
     except Exception as e:
         print(e)
     finally:
@@ -82,15 +86,15 @@ if __name__ == '__main__':
     todayspandl = float(account.equity) - float(account.last_equity)
     print("Todays profit/loss: $" + "{:0.2f}".format(todayspandl))
     #############################################################################
-    tdys_date = dt.datetime.today()
+    timeperiod = 2
+    tdys_date = dt.datetime.today() - dt.timedelta(days=timeperiod-1)
     todays_date = tdys_date.strftime('%Y-%m-%d')
-    timeperiod = 1
     ystrdy = dt.datetime.today() - dt.timedelta(days=timeperiod)
     yesterday = ystrdy.strftime('%Y-%m-%d')
     portfolio = api.get_portfolio_history(date_start=yesterday, date_end=todays_date, timeframe="1Min")
     #############################################################################
     order_list = api.list_orders(status='closed', limit=200)
-    df_orders = DataFrame([order.raw for order in order_list])
+    df_orders = DataFrame([order._raw for order in order_list])
     print(df_orders)
     df_orders.drop(df_orders.columns[[1, 5, 6, 7, 8, 9, 10, 11]], axis=1, inplace=True)
     print(df_orders)
@@ -99,23 +103,35 @@ if __name__ == '__main__':
     stock_tickers_involved = list(set(stock_tickers_involved))
     print(stock_tickers_involved)
     #############################################################################
-    oneyearriskfrrate = 0.11
-    spyreturn = 0
+    oneyrriskfreerate = 0.11
     #############################################################################
     pd.options.display.float_format = '{:.0f}'.format
     driver = webdriver.Chrome(ChromeDriverManager().install())
     quote_data = {}
     for stock in stock_tickers_involved:
         quote_data[stock] = []
-    webscraping(stock_tickers_involved, spyreturn)
+
+
+    quote_data = {'MSFT': {'stock': 'MSFT', 'beta': '0.83'}, 'AMD': {'stock': 'AMD', 'beta': '2.28'}, 'AAPL': {'stock': 'AAPL', 'beta': '1.28'}, 'AMZN': {'stock': 'AMZN', 'beta': '1.20'}}
+    spyreturn = 0.0057
+    # spyreturn = webscraping(stock_tickers_involved)
+    # spyreturn = '{:.4f}'.format(spyreturn)
     print(quote_data)
     #############################################################################
+    account = api.get_account()
+    print(spyreturn)
     for stock in stock_tickers_involved:
-        beta = float(quote_data[stock][1])
-        alphaMetric = (todayspandl - oneyearriskfrrate) - (beta * (spyreturn - oneyearriskfrrate))
+        # print(quote_data[stock])
+        # print(quote_data[stock]['beta'])
+        beta = float(quote_data[stock]['beta'])
+        buying_power = float(account.buying_power) / 4
+        portfolioreturnpct = (todayspandl / buying_power) * 100
+        alphaMetric = (todayspandl - oneyrriskfreerate) - (beta * (spyreturn - oneyrriskfreerate))
         print(alphaMetric)
 
+
     data = [
+        ['', 'All Trades', 'Long Trades', 'Short Trades'],
         ['Total Net Profit:', todayspandl, '123', '123'],
         ['Gross Profit:', '', '', ''],
         ['Gross Loss:', '', '', ''],
@@ -125,9 +141,7 @@ if __name__ == '__main__':
         ['Percent Profitable:', '', '', ''],
         ['Winning Trades:', '', '', ''],
         ['Losing Trades:', '', '', ''],
-        ['Even Trades', '', '', ''],
-        ['', '', '', ''],
-        ['', '', '', ''],
+        ['Even Trades', '', '', '']
             ]
     portfolio_metrics = DataFrame(data, columns=['', 'All Trades', 'Long Trades', 'Short Trades'])
 
