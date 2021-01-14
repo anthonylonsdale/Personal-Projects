@@ -111,7 +111,7 @@ if __name__ == '__main__':
     for stock in stock_tickers_involved:
         quote_data[stock] = []
 
-
+    #########################################################################################
     quote_data = {'MSFT': {'stock': 'MSFT', 'beta': '0.83'}, 'AMD': {'stock': 'AMD', 'beta': '2.28'}, 'AAPL': {'stock': 'AAPL', 'beta': '1.28'}, 'AMZN': {'stock': 'AMZN', 'beta': '1.20'}}
     spyreturn = 0.0057
     # spyreturn = webscraping(stock_tickers_involved)
