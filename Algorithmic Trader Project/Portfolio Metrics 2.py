@@ -1,4 +1,3 @@
-# to be combined with the other portfolio analysis program
 import alpaca_trade_api as trade_api
 from pandas import DataFrame
 import datetime as dt
@@ -10,6 +9,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import numpy as np
+import time
 
 
 if __name__ == '__main__':
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # Get a list of filled orders.
     # Can also limit the results by date if desired.
 
-    spec_date = dt.datetime.today() - dt.timedelta(days=15)
+    spec_date = dt.datetime.today() - dt.timedelta(days=16)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
     # Turn the activities list into a dataframe for easier manipulation
@@ -38,41 +38,133 @@ if __name__ == '__main__':
     ###################################################################################################################
     activities_df['cumulative_sum'] = activities_df.groupby('symbol')['net_qty'].apply(lambda g: g.cumsum())
 
+    # Total Net Profit for Long and Short Trades
+
     # filtering out bull long purchases
-    long_purchases = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] > 0)]
+    long_purchases_df = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] > 0)]
     # print(long_purchases)
     # long_purchases.to_excel("long purchases.xlsx")
-    total_long_purchases = long_purchases['net_trade'].sum()
+    total_long_purchases = long_purchases_df['net_trade'].sum()
     print("Total cost of long positions:", total_long_purchases)
 
     # filtering out bear 'buy to cover' purchases
-    short_purchases = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] <= 0)]
+    short_purchases_df = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] <= 0)]
     # print(short_purchases)
     # short_purchases.to_excel("short purchases.xlsx")
-    total_short_purchases = short_purchases['net_trade'].sum()
+    total_short_purchases = short_purchases_df['net_trade'].sum()
     print("Total cost of short positions:", total_short_purchases)
 
     # filtering bull long sales
-    long_sales = activities_df.loc[activities_df['side'] == 'sell']
+    long_sales_df = activities_df.loc[activities_df['side'] == 'sell']
     # print(long_sales)
     # long_sales.to_excel("long sales.xlsx")
-    total_long_sells = long_sales['net_trade'].sum()
+    total_long_sells = long_sales_df['net_trade'].sum()
     print("Total profit of long positions:", total_long_sells)
 
     # filtering bear short purchases
-    short_sales = activities_df.loc[activities_df['side'] == 'sell_short']
+    short_sales_df = activities_df.loc[activities_df['side'] == 'sell_short']
     # print(short_sales)
     # short_sales.to_excel("short sales.xlsx")
-    total_short_sells = short_sales['net_trade'].sum()
+    total_short_sells = short_sales_df['net_trade'].sum()
     print("Total profit of short positions:", total_short_sells)
 
-    long_position_pl = round(total_long_purchases + total_long_sells, 2)
-    short_position_pl = round(total_short_purchases + total_short_sells, 2)
-    print(long_position_pl)
-    print(short_position_pl)
-
+    net_long_position_pl = round(total_long_purchases + total_long_sells, 2)
+    net_short_position_pl = round(total_short_purchases + total_short_sells, 2)
+    print(net_long_position_pl)
+    print(net_short_position_pl)
 
     activities_df.to_excel("Portfolio Activities Test.xlsx")
+    ###################################################################################################################
+    # gross profit and loss
+    # for this we need to correlate the buys with the sells, which may be difficult
+    long_buy_df = long_purchases_df.sort_values(['symbol', 'transaction_time'])
+    lb_df = pd.DataFrame(long_buy_df)
+    lb_df.reset_index(drop=True, inplace=True)
+    # lb_df.to_excel("test grouping buy.xlsx")
+    print(lb_df)
+
+    long_sales_df = long_sales_df.sort_values(['symbol', 'transaction_time'])
+    ls_df = pd.DataFrame(long_sales_df)
+    ls_df.reset_index(drop=True, inplace=True)
+    # ls_df.to_excel("test grouping sell.xlsx")
+    print(ls_df)
+
+    # we can make an order book that tracks each trade as it iterates down the list
+    # example: first buy is 18 shares of appl
+    buy_order_book = {}
+    for index, row in lb_df.iterrows():
+        # we only need type (fill or partial fill), net_trade, cumulative_sum, net_qty and symbol
+        # print(row)
+        buy_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2), row['cumulative_sum']]
+    print(buy_order_book)
+
+    sell_order_book = {}
+    for index, row in ls_df.iterrows():
+        # we only need net_trade, cumulative_sum, net_qty and symbol
+        # print(row)
+        sell_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2), row['cumulative_sum']]
+    print(sell_order_book)
+
+    trade_book = {}
+    flag = False
+
+    while len(buy_order_book) > 0:
+        for position, item in enumerate(buy_order_book.copy()):
+            # if the cumulative quantity equals the current order, then that means this is an initial position with
+            # no previous existing quantity of shares
+            print(position)
+            try:
+                # if a buy requires multiple orders due to a partial fill then its not exactly correlated to a sell
+                if buy_order_book[position][1] == 'partial_fill':
+                    # we want to grab the quantity of this position and the next position since its a partial fill
+                    qty = buy_order_book[position][2] + buy_order_book[position+1][2]
+                    print(buy_order_book[position][2])
+                    print(buy_order_book[position + 1][2])
+
+                    for sellpos, sellitem in enumerate(sell_order_book):
+                        print(sell_order_book[sellitem])
+                        # if the combined partial fills equal a quantity that is sold
+                        if qty == sell_order_book[sellitem][2]:
+                            # remove the partial fills on the buy order book, as well as the sell on the sell book
+                            trade_book[position] = round(buy_order_book[position][3] + buy_order_book[position + 1][3]
+                                                         + sell_order_book[sellitem][3], 2)
+
+                            del buy_order_book[position], buy_order_book[position + 1], sell_order_book[sellitem]
+                            print(buy_order_book)
+                            print(sell_order_book)
+                        else:
+                            continue
+                        break
+                    print("TEST")
+                    flag = True
+
+                print(flag)
+                if flag == True:
+                    break
+
+                print("TEST")
+                # normal case, if the buys and sells are directly correlated
+                if buy_order_book[position][1] == 'fill':
+                    if buy_order_book[position][2] == buy_order_book[position][4]:
+                        if buy_order_book[position][2] == sell_order_book[position][2]:
+                            trade_book[position] = round(buy_order_book[position][3] + sell_order_book[position][3], 2)
+                            del buy_order_book[position], sell_order_book[position]
+                            break
+                        flag = True
+                    if flag:
+                        break
+
+            except KeyError:
+                pass
+
+        flag = False
+        print(buy_order_book)
+        print(sell_order_book)
+        print(trade_book)
+        time.sleep(1)
+
+    print(trade_book)
+
     ###################################################################################################################
     # profit per symbol
     net_zero_trades = activities_df.groupby('symbol').filter(lambda trades: sum(trades.net_qty) == 0)
