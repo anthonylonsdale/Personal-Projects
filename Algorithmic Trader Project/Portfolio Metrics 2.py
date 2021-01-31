@@ -112,144 +112,71 @@ if __name__ == '__main__':
     current_buy_pos = 0
     current_sell_pos = 0
     ###################################################################################################################
-    while len(buy_order_book) > 0:
+        while len(buy_order_book) > 0:
         for position, item in enumerate(buy_order_book.copy(), start=current_buy_pos):
-            # if the cumulative quantity equals the current order, then that means this is an initial position with
-            # no previous existing quantity of shares
-            print(position)
-            print(current_buy_pos)
-            print(current_sell_pos)
             try:
-                # if a buy requires multiple orders due to a partial fill then its not exactly correlated to a sell
+                position = current_buy_pos
+                print(current_buy_pos)
+                # first we need to settle all the partial fills and combine them into a single trade
+                i = 1
+                buy_qty = buy_order_book[current_buy_pos][2]
+                buy_value = buy_order_book[current_buy_pos][3]
                 if buy_order_book[current_buy_pos][1] == 'partial_fill':
-                    if sell_order_book[current_sell_pos][1] == 'partial_fill':
-                        trade_book[position] = round(buy_order_book[current_buy_pos][3] + buy_order_book[current_buy_pos + 1][3]
-                            + sell_order_book[current_sell_pos][3] + sell_order_book[current_sell_pos + 1][3], 2)
-                        del buy_order_book[current_buy_pos], buy_order_book[current_buy_pos + 1], \
-                            sell_order_book[current_sell_pos], sell_order_book[current_sell_pos + 1]
-                        flag = True
-
-                    if flag == True:
-                        current_buy_pos = list(buy_order_book)[0]
-                        current_sell_pos = list(sell_order_book)[0]
-                        current_buy_pos = int(current_buy_pos)
-                        current_sell_pos = int(current_sell_pos)
-                        break
-
-                    # we want to grab the quantity of this position and the next position since its a partial fill
-                    buy_qty = buy_order_book[current_buy_pos][2] + buy_order_book[current_buy_pos+1][2]
-                    print(buy_order_book[current_buy_pos][2])
-                    print(buy_order_book[current_buy_pos + 1][2])
-
-                    for sellpos, sellitem in enumerate(sell_order_book, start=current_sell_pos):
-                        print(sell_order_book[sellitem])
-                        # if the combined partial fills equal a quantity that is sold
-                        if buy_qty == sell_order_book[sellitem][2]:
-                            # remove the partial fills on the buy order book, as well as the sell on the sell book
-                            trade_book[position] = round(buy_order_book[current_buy_pos][3] + buy_order_book[current_buy_pos + 1][3]
-                                                         + sell_order_book[sellitem][3], 2)
-
-                            del buy_order_book[current_buy_pos], buy_order_book[current_buy_pos + 1], sell_order_book[sellitem]
-                            print(buy_order_book)
-                            print(sell_order_book)
+                    while True:
+                        if buy_order_book[current_buy_pos + i][1] == 'partial_fill':
+                            buy_qty += buy_order_book[current_buy_pos + i][2]
+                            buy_value += buy_order_book[current_buy_pos + i][3]
+                            i += 1
                         else:
-                            continue
-                        break
-                    print("TEST")
-                    flag = True
-
-                print(flag)
-                if flag == True:
-                    current_buy_pos = list(buy_order_book)[0]
-                    current_sell_pos = list(sell_order_book)[0]
-                    current_buy_pos = int(current_buy_pos)
-                    current_sell_pos = int(current_sell_pos)
-                    break
-
-                # normal case, if the buys and sells are directly correlated
-                if buy_order_book[current_buy_pos][1] == 'fill':
-                    # print(buy_order_book[current_buy_pos])
-                    # print(sell_order_book[current_sell_pos])
-                    if buy_order_book[current_buy_pos][2] == sell_order_book[current_sell_pos][2]:
-                        trade_book[position] = round(buy_order_book[current_buy_pos][3] + sell_order_book[current_sell_pos][3], 2)
-                        del buy_order_book[current_buy_pos], sell_order_book[current_sell_pos]
-
-                    else:
-                        # if there is a string of buys, then they must be added up when theres a big sell
-                        # the partial fill block works as intended
-                        if sell_order_book[current_sell_pos][1] == 'partial_fill':
-                            sell_qty = sell_order_book[current_sell_pos][2] + sell_order_book[current_sell_pos + 1][2]
-                            sell_val = sell_order_book[current_sell_pos][3] + sell_order_book[current_sell_pos + 1][3]
-                            print(sell_order_book[current_sell_pos][2])
-                            print(sell_order_book[current_sell_pos + 1][2])
-                            buy_qty = buy_order_book[current_buy_pos][2]
-                            buy_val = buy_order_book[current_buy_pos][3]
-                            i = 1
-                            while True:
-                                if buy_qty == sell_qty:
-                                    # handle the 2 partial fill and fill sell orders
-                                    trade_book[position] = round(buy_val + sell_val, 2)
-                                    del sell_order_book[current_sell_pos], sell_order_book[current_sell_pos + 1]
-                                    # then deal with the variable amount of buy orders that may have been needed to fill
-                                    # the sell order
-                                    for j in range(i):
-                                        del buy_order_book[current_buy_pos + j]
-                                    break
-                                buy_qty += buy_order_book[current_buy_pos + i][2]
-                                buy_val += buy_order_book[current_buy_pos + i][3]
-                                i += 1
-                            flag = True
-                        if flag == True:
-                            current_buy_pos = list(buy_order_book)[0]
-                            current_sell_pos = list(sell_order_book)[0]
-                            current_buy_pos = int(current_buy_pos)
-                            current_sell_pos = int(current_sell_pos)
+                            buy_qty += buy_order_book[current_buy_pos + i][2]
+                            buy_value += buy_order_book[current_buy_pos + i][3]
+                            buy_order_book[current_buy_pos + i][2] = buy_qty
+                            buy_order_book[current_buy_pos + i][3] = round(buy_value, 2)
+                            for j in range(i):
+                                del buy_order_book[current_buy_pos + j]
                             break
-
-                        # block for handling separate fill buys and a large sell buy
-
-
-
-                        # the partial fill buy block works as intended
-                        cum_qty = sell_order_book[current_sell_pos][2]
-                        sell_val = sell_order_book[current_sell_pos][3]
-                        partial_qty = buy_order_book[current_buy_pos][2]
-                        buy_val = buy_order_book[current_buy_pos][3]
-                        # keep adding buy orders until they equal the sell
-                        i = 1
-                        while True:
-                            partial_qty += buy_order_book[current_buy_pos + i][2]
-                            buy_val += buy_order_book[current_buy_pos + i][3]
-
-                            if partial_qty == cum_qty:
-                                trade_book[position] = round(buy_val + sell_val, 2)
-                                del sell_order_book[current_sell_pos]
-                                for j in range(i+1):
-                                    print(j)
-                                    print(i)
-                                    del buy_order_book[current_buy_pos + j]
-                                break
-                            else:
-                                i += 1
-                                continue
-
-                    current_buy_pos = list(buy_order_book)[0]
-                    current_sell_pos = list(sell_order_book)[0]
-                    current_buy_pos = int(current_buy_pos)
-                    current_sell_pos = int(current_sell_pos)
-                    break
-
+                current_buy_pos += i
+                position += i
+                print(position)
+                print(current_buy_pos)
+                print(buy_order_book)
+                print('-------------------------------------------------------------------------------------------------')
             except KeyError:
-                print('error')
                 pass
-
-        flag = False
-        print("##########################################################################################")
         print(buy_order_book)
+
+        for position, item in enumerate(sell_order_book.copy(), start=current_sell_pos):
+            try:
+                position = current_sell_pos
+                print(current_sell_pos)
+                # first we need to settle all the partial fills and combine them into a single trade
+                i = 1
+                sell_qty = sell_order_book[current_sell_pos][2]
+                sell_value = sell_order_book[current_sell_pos][3]
+                if sell_order_book[current_sell_pos][1] == 'partial_fill':
+                    while True:
+                        if sell_order_book[current_sell_pos + i][1] == 'partial_fill':
+                            sell_qty += sell_order_book[current_sell_pos + i][2]
+                            sell_value += sell_order_book[current_sell_pos + i][3]
+                            i += 1
+                        else:
+                            sell_qty += sell_order_book[current_sell_pos + i][2]
+                            sell_value += sell_order_book[current_sell_pos + i][3]
+                            sell_order_book[current_sell_pos + i][2] = sell_qty
+                            sell_order_book[current_sell_pos + i][3] = round(sell_value, 2)
+                            for j in range(i):
+                                del sell_order_book[current_sell_pos + j]
+                            break
+                current_sell_pos += i
+                position += i
+                print(position)
+                print(current_sell_pos)
+                print(sell_order_book)
+                print('-------------------------------------------------------------------------------------------------')
+            except KeyError:
+                pass
         print(sell_order_book)
-        print(trade_book)
-        print("##########################################################################################")
-        time.sleep(.5)
+        break
 
     print(trade_book)
 
