@@ -2,7 +2,6 @@ import alpaca_trade_api as trade_api
 import datetime as dt
 import pandas as pd
 import numpy as np
-import time
 
 if __name__ == '__main__':
     pd.options.mode.chained_assignment = None
@@ -10,13 +9,10 @@ if __name__ == '__main__':
     sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
-    # Get a list of filled orders.
     # Can also limit the results by date if desired.
-
-    spec_date = dt.datetime.today() - dt.timedelta(days=28)
+    spec_date = dt.datetime.today() - dt.timedelta(days=29)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
-    # Turn the activities list into a dataframe for easier manipulation
     activities_df = pd.DataFrame([activity._raw for activity in activities])
     activities_df = activities_df.iloc[::-1]
     stock_tickers_involved = list(set(activities_df['symbol'].tolist()))
@@ -275,17 +271,12 @@ if __name__ == '__main__':
                     break
 
             if len(short_buy_order_book) > 0:
-                # print(buy_order_book)
-                # print(sell_order_book)
-                # print(trade_book)
-                # every path will need to settle back down here
                 current_buy_pos = list(short_buy_order_book)[0]
                 current_sell_pos = list(short_sell_order_book)[0]
                 current_buy_pos = int(current_buy_pos)
                 current_sell_pos = int(current_sell_pos)
                 short_trade_ledger_position += 1
 
-    # now that we have settled all buy and sell orders, its time to correlate them and determine profit/ loss
     current_buy_pos = 0
     current_sell_pos = 0
     position = 0
@@ -371,7 +362,8 @@ if __name__ == '__main__':
     print("Long-Side Winning Trades:", long_winning_trades)
     print("Long-Side Even Trades:", long_even_trades)
     print("Long-Side Losing Trades:", long_losing_trades)
-    ######## profit per symbol
+    
+    # profit per symbol
     net_zero_trades = activities_df.groupby('symbol').filter(lambda trades: sum(trades.net_qty) == 0)
     trades = net_zero_trades.groupby('symbol').net_trade
     profit_per_symbol = net_zero_trades.groupby('symbol').net_trade.sum()
