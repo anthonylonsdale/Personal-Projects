@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # Get a list of filled orders.
     # Can also limit the results by date if desired.
 
-    spec_date = dt.datetime.today() - dt.timedelta(days=27)
+    spec_date = dt.datetime.today() - dt.timedelta(days=28)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
     # Turn the activities list into a dataframe for easier manipulation
@@ -81,15 +81,36 @@ if __name__ == '__main__':
     # ls_df.to_excel("test grouping sell.xlsx")
     print(ls_df)
 
+    short_buys_df = short_purchases_df.sort_values(['symbol', 'transaction_time'])
+    sb_df = pd.DataFrame(short_buys_df)
+    sb_df.reset_index(drop=True, inplace=True)
+    print(sb_df)
+
+    short_sells_df = short_sales_df.sort_values(['symbol', 'transaction_time'])
+    ss_df = pd.DataFrame(short_sells_df)
+    ss_df.reset_index(drop=True, inplace=True)
+    print(ss_df)
+
     # we can make an order book that tracks each trade as it iterates down the list
     # example: first buy is 18 shares of appl
+    short_buy_order_book = {}
+    for index, row in sb_df.iterrows():
+        short_buy_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
+                                       row['cumulative_sum']]
+    print("short buys", len(short_buy_order_book), short_buy_order_book)
+    short_sell_order_book = {}
+    for index, row in ss_df.iterrows():
+        short_sell_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
+                                        row['cumulative_sum']]
+    print("short sells", len(short_sell_order_book), short_sell_order_book)
+
     buy_order_book = {}
     for index, row in lb_df.iterrows():
         # we only need type (fill or partial fill), net_trade, cumulative_sum, net_qty and symbol
         # print(row)
         buy_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                  row['cumulative_sum']]
-    print(len(buy_order_book), buy_order_book)
+    print("long buys", len(buy_order_book), buy_order_book)
 
     sell_order_book = {}
     for index, row in ls_df.iterrows():
@@ -97,17 +118,70 @@ if __name__ == '__main__':
         # print(row)
         sell_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                   row['cumulative_sum']]
-    print(len(sell_order_book), sell_order_book)
+    print("long sells", len(sell_order_book), sell_order_book)
 
     trade_book = {}
+    short_trade_book = {}
     current_buy_pos = 0
     current_sell_pos = 0
     ###################################################################################################################
+    for position, item in enumerate(short_buy_order_book.copy(), start=current_buy_pos):
+        try:
+            position = current_buy_pos
+            i = 1
+            buy_qty = short_buy_order_book[current_buy_pos][2]
+            buy_value = short_buy_order_book[current_buy_pos][3]
+            if short_buy_order_book[current_buy_pos][1] == 'partial_fill':
+                while True:
+                    if short_buy_order_book[current_buy_pos + i][1] == 'partial_fill':
+                        buy_qty += short_buy_order_book[current_buy_pos + i][2]
+                        buy_value += short_buy_order_book[current_buy_pos + i][3]
+                        i += 1
+                    else:
+                        buy_qty += short_buy_order_book[current_buy_pos + i][2]
+                        buy_value += short_buy_order_book[current_buy_pos + i][3]
+                        short_buy_order_book[current_buy_pos + i][2] = buy_qty
+                        short_buy_order_book[current_buy_pos + i][3] = round(buy_value, 2)
+                        for j in range(i):
+                            del short_buy_order_book[current_buy_pos + j]
+                        break
+            current_buy_pos += i
+            position += i
+        except KeyError:
+            pass
+    print(len(short_buy_order_book), short_buy_order_book)
+
+    for position, item in enumerate(short_sell_order_book.copy(), start=current_sell_pos):
+        try:
+            position = current_sell_pos
+            i = 1
+            buy_qty = short_sell_order_book[current_sell_pos][2]
+            buy_value = short_sell_order_book[current_sell_pos][3]
+            if short_sell_order_book[current_sell_pos][1] == 'partial_fill':
+                while True:
+                    if short_sell_order_book[current_sell_pos + i][1] == 'partial_fill':
+                        buy_qty += short_sell_order_book[current_sell_pos + i][2]
+                        buy_value += short_sell_order_book[current_sell_pos + i][3]
+                        i += 1
+                    else:
+                        buy_qty += short_sell_order_book[current_sell_pos + i][2]
+                        buy_value += short_sell_order_book[current_sell_pos + i][3]
+                        short_sell_order_book[current_sell_pos + i][2] = buy_qty
+                        short_sell_order_book[current_sell_pos + i][3] = round(buy_value, 2)
+                        for j in range(i):
+                            del short_sell_order_book[current_sell_pos + j]
+                        break
+            current_sell_pos += i
+            position += i
+        except KeyError:
+            pass
+    print(len(short_sell_order_book), short_sell_order_book)
+
+    current_buy_pos = 0
+    current_sell_pos = 0
     for position, item in enumerate(buy_order_book.copy(), start=current_buy_pos):
         try:
             position = current_buy_pos
-            # print(current_buy_pos)
-            # first we need to settle all the partial fills and combine them into a single trade
             i = 1
             buy_qty = buy_order_book[current_buy_pos][2]
             buy_value = buy_order_book[current_buy_pos][3]
@@ -127,10 +201,6 @@ if __name__ == '__main__':
                         break
             current_buy_pos += i
             position += i
-            # print(position)
-            # print(current_buy_pos)
-            # print(buy_order_book)
-            # print('-------------------------------------------------------------------------------------------------')
         except KeyError:
             pass
     print(len(buy_order_book), buy_order_book)
@@ -138,8 +208,6 @@ if __name__ == '__main__':
     for position, item in enumerate(sell_order_book.copy(), start=current_sell_pos):
         try:
             position = current_sell_pos
-            # print(current_sell_pos)
-            # first we need to settle all the partial fills and combine them into a single trade
             i = 1
             sell_qty = sell_order_book[current_sell_pos][2]
             sell_value = sell_order_book[current_sell_pos][3]
@@ -159,28 +227,72 @@ if __name__ == '__main__':
                         break
             current_sell_pos += i
             position += i
-            # print(position)
-            # print(current_sell_pos)
-            # print(sell_order_book)
-            # print('-------------------------------------------------------------------------------------------------')
         except KeyError:
             pass
     print(len(sell_order_book), sell_order_book)
 
-    # now that we have settled all buy and sell orders, its time to correlate them and determine profit/ loss
-    position = 0
+    ####################################################################################################################
+    # adding to respective trade books
     current_buy_pos = 0
     current_sell_pos = 0
+    position = 0
+    short_trade_ledger_position = 0
+
+    while len(short_buy_order_book) > 0:
+        for position, item in enumerate(short_buy_order_book.copy(), start=current_buy_pos):
+
+            if short_buy_order_book[current_buy_pos][2] == short_sell_order_book[current_sell_pos][2]:
+                short_trade_book[short_trade_ledger_position] = round(short_buy_order_book[current_buy_pos][3] +
+                                                                      short_sell_order_book[current_sell_pos][3], 2)
+                del short_buy_order_book[current_buy_pos], short_sell_order_book[current_sell_pos]
+
+            else:
+                while True:
+                    bought_share_value = round(
+                        short_buy_order_book[current_buy_pos][3] / short_buy_order_book[current_buy_pos][2], 2)
+                    sold_share_value = round(
+                        short_sell_order_book[current_sell_pos][3] / short_sell_order_book[current_sell_pos][2], 2)
+                    buy_quantity = short_buy_order_book[current_buy_pos][2]
+                    sell_quantity = short_sell_order_book[current_sell_pos][2]
+                    buy_val = short_buy_order_book[current_buy_pos][3]
+                    sell_val = short_sell_order_book[current_sell_pos][3]
+
+                    if buy_quantity > sell_quantity:
+                        value_of_shares_sold = bought_share_value * sell_quantity
+                        short_trade_book[short_trade_ledger_position] = round(value_of_shares_sold + sell_val, 2)
+                        short_buy_order_book[current_buy_pos][2] -= sell_quantity
+                        short_buy_order_book[current_buy_pos][3] = round(buy_val - value_of_shares_sold, 2)
+                        short_buy_order_book[current_buy_pos][4] -= sell_quantity
+                        del short_sell_order_book[current_sell_pos]
+                        break
+
+                    if buy_quantity < sell_quantity:
+                        value_of_shares_sold = sold_share_value * buy_quantity
+                        short_sell_order_book[current_sell_pos][2] -= buy_quantity
+                        short_sell_order_book[current_sell_pos][3] = round(sell_val - value_of_shares_sold, 2)
+                        del short_buy_order_book[current_buy_pos]
+                        short_trade_book[short_trade_ledger_position] = round(value_of_shares_sold + buy_val, 2)
+                    break
+
+            if len(short_buy_order_book) > 0:
+                # print(buy_order_book)
+                # print(sell_order_book)
+                # print(trade_book)
+                # every path will need to settle back down here
+                current_buy_pos = list(short_buy_order_book)[0]
+                current_sell_pos = list(short_sell_order_book)[0]
+                current_buy_pos = int(current_buy_pos)
+                current_sell_pos = int(current_sell_pos)
+                short_trade_ledger_position += 1
+
+    # now that we have settled all buy and sell orders, its time to correlate them and determine profit/ loss
+    current_buy_pos = 0
+    current_sell_pos = 0
+    position = 0
     trade_ledger_position = 0
 
     while len(buy_order_book) > 0:
         for position, item in enumerate(buy_order_book.copy(), start=current_buy_pos):
-            # print(position)
-            # print(current_buy_pos)
-            # print(current_sell_pos)
-
-            # start with the very basic, if we have a direct match, and the cumulative sell = 0 (meaning there is no
-            # net position), then that is a buy trade and sell trade matched up together
             if buy_order_book[current_buy_pos][2] == sell_order_book[current_sell_pos][2]:
                 trade_book[trade_ledger_position] = round(buy_order_book[current_buy_pos][3] +
                                                           sell_order_book[current_sell_pos][3], 2)
@@ -188,19 +300,17 @@ if __name__ == '__main__':
 
             else:
                 while True:
-                    # first we figure the value of each share in the purchase
-                    bought_share_value = round(buy_order_book[current_buy_pos][3] / buy_order_book[current_buy_pos][2], 2)
-                    sold_share_value = round(sell_order_book[current_sell_pos][3] / sell_order_book[current_sell_pos][2], 2)
+                    bought_share_value = round(buy_order_book[current_buy_pos][3] / buy_order_book[current_buy_pos][2],
+                                               2)
+                    sold_share_value = round(
+                        sell_order_book[current_sell_pos][3] / sell_order_book[current_sell_pos][2], 2)
                     buy_quantity = buy_order_book[current_buy_pos][2]
                     sell_quantity = sell_order_book[current_sell_pos][2]
                     buy_val = buy_order_book[current_buy_pos][3]
                     sell_val = sell_order_book[current_sell_pos][3]
 
-                    # print(bought_share_value)
-                    # print(sold_share_value)
                     if buy_quantity > sell_quantity:
                         value_of_shares_sold = bought_share_value * sell_quantity
-                        # print(value_of_shares_sold)
                         trade_book[trade_ledger_position] = round(value_of_shares_sold + sell_val, 2)
                         buy_order_book[current_buy_pos][2] -= sell_quantity
                         buy_order_book[current_buy_pos][3] = round(buy_val - value_of_shares_sold, 2)
@@ -208,26 +318,15 @@ if __name__ == '__main__':
                         del sell_order_book[current_sell_pos]
                         break
 
-                    # for debugging: time.sleep(1)
                     if buy_quantity < sell_quantity:
-                        # print("#################################################")
-                        # this one will be a bit harder, we need to add up buy orders until we match the sell order
                         value_of_shares_sold = sold_share_value * buy_quantity
-                        # print(value_of_shares_sold)
-
                         sell_order_book[current_sell_pos][2] -= buy_quantity
                         sell_order_book[current_sell_pos][3] = round(sell_val - value_of_shares_sold, 2)
                         del buy_order_book[current_buy_pos]
-                        # print(buy_val)
-                        # print(value_of_shares_sold)
                         trade_book[trade_ledger_position] = round(value_of_shares_sold + buy_val, 2)
                     break
 
             if len(buy_order_book) > 0:
-                # print(buy_order_book)
-                # print(sell_order_book)
-                # print(trade_book)
-                # every path will need to settle back down here
                 current_buy_pos = list(buy_order_book)[0]
                 current_sell_pos = list(sell_order_book)[0]
                 current_buy_pos = int(current_buy_pos)
@@ -235,14 +334,44 @@ if __name__ == '__main__':
                 trade_ledger_position += 1
 
     ###################################################################################################################
+    print(short_trade_book)
+    net_short_profit = 0
+    short_winning_trades = 0
+    short_even_trades = 0
+    short_losing_trades = 0
+    for i in range(len(short_trade_book)):
+        if short_trade_book[i] > 0:
+            short_winning_trades += 1
+        elif short_trade_book[i] < 0:
+            short_losing_trades += 1
+        else:
+            short_even_trades += 1
+        net_short_profit += short_trade_book[i]
+    net_short_profit = round(net_short_profit, 2)
+    print(net_short_profit)
+    print("Short-Side Winning Trades:", short_winning_trades)
+    print("Short-Side Even Trades:", short_even_trades)
+    print("Short-Side Losing Trades:", short_losing_trades)
+
+    long_winning_trades = 0
+    long_even_trades = 0
+    long_losing_trades = 0
     print(trade_book)
     net_profit = 0
     for i in range(len(trade_book)):
-        # print(trade_book[i])
+        if trade_book[i] > 0:
+            long_winning_trades += 1
+        elif trade_book[i] < 0:
+            long_losing_trades += 1
+        else:
+            long_even_trades += 1
         net_profit += trade_book[i]
     net_long_profit = round(net_profit, 2)
-    
-    # profit per symbol
+    print(net_long_profit)
+    print("Long-Side Winning Trades:", long_winning_trades)
+    print("Long-Side Even Trades:", long_even_trades)
+    print("Long-Side Losing Trades:", long_losing_trades)
+    ######## profit per symbol
     net_zero_trades = activities_df.groupby('symbol').filter(lambda trades: sum(trades.net_qty) == 0)
     trades = net_zero_trades.groupby('symbol').net_trade
     profit_per_symbol = net_zero_trades.groupby('symbol').net_trade.sum()
