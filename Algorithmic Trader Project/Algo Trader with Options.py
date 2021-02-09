@@ -1,3 +1,9 @@
+"""
+update as of 2/8/2021
+this program is old and needs to be fixed, but the only useful part is how the options is
+integrated into the main trader
+I can get the main trader fixed up then try to add in the options component
+"""
 import requests
 import websocket
 import json
