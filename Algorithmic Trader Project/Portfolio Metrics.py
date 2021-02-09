@@ -13,15 +13,16 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import numpy as np
+import time
 
 
-def orders_to_excel(activities_dataframe, metrics):
+def data_to_excel(metrics):
     book = openpyxl.load_workbook('Portfolio Data.xlsx')
     writer = pd.ExcelWriter('Portfolio Data.xlsx', engine='openpyxl')
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    activities_dataframe.to_excel(writer, sheet_name='Activities')
-    metrics.to_excel(writer, sheet_name='Portfolio Metrics')
+    sheet_name = str('Performance on ') + str(date)
+    metrics.to_excel(writer, sheet_name=sheet_name)
     try:
         sheet = book['Sheet']
         book.remove(sheet)
@@ -29,17 +30,17 @@ def orders_to_excel(activities_dataframe, metrics):
     except KeyError:
         pass
     writer.save()
+    return sheet_name
 
 
-def formatting_excel():
+def formatting_excel(sheet_name):
     excel = win32.gencache.EnsureDispatch('Excel.Application')
     wb = excel.Workbooks.Open(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Portfolio Data.xlsx")
-    ws = wb.Worksheets('Orders')
+    ws = wb.Worksheets(sheet_name)
     ws.Columns.AutoFit()
-    ws2 = wb.Worksheets('Portfolio Metrics')
-    ws2.Columns.AutoFit()
     wb.Save()
     excel.Application.Quit()
+
 
 
 def webscraping(stock_tickers_involved):
@@ -242,6 +243,8 @@ def order_settlement():
 def trade_book_settlement():
     trade_book = {}
     short_trade_book = {}
+    short_order_time_held = {}
+    long_order_time_held = {}
     ####################################################################################################################
     # adding to respective trade books
     current_buy_pos = 0
@@ -250,9 +253,14 @@ def trade_book_settlement():
 
     while len(short_buy_order_book) > 0:
         for position, item in enumerate(short_buy_order_book.copy(), start=current_buy_pos):
+            d1 = dt.datetime.strptime(short_buy_order_book[current_buy_pos][0], "%Y-%m-%dT%H:%M:%S.%fZ")
+            d2 = dt.datetime.strptime(short_sell_order_book[current_sell_pos][0], "%Y-%m-%dT%H:%M:%S.%fZ")
+            elapsedTime = (d1 - d2).total_seconds()
             if short_buy_order_book[current_buy_pos][2] == short_sell_order_book[current_sell_pos][2]:
                 short_trade_book[short_trade_ledger_position] = round(short_buy_order_book[current_buy_pos][3] +
                                                                       short_sell_order_book[current_sell_pos][3], 2)
+                short_order_time_held[short_trade_ledger_position] = (
+                elapsedTime, short_buy_order_book[current_buy_pos][2])
                 del short_buy_order_book[current_buy_pos], short_sell_order_book[current_sell_pos]
 
             else:
@@ -272,6 +280,7 @@ def trade_book_settlement():
                         short_buy_order_book[current_buy_pos][2] -= sell_quantity
                         short_buy_order_book[current_buy_pos][3] = round(buy_val - value_of_shares_sold, 2)
                         short_buy_order_book[current_buy_pos][4] -= sell_quantity
+                        short_order_time_held[short_trade_ledger_position] = (elapsedTime, sell_quantity)
                         del short_sell_order_book[current_sell_pos]
                         break
 
@@ -279,8 +288,9 @@ def trade_book_settlement():
                         value_of_shares_sold = sold_share_value * buy_quantity
                         short_sell_order_book[current_sell_pos][2] -= buy_quantity
                         short_sell_order_book[current_sell_pos][3] = round(sell_val - value_of_shares_sold, 2)
-                        del short_buy_order_book[current_buy_pos]
                         short_trade_book[short_trade_ledger_position] = round(value_of_shares_sold + buy_val, 2)
+                        short_order_time_held[short_trade_ledger_position] = (elapsedTime, buy_quantity)
+                        del short_buy_order_book[current_buy_pos]
                     break
 
             if len(short_buy_order_book) > 0:
@@ -294,9 +304,13 @@ def trade_book_settlement():
 
     while len(buy_order_book) > 0:
         for position, item in enumerate(buy_order_book.copy(), start=current_buy_pos):
+            d1 = dt.datetime.strptime(buy_order_book[current_buy_pos][0], "%Y-%m-%dT%H:%M:%S.%fZ")
+            d2 = dt.datetime.strptime(sell_order_book[current_sell_pos][0], "%Y-%m-%dT%H:%M:%S.%fZ")
+            elapsedTime = (d2 - d1).total_seconds()
             if buy_order_book[current_buy_pos][2] == sell_order_book[current_sell_pos][2]:
-                trade_book[trade_ledger_position] = round(buy_order_book[current_buy_pos][3] +
-                                                          sell_order_book[current_sell_pos][3], 2)
+                trade_book[trade_ledger_position] = round(
+                    buy_order_book[current_buy_pos][3] + sell_order_book[current_sell_pos][3], 2)
+                long_order_time_held[trade_ledger_position] = (elapsedTime, buy_order_book[current_buy_pos][2])
                 del buy_order_book[current_buy_pos], sell_order_book[current_sell_pos]
 
             else:
@@ -316,6 +330,7 @@ def trade_book_settlement():
                         buy_order_book[current_buy_pos][2] -= sell_quantity
                         buy_order_book[current_buy_pos][3] = round(buy_val - value_of_shares_sold, 2)
                         buy_order_book[current_buy_pos][4] -= sell_quantity
+                        long_order_time_held[trade_ledger_position] = (elapsedTime, sell_quantity)
                         del sell_order_book[current_sell_pos]
                         break
 
@@ -323,16 +338,16 @@ def trade_book_settlement():
                         value_of_shares_sold = sold_share_value * buy_quantity
                         sell_order_book[current_sell_pos][2] -= buy_quantity
                         sell_order_book[current_sell_pos][3] = round(sell_val - value_of_shares_sold, 2)
-                        del buy_order_book[current_buy_pos]
                         trade_book[trade_ledger_position] = round(value_of_shares_sold + buy_val, 2)
+                        long_order_time_held[trade_ledger_position] = (elapsedTime, buy_quantity)
+                        del buy_order_book[current_buy_pos]
                     break
 
             if len(buy_order_book) > 0:
                 current_buy_pos = list(buy_order_book)[0]
                 current_sell_pos = list(sell_order_book)[0]
                 trade_ledger_position += 1
-
-    return short_trade_book, trade_book
+    return short_trade_book, trade_book, short_order_time_held, long_order_time_held
 
 
 if __name__ == '__main__':
@@ -347,7 +362,7 @@ if __name__ == '__main__':
     api = trade_api.REST(key, sec, url, api_version='v2')
 
     # Can also limit the results by date if desired.
-    spec_date = dt.datetime.today() - dt.timedelta(days=29)
+    spec_date = dt.datetime.today() - dt.timedelta(days=31)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
     activities_df = pd.DataFrame([activity._raw for activity in activities])
@@ -391,9 +406,31 @@ if __name__ == '__main__':
 
     order_settlement()
 
-    short_trades, long_trades = trade_book_settlement()
+    short_trades, long_trades, short_trade_time_ledger, long_trade_time_ledger = trade_book_settlement()
 
     ###################################################################################################################
+    # finding average short trade held time
+    print(short_trade_time_ledger)
+    print(long_trade_time_ledger)
+    short_hold_time = 0
+    for position, item in enumerate(short_trade_time_ledger):
+        short_hold_time += short_trade_time_ledger[position][0]
+    average_short_trade_hold_time = round(short_hold_time / len(short_trade_time_ledger), 2)
+    avg_total_trade_hold_time = average_short_trade_hold_time
+    avg_short_trade_length = time.strftime("%M:%S", time.gmtime(average_short_trade_hold_time))
+    print(avg_short_trade_length)
+
+    long_hold_time = 0
+    for position, item in enumerate(long_trade_time_ledger):
+        long_hold_time += long_trade_time_ledger[position][0]
+    average_long_trade_hold_time = round(long_hold_time / len(long_trade_time_ledger), 2)
+    avg_total_trade_hold_time += average_long_trade_hold_time
+    avg_long_trade_length = time.strftime("%M:%S", time.gmtime(average_long_trade_hold_time))
+    print(avg_long_trade_length)
+    # divide time held in seconds by time of avg trading day, 23400 seconds
+    avg_total_trade_hold_time = time.strftime("%M:%S", time.gmtime((avg_total_trade_hold_time / 2)))
+
+    ##################################################################
     total_gross_profit = 0
     total_gross_loss = 0
 
@@ -455,6 +492,12 @@ if __name__ == '__main__':
 
     avg_winning_trade = round((total_gross_profit / (long_winning_trades + short_winning_trades)), 2)
     avg_losing_trade = round((total_gross_loss / (total_long_trades + short_losing_trades)), 2)
+    avg_long_winning_trade = round(long_gross_profit / long_winning_trades, 2)
+    avg_long_losing_trade = round(long_gross_loss / long_losing_trades, 2)
+    avg_short_winning_trade = round(short_gross_profit / short_winning_trades, 2)
+    avg_short_losing_trade = round(short_gross_loss / short_losing_trades, 2)
+
+
     todayspandl = round(total_gross_profit + total_gross_loss, 2)
     total_gross_profit = round(total_gross_profit, 2)
     total_gross_loss = round(total_gross_loss, 2)
@@ -475,11 +518,9 @@ if __name__ == '__main__':
     stock_tickers_involved = profit_per_symbol.index.tolist()
     print(stock_tickers_involved)
 
-    # for stock in stock_tickers_involved:
-        # print(profit_per_symbol[stock])
     #############################################################################
-    # the risk free rate is commonly considered to be the interest rate on a 3-month US treasury bond
-    threemonthriskfreerate = 0.03
+    # the risk free rate is commonly considered to be the interest rate on a 1-month US treasury bond
+    riskfreerate = 0.02
     #############################################################################
     pd.options.display.float_format = '{:.0f}'.format
     driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -502,7 +543,10 @@ if __name__ == '__main__':
     #############################################################################
     account = api.get_account()
 
-    print("Daily return of the SPDR S&P 500 ETF Trust ($SPY):", str(spyreturn) + str('%'))
+    stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers_involved) * 3)]
+    spdr_string = "Daily return of the SPDR S&P 500 ETF Trust ($SPY):" + str(spyreturn) + str('%')
+    print(spdr_string)
+    stock_index = 0
     for stock in stock_tickers_involved:
         # print(quote_data[stock])
         # print(quote_data[stock]['beta'])
@@ -514,32 +558,66 @@ if __name__ == '__main__':
         # portfolioreturnpct = (stock_profit / buying_power) * 100
         print(buying_power)
         market_returns_pct = quote_data[stock]['returns']
-        alpha = round((stock_profit_pct - threemonthriskfreerate) - (beta * (spyreturn - threemonthriskfreerate)), 4)
-        print("Daily percentage performance of {}:".format(stock), str(market_returns_pct) + str('%'))
-        print("Daily percentage performance of {} relative to $SPY".format(stock), str(market_returns_pct - spyreturn) + str('%'))
-        print("Daily trading performance of {} relative to $SPY and risk-free rate (Alpha):".format(stock), str(alpha) + str('%'))
+        alpha = round((stock_profit_pct - riskfreerate) - (beta * (spyreturn - riskfreerate)), 4)
 
-    total_profit_factor = round((total_gross_profit / total_gross_loss), 2)
-    long_profit_factor = round((long_gross_profit / long_gross_loss), 2)
-    short_profit_factor = round((short_gross_profit / short_gross_loss), 2)
+        string1 = "Daily percentage performance of {}: ".format(stock) + str(market_returns_pct) + str('%')
+        string2 = "Daily percentage performance of {} relative to $SPY: ".format(stock) + str(market_returns_pct - spyreturn) + str('%')
+        string3 = "Daily trading performance of {} relative to $SPY and risk-free rate (Alpha): ".format(stock) + str(alpha) + str('%')
+
+        stock_metrics[stock_index] = [string1]
+        stock_metrics[stock_index + 1] = [string2]
+        stock_metrics[stock_index + 2] = [string3]
+
+        print(string1)
+        print(string2)
+        print(string3)
+        stock_index += 3
+
+    if total_gross_profit > -total_gross_loss:
+        total_profit_factor = round((total_gross_profit / -total_gross_loss), 2)
+    else:
+        total_profit_factor = round((total_gross_profit / total_gross_loss), 2)
+
+    if long_gross_profit > -long_gross_loss:
+        long_profit_factor = round((long_gross_profit / -long_gross_loss), 2)
+    else:
+        long_profit_factor = round((long_gross_profit / long_gross_loss), 2)
+
+    if short_gross_profit > -short_gross_loss:
+        short_profit_factor = round((short_gross_profit / -short_gross_loss), 2)
+    else:
+        short_profit_factor = round((short_gross_profit / short_gross_loss), 2)
+
     total_percent_profitable = round(((long_winning_trades + short_winning_trades) / (total_long_trades + total_short_trades)) * 100, 2)
     long_percent_profitable = round((long_winning_trades / total_long_trades) * 100, 2)
     short_percent_profitable = round((short_winning_trades / total_short_trades) * 100, 2)
+
     data = [
-        ['', 'All Trades', 'Long Trades', 'Short Trades'],
+        ['Profit Metrics', '', '', ''],
         ['Total Net Profit:', todayspandl, net_long_profit, net_short_profit],
         ['Gross Profit:', total_gross_profit, long_gross_profit, short_gross_profit],
         ['Gross Loss:', total_gross_loss, long_gross_loss, short_gross_loss],
         ['Profit Factor:', total_profit_factor, long_profit_factor, short_profit_factor],
         ['', '', '', ''],
+        ['Trade Metrics', '', '', ''],
         ['Total Number of Trades:', int(total_long_trades + total_short_trades), total_long_trades, total_short_trades],
         ['Percent Profitable:', str(total_percent_profitable) + str("%"), str(long_percent_profitable) + str('%'),
          str(short_percent_profitable) + str('%')],
+        ['Average Time Held (Minutes):', avg_total_trade_hold_time.lstrip("0"), avg_long_trade_length.lstrip("0"),
+         avg_short_trade_length.lstrip("0")],
         ['Winning Trades:', long_winning_trades + short_winning_trades, long_winning_trades, short_winning_trades],
+        ['Average Winning Trade:', avg_winning_trade, avg_long_winning_trade, avg_short_winning_trade],
         ['Losing Trades:', long_losing_trades + short_losing_trades, long_losing_trades, short_losing_trades],
-        ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades]
+        ['Average Losing Trade:', avg_losing_trade, avg_long_losing_trade, avg_short_losing_trade],
+        ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades],
+        ['', '', '', ''],
+        ['Stock Metrics', '', '', ''],
+        [spdr_string]
             ]
-    portfolio_metrics = DataFrame(data, columns=['', 'All Trades', 'Long Trades', 'Short Trades'])
+    for i in range(len(stock_metrics)):
+        data.append(stock_metrics[i])
 
-    orders_to_excel(activities_df, portfolio_metrics)
-    formatting_excel()
+    portfolio_metrics = DataFrame(data, columns=['Performance Summary', 'All Trades', 'Long Trades', 'Short Trades'])
+
+    sheet_name = data_to_excel(portfolio_metrics)
+    formatting_excel(sheet_name)
