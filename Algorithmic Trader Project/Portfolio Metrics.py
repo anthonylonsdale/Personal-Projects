@@ -362,7 +362,7 @@ if __name__ == '__main__':
     api = trade_api.REST(key, sec, url, api_version='v2')
 
     # Can also limit the results by date if desired.
-    spec_date = dt.datetime.today() - dt.timedelta(days=31)
+    spec_date = dt.datetime.today() - dt.timedelta(days=34)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
     activities_df = pd.DataFrame([activity._raw for activity in activities])
@@ -544,8 +544,11 @@ if __name__ == '__main__':
     account = api.get_account()
 
     stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers_involved) * 3)]
-    spdr_string = "Daily return of the SPDR S&P 500 ETF Trust ($SPY):" + str(spyreturn) + str('%')
-    print(spdr_string)
+    spdr_string = str(spyreturn) + str('%')
+    spdr_list = ["Daily return of $SPY", spdr_string]
+    # print(spdr_string)
+    print(spdr_list)
+
     stock_index = 0
     for stock in stock_tickers_involved:
         # print(quote_data[stock])
@@ -560,17 +563,17 @@ if __name__ == '__main__':
         market_returns_pct = quote_data[stock]['returns']
         alpha = round((stock_profit_pct - riskfreerate) - (beta * (spyreturn - riskfreerate)), 4)
 
-        string1 = "Daily percentage performance of {}: ".format(stock) + str(market_returns_pct) + str('%')
-        string2 = "Daily percentage performance of {} relative to $SPY: ".format(stock) + str(market_returns_pct - spyreturn) + str('%')
-        string3 = "Daily trading performance of {} relative to $SPY and risk-free rate (Alpha): ".format(stock) + str(alpha) + str('%')
+        list1 = ["Performance of {}:".format(stock), str(market_returns_pct) + str('%')]
+        list2 = ["Performance of {} relative to $SPY:".format(stock), str(market_returns_pct - spyreturn) + str('%')]
+        list3 = ["\"Alpha\" trading performance of {}:".format(stock), str(alpha) + str('%')]
 
-        stock_metrics[stock_index] = [string1]
-        stock_metrics[stock_index + 1] = [string2]
-        stock_metrics[stock_index + 2] = [string3]
+        stock_metrics[stock_index] = list1
+        stock_metrics[stock_index + 1] = list2
+        stock_metrics[stock_index + 2] = list3
 
-        print(string1)
-        print(string2)
-        print(string3)
+        print(list1)
+        print(list2)
+        print(list3)
         stock_index += 3
 
     if total_gross_profit > -total_gross_loss:
@@ -612,7 +615,7 @@ if __name__ == '__main__':
         ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades],
         ['', '', '', ''],
         ['Stock Metrics', '', '', ''],
-        [spdr_string]
+        spdr_list
             ]
     for i in range(len(stock_metrics)):
         data.append(stock_metrics[i])
