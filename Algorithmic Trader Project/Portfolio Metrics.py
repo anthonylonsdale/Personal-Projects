@@ -42,9 +42,16 @@ def formatting_excel(sheet_name):
     excel.Application.Quit()
 
 
-
 def webscraping(stock_tickers_involved):
     try:
+        bond_url = 'http://www.marketwatch.com/investing/bond/tmubmusd01m?countrycode=bx'
+        driver.get(bond_url)
+        html = driver.execute_script('return document.body.innerHTML;')
+        soup = BeautifulSoup(html, 'lxml')
+        bondlist = [entry.text for entry in
+                    soup.find_all('bg-quote', {'channel': '/zigman2/quotes/211347041/realtime'})]
+        riskfreerate = float(bondlist[1])
+        print("1 month risk-free-rate", str(riskfreerate) + str('%'))
         for stock in stock_tickers_involved:
             quote = {}
             stock_url = 'https://finance.yahoo.com/quote/' + stock + '?p=' + stock
@@ -75,7 +82,7 @@ def webscraping(stock_tickers_involved):
         rt = formatted_return[formatted_return.find(delimiter1) + 1: formatted_return.find(delimiter2)]
         return_string = rt.split("%")[0]
         spy_returns = float(return_string)
-        return spy_returns
+        return spy_returns, riskfreerate
     except Exception as e:
         print(e)
     finally:
@@ -362,7 +369,7 @@ if __name__ == '__main__':
     api = trade_api.REST(key, sec, url, api_version='v2')
 
     # Can also limit the results by date if desired.
-    spec_date = dt.datetime.today() - dt.timedelta(days=34)
+    spec_date = dt.datetime.today() - dt.timedelta(days=52)
     date = spec_date.strftime('%Y-%m-%d')
     activities = api.get_activities(activity_types='FILL', date=date)
     activities_df = pd.DataFrame([activity._raw for activity in activities])
@@ -378,7 +385,6 @@ if __name__ == '__main__':
 
     # Total Net Profit for Long and Short Trades
     lb_df, ls_df, sb_df, ss_df = purchasing_filter(activities_df)
-
     ###################################################################################################################
     # we can make an order book that tracks each trade as it iterates down the list
     short_buy_order_book = {}
@@ -497,7 +503,6 @@ if __name__ == '__main__':
     avg_short_winning_trade = round(short_gross_profit / short_winning_trades, 2)
     avg_short_losing_trade = round(short_gross_loss / short_losing_trades, 2)
 
-
     todayspandl = round(total_gross_profit + total_gross_loss, 2)
     total_gross_profit = round(total_gross_profit, 2)
     total_gross_loss = round(total_gross_loss, 2)
@@ -519,25 +524,17 @@ if __name__ == '__main__':
     print(stock_tickers_involved)
 
     #############################################################################
-    # the risk free rate is commonly considered to be the interest rate on a 1-month US treasury bond
-    riskfreerate = 0.02
-    #############################################################################
     pd.options.display.float_format = '{:.0f}'.format
-    driver = webdriver.Chrome(ChromeDriverManager().install())
     quote_data = {}
     for stock in stock_tickers_involved:
         quote_data[stock] = []
 
     #########################################################################################
     # for quick debugging
-    quote_data = {'MSFT': {'stock': 'MSFT', 'beta': '0.82', 'returns': 0.08},
-                  'AMZN': {'stock': 'AMZN', 'beta': '1.14', 'returns': 0.63},
-                  'AMD': {'stock': 'AMD', 'beta': '2.20', 'returns': 0.07},
-                  'AAPL': {'stock': 'AAPL', 'beta': '1.27', 'returns': -0.31}}
-    spyreturn = 0.39
-    # spyreturn = webscraping(stock_tickers_involved)
-    # spyreturn = '{:.4f}'.format(spyreturn)
-    # spyreturn = float(spyreturn)
+    driver = webdriver.Chrome(ChromeDriverManager().install())
+    spyreturn, riskfreerate = webscraping(stock_tickers_involved)
+    spyreturn = '{:.4f}'.format(spyreturn)
+    spyreturn = float(spyreturn)
     print(quote_data)
     print(spyreturn)
     #############################################################################
@@ -551,20 +548,19 @@ if __name__ == '__main__':
 
     stock_index = 0
     for stock in stock_tickers_involved:
-        # print(quote_data[stock])
-        # print(quote_data[stock]['beta'])
         trade_size_relative_to_portfolio = 0.1
         beta = trade_size_relative_to_portfolio * float(quote_data[stock]['beta'])
         buying_power = float(account.buying_power) / 4
         stock_profit_pct = round((profit_per_symbol[stock] / buying_power) * 100, 4)
-        print(stock_profit_pct)
-        # portfolioreturnpct = (stock_profit / buying_power) * 100
-        print(buying_power)
+
+        # print(stock_profit_pct)
+        # print(buying_power)
         market_returns_pct = quote_data[stock]['returns']
-        alpha = round((stock_profit_pct - riskfreerate) - (beta * (spyreturn - riskfreerate)), 4)
+        # divide the 1 month risk free rate by 30 to approximate the rate of bond return for 1 day
+        alpha = round((stock_profit_pct - (riskfreerate / 30)) - (beta * (spyreturn - (riskfreerate / 30))), 4)
 
         list1 = ["Performance of {}:".format(stock), str(market_returns_pct) + str('%')]
-        list2 = ["Performance of {} relative to $SPY:".format(stock), str(market_returns_pct - spyreturn) + str('%')]
+        list2 = ["Performance of {} relative to $SPY:".format(stock), str(round(market_returns_pct - spyreturn, 2)) + str('%')]
         list3 = ["\"Alpha\" trading performance of {}:".format(stock), str(alpha) + str('%')]
 
         stock_metrics[stock_index] = list1
