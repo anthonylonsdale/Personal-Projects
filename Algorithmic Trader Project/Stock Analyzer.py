@@ -1,55 +1,78 @@
+# updated to full functionality
+
 import time
 import os
 import yfinance as yf
 import pandas as pd
 import shutil
 import glob
-from get_all_tickers import get_tickers as gt
+import requests
+import openpyxl
 
 
 def get_tickers():
-    # gathers all s&p 500 components
+    tickers = []
     table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     df = table[0]
-    spytickers = df['Symbol'].to_list()
+    sandp500tickers = df['Symbol'].to_list()
+    print(sandp500tickers)
 
-    # mkt cap is in millions
-    # so we are looking from 10 billion (for sufficient volume) to 25 billion
-    minmktcap = 15000
-    maxmktcap = 20000
-    tickers = gt.get_tickers_filtered(mktcap_min=minmktcap, mktcap_max=maxmktcap)
-    # Check that the amount of tickers isn't more than 1800
-    while len(tickers) > 1800:
-        print('The number of stocks between a market cap of ${} million and ${} million is too high, enter new'
-              'market cap parameters:')
-        minmktcap = int(input('Minimum market cap (in millions):'))
-        maxmktcap = int(input('Minimum market cap (in millions):'))
-        tickers = gt.get_tickers_filtered(mktcap_min=minmktcap, mktcap_max=maxmktcap)
-    print("Number of stocks with a market cap between ${} million and ${} million: ".format(minmktcap, maxmktcap) +
-          str(len(tickers)))
-    # we only want to use tickers in the s and p 500
-    tickerlist = []
-    for ticker in spytickers:
-        if ticker in tickers:
-            tickerlist.append(ticker)
-    print(len(tickerlist))
-    return tickerlist
+    # these headers and params are subject to change in the event NASDAQ changes its API
+    headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
+               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
+               'origin': 'https://www.nasdaq.com', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors',
+               'sec-fetch-dest': 'empty', 'referer': 'https://www.nasdaq.com/', 'accept-language': 'en-US,en;q=0.9', }
+
+    params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
+
+    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=params)
+    data = r.json()['data']
+    df = pd.DataFrame(data['rows'], columns=data['headers'])
+
+    # Drop all non United States Stocks
+    df = df[df.country == 'United States']
+    df['marketCap'] = pd.to_numeric(df['marketCap'])
+    df['volume'] = pd.to_numeric(df['volume'])
+    # Drop all stocks with less than 500 million in market cap and more than 2 trillion
+    df = df[df.marketCap > 500000000]
+    df = df[df.marketCap != 0 & df.marketCap.notnull()]
+    # I believe an acceptable level of liquidity is at least 100 shares traded per second avg,
+    # which is 2.34 million per normal trading day (6.5 hours)
+    df = df[df.volume > 2340000]
+
+    print(df)
+
+    for index, row in df.iterrows():
+        for i in range(len(sandp500tickers)):
+            if row['symbol'] == sandp500tickers[i]:
+                tickers.append(row['symbol'])
+
+    book = openpyxl.load_workbook('Ticker Test.xlsx')
+    writer = pd.ExcelWriter('Ticker Test.xlsx', engine='openpyxl')
+    writer.book = book
+    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    df.to_excel(writer)
+    book.save('Ticker Test.xlsx')
+    writer.save()
+
+    print(tickers)
+    print(len(tickers))
+    return tickers
 
 
-def api_calls():
-    API_Calls = 0
+def api_calls(tickers):
+    api_calls = 0
     stock_failures = 0
-    Stocks_Not_Imported = 0
+    stocks_not_imported = 0
     i = 0
-    while (i < len(tickers)) and (API_Calls < 1800):
+    while (i < len(tickers)) and (api_calls < 1800):
         try:
             stock = tickers[i]  # Gets the current stock ticker
             temp = yf.Ticker(str(stock))
-            Hist_data = temp.history(period="max")
-            Hist_data.to_csv(
-                r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks\\" + stock + ".csv")
+            his_data = temp.history(period="max")
+            his_data.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks\\" + stock + ".csv")
             time.sleep(2)
-            API_Calls += 1
+            api_calls += 1
             stock_failures = 0
             i += 1
             print('Number of stocks gathered:', i)
@@ -57,10 +80,10 @@ def api_calls():
             print("Error with gathering Yahoo Finance data for {}".format(str(tickers[i])))
             if stock_failures > 5:
                 i += 1
-                Stocks_Not_Imported += 1
-            API_Calls += 1
+                stocks_not_imported += 1
+            api_calls += 1
             stock_failures += 1
-    print("The amount of stocks we successfully imported: " + str(i - Stocks_Not_Imported))
+    print("The amount of stocks we successfully imported: " + str(i - stocks_not_imported))
 
 
 def obv_score_array():
@@ -68,36 +91,41 @@ def obv_score_array():
     new_data = []  # This will be a 2D array to hold our stock name and OBV score
     interval = 0  # Used for iteration
     while interval < len(list_files):
-        Data = pd.read_csv(list_files[interval]).tail(7)  # Gets the last 7 days of trading for the current stock in iteration
+        data = pd.read_csv(list_files[interval]).tail(7)  # Gets the last 7 days of trading for the current stock
         pos_move = []  # List of days that the stock price increased
         neg_move = []  # List of days that the stock price increased
-        OBV_Value = 0  # Sets the initial OBV_Value to zero
+        obv_value = 0  # Sets the initial OBV_Value to zero
         count = 0
-        while (count < 7):  # 10 because we are looking at the last 7 trading days
-            if Data.iloc[count, 1] < Data.iloc[count, 4]:  # True if the stock increased in price
+        while count < 7:  # 7 because we are looking at the last 7 trading days
+            if data.iloc[count, 1] < data.iloc[count, 4]:  # True if the stock increased in price
                 pos_move.append(count)  # Add the day to the pos_move list
-            elif Data.iloc[count, 1] > Data.iloc[count, 4]:  # True if the stock decreased in price
+            elif data.iloc[count, 1] > data.iloc[count, 4]:  # True if the stock decreased in price
                 neg_move.append(count)  # Add the day to the neg_move list
             count += 1
-        for i in pos_move:  # Adds the volumes of positive days to OBV_Value, divide by opening price to normalize across all stocks
-            OBV_Value = round(OBV_Value + (Data.iloc[i, 5] / Data.iloc[i, 1]))
-        for i in neg_move:  # Subtracts the volumes of negative days from OBV_Value, divide by opening price to normalize across all stocks
-            OBV_Value = round(OBV_Value - (Data.iloc[i, 5] / Data.iloc[i, 1]))
-        Stock_Name = ((os.path.basename(list_files[interval])).split(".csv")[0])  # Get the name of the current stock
-        new_data.append([Stock_Name, OBV_Value])  # Add the stock name and OBV value to the new_data list
+        for i in pos_move:  # Adds the volumes of positive days to OBV_Value, divide by opening price to normalize
+            obv_value = round(obv_value + (data.iloc[i, 5] / data.iloc[i, 1]))
+        for i in neg_move:  # Subtracts the volumes of negative days from OBV_Value, divide by opening price
+            obv_value = round(obv_value - (data.iloc[i, 5] / data.iloc[i, 1]))
+        stock_name = ((os.path.basename(list_files[interval])).split(".csv")[0])  # Get the name of the current stock
+        new_data.append([stock_name, obv_value])  # Add the stock name and OBV value to the new_data list
         interval += 1
     return new_data
 
 
 if __name__ == '__main__':
+    if not os.path.isfile(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Ticker Test.xlsx"):
+        wb = openpyxl.Workbook()
+        wb.save('Ticker Test.xlsx')
+
     try:
         shutil.rmtree(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
     os.mkdir(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
     ###################################################################################################################
     tickers = get_tickers()
-    api_calls()
+    api_calls(tickers)
     obv_score_array = obv_score_array()
     ###################################################################################################################
     df = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
