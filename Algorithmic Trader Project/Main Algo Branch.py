@@ -1,3 +1,5 @@
+# functional but needs updating
+
 """
 update after working on the analysis programs:
 The short trades seem to work the best but I need to get a good sample
@@ -16,6 +18,7 @@ import time
 import datetime as dt
 from clr import AddReference
 import csv
+import os
 
 
 def on_message(ws, message):
@@ -285,7 +288,7 @@ def trade_execution_operations():
                 print(problem)
                 continue
 
-        # functional but maybe not a good strategy
+        # lets comment this out for now
         """
         for element in strong_buy:
             try:
@@ -565,15 +568,15 @@ def cleanup():
 def check():
     close = dt.datetime.strptime(market_close, '%Y-%m-%d %H:%M:%S.%f')
     if local_timezone == 'EST':
-        if dt.datetime.now() > (close - dt.timedelta(minutes=1)):
+        if dt.datetime.now() > (close - dt.timedelta(minutes=5)):
             api.close_all_positions()
             api.cancel_all_orders()
-            raise Exception('The market is closing in 1 minute, all positions have been closed')
+            raise Exception('The market is closing in 5 minutes, all positions have been closed')
     if local_timezone == 'CST':
-        if dt.datetime.now() > (close - dt.timedelta(minutes=61)):
+        if dt.datetime.now() > (close - dt.timedelta(minutes=65)):
             api.close_all_positions()
             api.cancel_all_orders()
-            raise Exception('The market is closing in 1 minute, all positions have been closed')
+            raise Exception('The market is closing in 5 minutes, all positions have been closed')
 
 
 if __name__ == '__main__':
@@ -587,8 +590,9 @@ if __name__ == '__main__':
     websocket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
     socket = websocket.WebSocketApp(websocket_url, on_message=on_message, on_error=on_error, on_close=on_close)
     socket.on_open = on_open
-    #############################################################################################################
     account = api.get_account()
+    clock = api.get_clock()
+    #############################################################################################################
     account_balance = float(account.buying_power) / 4
     print('Trading Account status:', account.status)
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
@@ -596,16 +600,22 @@ if __name__ == '__main__':
     fulltimezone = str(dt.datetime.now(dt.timezone.utc).astimezone().tzinfo)
     local_timezone = ''.join([c for c in fulltimezone if c.isupper()])
     print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), local_timezone)
-    clock = api.get_clock()
     market_close = str(clock.next_close)[:16:] + str(':00.000000')
     stock_tickers = []
     # automated, only grab top 3 stocks to trade on
-    with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
-        reader = csv.reader(f)
-        for position, row in enumerate(reader):
-            if position > 0:
-                if float(row[2]) <= 3.0:
-                    stock_tickers.append(row[0])
+    # check and see if the file exists automatically, if it doesnt exists then manually enter tickers
+    try:
+        if os.path.isfile(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv'):
+            if os.stat(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv').st_size > 0:
+                with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
+                    reader = csv.reader(f)
+                    for position, row in enumerate(reader):
+                        if position > 0:
+                            if float(row[2]) <= 3.0:
+                                stock_tickers.append(row[0])
+    except Exception as e:
+        print(e)
+        pass
 
     print(stock_tickers)
     if len(stock_tickers) == 0:
@@ -615,7 +625,7 @@ if __name__ == '__main__':
         print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
         print("Enter in 'close' in order to close all current positions")
         stock_tickers = input('Enter Ticker(s): ').upper().split()
-        
+
         while True:
             try:
                 if stock_tickers == ['CLOSE']:
