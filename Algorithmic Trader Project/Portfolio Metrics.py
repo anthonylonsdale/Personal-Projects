@@ -50,8 +50,8 @@ def webscraping(tickers):
         html = driver.execute_script('return document.body.innerHTML;')
         soup = BeautifulSoup(html, 'lxml')
         bondlist = [entry.text for entry in
-                    soup.find_all('bg-quote', {'channel': '/zigman2/quotes/211347041/realtime'})]
-        risk_free_rate = float(bondlist[1])
+                    soup.find_all('span', {'class': 'value'})]
+        risk_free_rate = float(bondlist[6])
         print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
         for stock in tickers:
             quote = {}
@@ -111,8 +111,6 @@ def purchasing_filter(activities_df):
     short_sales_df = activities_df.loc[activities_df['side'] == 'sell_short']
     total_short_sells = round(short_sales_df['net_trade'].sum(), 2)
     print("Gross profit of short positions:", total_short_sells)
-
-    activities_df.to_excel("Portfolio Activities Test.xlsx")
 
     long_buy_df = long_purchases_df.sort_values(['symbol', 'transaction_time'])
     lb_df = pd.DataFrame(long_buy_df)
@@ -374,42 +372,37 @@ if __name__ == '__main__':
     activities_df[['price', 'qty']] = activities_df[['price', 'qty']].apply(pd.to_numeric)
     activities_df['net_qty'] = np.where(activities_df.side == 'buy', activities_df.qty, -activities_df.qty)
     activities_df['net_trade'] = -activities_df.net_qty * activities_df.price
-    activities_df.to_excel("Portfolio Activities.xlsx")
-    # print(activities_df)
-    ###################################################################################################################
     activities_df['cumulative_sum'] = activities_df.groupby('symbol')['net_qty'].apply(lambda g: g.cumsum())
-
-    # Total Net Profit for Long and Short Trades
-    lb_df, ls_df, sb_df, ss_df = purchasing_filter(activities_df)
     ###################################################################################################################
+    # Total Net Profit for Long and Short Trades
+    long_buy_df, long_sell_df, short_buy_df, short_sell_df = purchasing_filter(activities_df)
+
     # we can make an order book that tracks each trade as it iterates down the list
     short_buy_order_book = {}
-    for index, row in sb_df.iterrows():
+    for index, row in short_buy_df.iterrows():
         short_buy_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                        row['cumulative_sum']]
     print("short buys", len(short_buy_order_book), short_buy_order_book)
     short_sell_order_book = {}
-    for index, row in ss_df.iterrows():
+    for index, row in short_sell_df.iterrows():
         short_sell_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                         row['cumulative_sum']]
     print("short sells", len(short_sell_order_book), short_sell_order_book)
 
     buy_order_book = {}
-    for index, row in lb_df.iterrows():
+    for index, row in long_buy_df.iterrows():
         buy_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                  row['cumulative_sum']]
     print("long buys", len(buy_order_book), buy_order_book)
 
     sell_order_book = {}
-    for index, row in ls_df.iterrows():
+    for index, row in long_sell_df.iterrows():
         sell_order_book[index] = [row['transaction_time'], row['type'], row['qty'], round(row['net_trade'], 2),
                                   row['cumulative_sum']]
     print("long sells", len(sell_order_book), sell_order_book)
 
     order_settlement()
-
     short_trades, long_trades, short_trade_time_ledger, long_trade_time_ledger = trade_book_settlement()
-
     ###################################################################################################################
     # finding average short trade held time
     print(short_trade_time_ledger)
@@ -431,7 +424,6 @@ if __name__ == '__main__':
     print(avg_long_trade_length)
     # divide time held in seconds by time of avg trading day, 23400 seconds
     avg_total_trade_hold_time = time.strftime("%M:%S", time.gmtime((avg_total_trade_hold_time / 2)))
-
     ##################################################################
     total_gross_profit = 0
     total_gross_loss = 0
@@ -536,8 +528,6 @@ if __name__ == '__main__':
     stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers_involved) * 3)]
     spdr_string = str(spyreturn) + str('%')
     spdr_list = ["Daily return of $SPY", spdr_string]
-    # print(spdr_string)
-    print(spdr_list)
 
     stock_index = 0
     for stock in stock_tickers_involved:
