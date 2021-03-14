@@ -23,8 +23,7 @@ def data_to_excel(metrics):
     writer = pd.ExcelWriter('Portfolio Data.xlsx', engine='openpyxl')
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    name = str('Performance on ') + str(date)
-    metrics.to_excel(writer, sheet_name=name)
+    metrics.to_excel(writer, sheet_name=sheet_name)
     try:
         sheet = book['Sheet']
         book.remove(sheet)
@@ -32,7 +31,6 @@ def data_to_excel(metrics):
     except KeyError:
         pass
     writer.save()
-    return name
 
 
 def formatting_excel(name):
@@ -520,13 +518,11 @@ if __name__ == '__main__':
 
     stock_tickers_involved = profit_per_symbol.index.tolist()
     print(stock_tickers_involved)
-
     #############################################################################
     pd.options.display.float_format = '{:.0f}'.format
     quote_data = {}
     for stock in stock_tickers_involved:
         quote_data[stock] = []
-
     #########################################################################################
     # for quick debugging
     driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -537,7 +533,6 @@ if __name__ == '__main__':
     print(spyreturn)
     #############################################################################
     account = api.get_account()
-
     stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers_involved) * 3)]
     spdr_string = str(spyreturn) + str('%')
     spdr_list = ["Daily return of $SPY", spdr_string]
@@ -546,11 +541,11 @@ if __name__ == '__main__':
 
     stock_index = 0
     for stock in stock_tickers_involved:
+        # the average max holdings of each stock is limited at 10% of the portfolio
         trade_size_relative_to_portfolio = 0.1
         beta = trade_size_relative_to_portfolio * float(quote_data[stock]['beta'])
         buying_power = float(account.buying_power) / 4
         stock_profit_pct = round((profit_per_symbol[stock] / buying_power) * 100, 4)
-
         market_returns_pct = quote_data[stock]['returns']
         # divide the 1 month risk free rate by 30 to approximate the rate of bond return for 1 day
         alpha = round((stock_profit_pct - (riskfreerate / 30)) - (beta * (spyreturn - (riskfreerate / 30))), 4)
@@ -568,6 +563,8 @@ if __name__ == '__main__':
         print(list3)
         stock_index += 3
 
+    # if the total gross profit of the stock is not positive then the gross loss must be flipped in order to generate a
+    # non negative percentage for the profit factor of the portfolio
     if total_gross_profit > -total_gross_loss:
         total_profit_factor = round((total_gross_profit / -total_gross_loss), 2)
     else:
@@ -588,8 +585,10 @@ if __name__ == '__main__':
     long_percent_profitable = round((long_winning_trades / total_long_trades) * 100, 2)
     short_percent_profitable = round((short_winning_trades / total_short_trades) * 100, 2)
 
-    data = [
-        ['Profit Metrics', '', '', ''],
+    no_of_stock_metrics = len(stock_metrics)
+
+    # this is the 2d list used to convert into a pandas dataframe for easy transcription onto an excel document
+    data = [['Profit Metrics', '', '', ''],
         ['Total Net Profit:', todayspandl, net_long_profit, net_short_profit],
         ['Gross Profit:', total_gross_profit, long_gross_profit, short_gross_profit],
         ['Gross Loss:', total_gross_loss, long_gross_loss, short_gross_loss],
@@ -608,12 +607,12 @@ if __name__ == '__main__':
         ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades],
         ['', '', '', ''],
         ['Stock Metrics', '', '', ''],
-        spdr_list
-            ]
-    for j in range(len(stock_metrics)):
-        data.append(stock_metrics[j])
+        spdr_list] + stock_metrics
+
+    # if i want to add further rows in the future, simply do
+    # data + 2d list
 
     portfolio_metrics = DataFrame(data, columns=['Performance Summary', 'All Trades', 'Long Trades', 'Short Trades'])
-
-    sheet_name = data_to_excel(portfolio_metrics)
+    sheet_name = str('Performance on ') + str(date)
+    data_to_excel(portfolio_metrics)
     formatting_excel(sheet_name)
