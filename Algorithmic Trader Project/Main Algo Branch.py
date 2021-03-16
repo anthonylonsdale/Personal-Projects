@@ -288,8 +288,6 @@ def trade_execution_operations():
                 print(problem)
                 continue
 
-        # lets comment this out for now
-        """
         for element in strong_buy:
             try:
                 # for an element in the strong_buy indicator list, if it is equal to the current stock position,
@@ -371,7 +369,6 @@ def trade_execution_operations():
             except Exception as problem:
                 print(problem)
                 continue
-                """
 
     #################################################################################################################
     # check orders and see if they should be sold, if we have idle bracket orders with a small fluctuating profit/loss
@@ -601,21 +598,62 @@ if __name__ == '__main__':
     local_timezone = ''.join([c for c in fulltimezone if c.isupper()])
     print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), local_timezone)
     market_close = str(clock.next_close)[:16:] + str(':00.000000')
-    stock_tickers = []
     # automated, only grab top 3 stocks to trade on
     # check and see if the file exists automatically, if it doesnt exists then manually enter tickers
-    try:
-        if os.path.isfile(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv'):
-            if os.stat(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv').st_size > 0:
-                with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
-                    reader = csv.reader(f)
-                    for position, row in enumerate(reader):
-                        if position > 0:
-                            if float(row[2]) <= 3.0:
-                                stock_tickers.append(row[0])
-    except Exception as e:
-        print(e)
-        pass
+    # if there is ean error with getting the api to trad ethe stock then remove the stock from the stock ticker list
+    # and pick the next stock in the list
+    while True:
+        minimum_position = 1.0
+        maximum_position = 3.0
+        retry = False
+        start_reducing = False
+        stock_tickers = []
+        try:
+            if os.path.isfile(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv'):
+                if os.stat(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv').st_size > 0:
+                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
+                        reader = csv.reader(f)
+                        for position, row in enumerate(reader):
+                            if position > 0:
+                                if minimum_position <= position <= maximum_position:
+                                    if row[0] not in stock_tickers:
+                                        stock_tickers.append(row[0])
+            print(stock_tickers)
+            AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
+                         r"scraper Class Library.dll")
+            import CSharpwebscraper
+            scraper = CSharpwebscraper.Webscraper()
+            for position, item in enumerate(stock_tickers):
+                stock = [stock_tickers[position]]
+                try:
+                    stock_info = scraper.Scraper(stock)
+                except Exception as e:
+                    print(e, "Error Found with Tickers!")
+                    line = stock_tickers[position]
+                    lines = []
+                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
+                        reader = csv.reader(f)
+                        for position, row in enumerate(reader):
+                            if position > 0:
+                                if row[0] == line:
+                                    start_reducing = True
+                                    continue
+                                if start_reducing:
+                                    row[2] = float(row[2]) - 1
+                                lines.append(row)
+                            else:
+                                lines.append(row)
+                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'w') as w:
+                        writer = csv.writer(w, lineterminator='\n')
+                        writer.writerows(lines)
+                    retry = True
+            if not retry:
+                break
+        except Exception as e:
+            print(e)
+            print("An error with the automated stock fetcher was found, using the manual stock fetcher")
+            stock_tickers = []
+            break
 
     print(stock_tickers)
     if len(stock_tickers) == 0:
