@@ -8,6 +8,7 @@ import shutil
 import glob
 import requests
 import openpyxl
+import alpaca_trade_api as trade_api
 
 
 def get_tickers():
@@ -22,9 +23,7 @@ def get_tickers():
                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
                'origin': 'https://www.nasdaq.com', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors',
                'sec-fetch-dest': 'empty', 'referer': 'https://www.nasdaq.com/', 'accept-language': 'en-US,en;q=0.9', }
-
     params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
-
     r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=params)
     data = r.json()['data']
     df = pd.DataFrame(data['rows'], columns=data['headers'])
@@ -40,19 +39,26 @@ def get_tickers():
     # which is 2.34 million per normal trading day (6.5 hours)
     df = df[df.volume > 2340000]
 
-    print(df)
-
+    # we should probably test these stocks to see if they are tradable on alpaca
     for index, row in df.iterrows():
         for i in range(len(sandp500tickers)):
-            if row['symbol'] == sandp500tickers[i]:
-                tickers.append(row['symbol'])
+            stock = row['symbol']
+            if stock == sandp500tickers[i]:
+                try:
+                    asset = api.get_asset(stock)
+                    print(asset)
+                    if asset.tradable and asset.easy_to_borrow and asset.marginable and asset.shortable:
+                        tickers.append(stock)
+                except Exception as e:
+                    print(e)
+                    pass
 
-    book = openpyxl.load_workbook('Ticker Test.xlsx')
-    writer = pd.ExcelWriter('Ticker Test.xlsx', engine='openpyxl')
+    book = openpyxl.load_workbook('Ticker Selections.xlsx')
+    writer = pd.ExcelWriter('Ticker Selections.xlsx', engine='openpyxl')
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     df.to_excel(writer)
-    book.save('Ticker Test.xlsx')
+    book.save('Ticker Selections.xlsx')
     writer.save()
 
     print(tickers)
@@ -60,7 +66,7 @@ def get_tickers():
     return tickers
 
 
-def api_calls(tickers):
+def api_calls():
     api_calls = 0
     stock_failures = 0
     stocks_not_imported = 0
@@ -113,9 +119,9 @@ def obv_score_array():
 
 
 if __name__ == '__main__':
-    if not os.path.isfile(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Ticker Test.xlsx"):
+    if not os.path.isfile(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Ticker Selections.xlsx"):
         wb = openpyxl.Workbook()
-        wb.save('Ticker Test.xlsx')
+        wb.save('Ticker Selections.xlsx')
 
     try:
         shutil.rmtree(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
@@ -124,8 +130,13 @@ if __name__ == '__main__':
         pass
     os.mkdir(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
     ###################################################################################################################
+    key = "PKCPC6RJ84BG84W3PB60"
+    sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
+    url = "https://paper-api.alpaca.markets"
+    api = trade_api.REST(key, sec, url, api_version='v2')
+    ###################################################################################################################
     tickers = get_tickers()
-    api_calls(tickers)
+    api_calls()
     obv_score_array = obv_score_array()
     ###################################################################################################################
     df = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
