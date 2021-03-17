@@ -20,7 +20,8 @@ def get_tickers():
 
     # these headers and params are subject to change in the event NASDAQ changes its API
     headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
-               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36',
+               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chr'
+                             'ome/87.0.4280.141 Safari/537.36',
                'origin': 'https://www.nasdaq.com', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors',
                'sec-fetch-dest': 'empty', 'referer': 'https://www.nasdaq.com/', 'accept-language': 'en-US,en;q=0.9', }
     params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
@@ -39,7 +40,7 @@ def get_tickers():
     # which is 2.34 million per normal trading day (6.5 hours)
     df = df[df.volume > 2340000]
 
-    # we should probably test these stocks to see if they are tradable on alpaca
+    # we should probably test these stocks to see if they are tradeable on alpaca
     for index, row in df.iterrows():
         for i in range(len(sandp500tickers)):
             stock = row['symbol']
@@ -49,8 +50,8 @@ def get_tickers():
                     print(asset)
                     if asset.tradable and asset.easy_to_borrow and asset.marginable and asset.shortable:
                         tickers.append(stock)
-                except Exception as e:
-                    print(e)
+                except Exception as error:
+                    print(error)
                     pass
 
     book = openpyxl.load_workbook('Ticker Selections.xlsx')
@@ -66,19 +67,19 @@ def get_tickers():
     return tickers
 
 
-def api_calls():
-    api_calls = 0
+def api_calls(tickers):
+    yfinance_api_calls = 0
     stock_failures = 0
     stocks_not_imported = 0
     i = 0
-    while (i < len(tickers)) and (api_calls < 1800):
+    while (i < len(tickers)) and (yfinance_api_calls < 1800):
         try:
             stock = tickers[i]  # Gets the current stock ticker
             temp = yf.Ticker(str(stock))
             his_data = temp.history(period="max")
             his_data.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks\\" + stock + ".csv")
             time.sleep(2)
-            api_calls += 1
+            yfinance_api_calls += 1
             stock_failures = 0
             i += 1
             print('Number of stocks gathered:', i)
@@ -87,7 +88,7 @@ def api_calls():
             if stock_failures > 5:
                 i += 1
                 stocks_not_imported += 1
-            api_calls += 1
+            yfinance_api_calls += 1
             stock_failures += 1
     print("The amount of stocks we successfully imported: " + str(i - stocks_not_imported))
 
@@ -135,12 +136,12 @@ if __name__ == '__main__':
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
     ###################################################################################################################
-    tickers = get_tickers()
-    api_calls()
+    stock_tickers = get_tickers()
+    api_calls(stock_tickers)
     obv_score_array = obv_score_array()
     ###################################################################################################################
-    df = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
-    df["Stocks_Ranked"] = df["OBV_Value"].rank(ascending=False)  # Rank the stocks by their OBV_Values
-    df.sort_values("OBV_Value", inplace=True, ascending=False)  # Sort the ranked stocks
-    print(df)
-    df.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv", index=False)
+    obv_dataframe = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
+    obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)  # Rank the stocks by their OBV
+    obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)  # Sort the ranked stocks
+    print(obv_dataframe)
+    obv_dataframe.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv", index=False)
