@@ -49,10 +49,20 @@ def webscraping(tickers):
         driver.get(bond_url)
         html = driver.execute_script('return document.body.innerHTML;')
         soup = BeautifulSoup(html, 'lxml')
-        bondlist = [entry.text for entry in
-                    soup.find_all('span', {'class': 'value'})]
-        risk_free_rate = float(bondlist[6])
-        print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+        try:
+            bondlist = [entry.text for entry in
+                        soup.find_all('span', {'class': 'value', 'field': 'Last'})]
+            risk_free_rate = float(bondlist[6])
+            print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+        except IndexError:
+            try:
+                bondlist = [entry.text for entry in
+                            soup.find_all('span', {'class': 'value negative', 'field': 'Last'})]
+                risk_free_rate = float(bondlist[6])
+                print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+            except:
+                print("Failed to fetch 1-Month T-bond Yield! Setting to default value (0.01)")
+                risk_free_rate = 0.01
         for stock in tickers:
             quote = {}
             stock_url = 'https://finance.yahoo.com/quote/' + stock + '?p=' + stock
@@ -363,16 +373,27 @@ if __name__ == '__main__':
     api = trade_api.REST(key, sec, url, api_version='v2')
 
     # Can also limit the results by date if desired.
-    spec_date = dt.datetime.today() - dt.timedelta(days=64)
-    date = spec_date.strftime('%Y-%m-%d')
-    activities = api.get_activities(activity_types='FILL', date=date)
-    activities_df = pd.DataFrame([activity._raw for activity in activities])
-    activities_df = activities_df.iloc[::-1]
+    days = 1
+    while True:
+        try:
+            spec_date = dt.datetime.today() - dt.timedelta(days=days)
+            date = spec_date.strftime('%Y-%m-%d')
+            print(date)
+            activities = api.get_activities(activity_types='FILL', date=date)
+            activities_df = pd.DataFrame([activity._raw for activity in activities])
+            activities_df = activities_df.iloc[::-1]
 
-    activities_df[['price', 'qty']] = activities_df[['price', 'qty']].apply(pd.to_numeric)
-    activities_df['net_qty'] = np.where(activities_df.side == 'buy', activities_df.qty, -activities_df.qty)
-    activities_df['net_trade'] = -activities_df.net_qty * activities_df.price
-    activities_df['cumulative_sum'] = activities_df.groupby('symbol')['net_qty'].apply(lambda g: g.cumsum())
+            activities_df[['price', 'qty']] = activities_df[['price', 'qty']].apply(pd.to_numeric)
+            activities_df['net_qty'] = np.where(activities_df.side == 'buy', activities_df.qty, -activities_df.qty)
+            activities_df['net_trade'] = -activities_df.net_qty * activities_df.price
+            activities_df['cumulative_sum'] = activities_df.groupby('symbol')['net_qty'].apply(lambda g: g.cumsum())
+            if not len(activities_df) > 10:
+                raise Exception("Not enough trades to not be a test")
+            break
+        except Exception as e:
+            print(e)
+            days += 1
+
     ###################################################################################################################
     # Total Net Profit for Long and Short Trades
     long_buy_df, long_sell_df, short_buy_df, short_sell_df = purchasing_filter(activities_df)
