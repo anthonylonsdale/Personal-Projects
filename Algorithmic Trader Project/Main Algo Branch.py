@@ -602,6 +602,7 @@ if __name__ == '__main__':
     # check and see if the file exists automatically, if it doesnt exists then manually enter tickers
     # if there is ean error with getting the api to trad ethe stock then remove the stock from the stock ticker list
     # and pick the next stock in the list
+    stock_tickers = []
     while True:
         minimum_position = 1.0
         maximum_position = 3.0
@@ -609,8 +610,8 @@ if __name__ == '__main__':
         start_reducing = False
         stock_tickers = []
         try:
-            if os.path.isfile(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv'):
-                if os.stat(r'C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv').st_size > 0:
+            if os.path.isfile('Daily Stock Analysis\OBV_Ranked.csv'):
+                if os.stat('Daily Stock Analysis\OBV_Ranked.csv').st_size > 0:
                     with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
                         reader = csv.reader(f)
                         for position, row in enumerate(reader):
@@ -633,8 +634,8 @@ if __name__ == '__main__':
                     lines = []
                     with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
                         reader = csv.reader(f)
-                        for position, row in enumerate(reader):
-                            if position > 0:
+                        for pos, row in enumerate(reader):
+                            if pos > 0:
                                 if row[0] == line:
                                     start_reducing = True
                                     continue
