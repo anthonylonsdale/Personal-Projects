@@ -82,7 +82,7 @@ def api_calls(tickers):
                 stocks_not_imported += 1
             yfinance_api_calls += 1
             stock_failures += 1
-    print("The amount of stocks we successfully imported: " + str(i - stocks_not_imported))
+    print("Data successfully imported for {} stocks".format(i - stocks_not_imported))
 
 
 def obv_score_array():
@@ -123,10 +123,10 @@ if __name__ == '__main__':
 
     try:
         shutil.rmtree("Daily Stock Analysis/Stocks")
+        os.mkdir("Daily Stock Analysis/Stocks")
     except Exception as e:
         print(e)
         pass
-    os.mkdir("Daily Stock Analysis/Stocks")
     ###################################################################################################################
     key = "PKCPC6RJ84BG84W3PB60"
     sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
