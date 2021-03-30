@@ -4,7 +4,6 @@ the regular options table export to excel, but we need to gut out all trading co
 and options pricing
 """
 import requests
-import alpaca_trade_api as trade_api
 import pandas as pd
 import datetime as dt
 import openpyxl
@@ -52,21 +51,6 @@ def stock_data_engine():
             df_quote = pd.DataFrame(quote_data[stock])
             df_quote.set_index('time', inplace=True)
             print(df_quote)
-
-
-"""
-this function is the main handler for the options data, specifically, it creates excel sheets for each stock that is
-inputted, and creates two sheets per stock, one for the put options, and one for the call options
-the formatting_excel function autofits each column automatically so the file is readable if you wish to look at the
-options contracts for whatever reason
-the options_calculations function uses custom-built c++ scripts to calculate the price of an options contract. It does
-this through a modified Black-Scholes equation called a Binomial Tree. These options prices are then compared to the
-actual options prices we have retrieved from Yahoo! Finance. 
-Theoretically:
-If, for example, the call options are overvalued, we can anticipate that traders will start selling off call options
-and purchasing equivalent positions of stock. This creates an artificial short-term increase in the stock price that we 
-can exploit (but I have not yet implemented it as I am still experimenting with it).
-"""
 
 
 def options():
@@ -185,25 +169,13 @@ if __name__ == '__main__':
         os.remove("Options Data.xlsx")
     wb = openpyxl.Workbook()
     wb.save('Options Data.xlsx')
-    # manual
-    print("Input stock tickers separated by a space, the quotes and trades for each stock will be streamed")
-    print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
-    stock_tickers = input('Enter Ticker(s): ').upper().split()
-    #############################################################################################################
-    key = "PK5S3WI3U5I3OBCZV82C"
-    sec = "xfR7UlCNxngZbkriUvyIrk2rFNvR89IPw9epAK3d"
-    url = "https://paper-api.alpaca.markets"
-    api = trade_api.REST(key, sec, url, api_version='v2')
-    account = api.get_account()
-    account_balance = float(account.buying_power)
-    print('Trading Account status:', account.status)
+
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
-    # Get when the market opens or opened today
     print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), 'CST')
-    clock = api.get_clock()
-    market_close = str(clock.next_close)[:16:] + str(':00.000000')
-    print("The market closes at {} o'clock EST today.".format(market_close[11:16:]),
-          "Extended hours trading lasts for 4 hours before and after regular market hours.")
+    # manual
+    print("Input stock tickers separated by a space, the options chain for each stock will be gathered")
+    print("When you are done entering tickers, press Enter to show the options contracts for each stock in order")
+    stock_tickers = input('Enter Ticker(s): ').upper().split()
     #############################################################################################################
     try:
         quote_data = {}
