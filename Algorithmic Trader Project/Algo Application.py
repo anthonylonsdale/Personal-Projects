@@ -29,8 +29,8 @@ def get_tickers():
     tickers = []
     table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     df = table[0]
-    sandp500tickers = df['Symbol'].to_list()
-    print(sandp500tickers)
+    sp500tickers = df['Symbol'].to_list()
+    print(sp500tickers)
 
     # these headers and params are subject to change in the event NASDAQ changes its API
     headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
@@ -41,8 +41,8 @@ def get_tickers():
     params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
 
     r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=params)
-    data = r.json()['data']
-    df = pd.DataFrame(data['rows'], columns=data['headers'])
+    json_data = r.json()['data']
+    df = pd.DataFrame(json_data['rows'], columns=json_data['headers'])
     df = df[df.country == 'United States']
     df['marketCap'] = pd.to_numeric(df['marketCap'])
     df['volume'] = pd.to_numeric(df['volume'])
@@ -50,85 +50,85 @@ def get_tickers():
     df = df[df.marketCap != 0 & df.marketCap.notnull()]
     df = df[df.volume > 2340000]
 
-    for index, row in df.iterrows():
-        for i in range(len(sandp500tickers)):
-            stock = row['symbol']
-            if stock == sandp500tickers[i]:
+    for INDEX, ROW in df.iterrows():
+        for sp500ticker in range(len(sp500tickers)):
+            ticker_to_list = ROW['symbol']
+            if ticker_to_list == sp500tickers[sp500ticker]:
                 try:
-                    asset = api.get_asset(stock)
-                    print(asset)
-                    if asset.tradable and asset.easy_to_borrow and asset.marginable and asset.shortable:
-                        tickers.append(stock)
+                    api_asset = api.get_asset(ticker_to_list)
+                    print(api_asset)
+                    if api_asset.tradable and api_asset.easy_to_borrow and api_asset.marginable and api_asset.shortable:
+                        tickers.append(ticker_to_list)
                 except Exception as error:
                     print(error)
                     pass
 
     book = openpyxl.load_workbook('Ticker Selections.xlsx')
-    writer = pd.ExcelWriter('Ticker Selections.xlsx', engine='openpyxl')
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    df.to_excel(writer)
+    ex_writer = pd.ExcelWriter('Ticker Selections.xlsx', engine='openpyxl')
+    ex_writer.book = book
+    ex_writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    df.to_excel(ex_writer)
     try:
         sheet = book['Sheet']
         book.remove(sheet)
         book.save('Ticker Selections.xlsx')
     except KeyError:
         pass
-    writer.save()
+    ex_writer.save()
     return tickers
 
 
 def api_calls(tickers):
-    yfinance_api_calls = 0
+    y_finance_api_calls = 0
     stock_failures = 0
     stocks_not_imported = 0
-    i = 0
-    while (i < len(tickers)) and (yfinance_api_calls < 1800):
+    position_in_list = 0
+    while (position_in_list < len(tickers)) and (y_finance_api_calls < 1800):
         try:
-            stock = tickers[i]
-            temp = yf.Ticker(str(stock))
+            stock_analyzed = tickers[position_in_list]
+            temp = yf.Ticker(str(stock_analyzed))
             his_data = temp.history(period="max")
-            his_data.to_csv(r"Daily Stock Analysis\Stocks\\" + stock + ".csv")
+            his_data.to_csv(r"Daily Stock Analysis\Stocks\\" + stock_analyzed + ".csv")
             time.sleep(2)
-            yfinance_api_calls += 1
+            y_finance_api_calls += 1
             stock_failures = 0
-            i += 1
-            print('Number of stocks gathered:', i)
+            position_in_list += 1
+            print('Number of stocks gathered:', position_in_list)
         except ValueError:
-            print("Error with gathering Yahoo Finance data for {}".format(str(tickers[i])))
+            print("Error with gathering Yahoo Finance data for {}".format(str(tickers[position_in_list])))
             if stock_failures > 5:
-                i += 1
+                position_in_list += 1
                 stocks_not_imported += 1
-            yfinance_api_calls += 1
+            y_finance_api_calls += 1
             stock_failures += 1
-    print("Data successfully imported for {} stocks".format(i - stocks_not_imported))
+    print("Data successfully imported for {} stocks".format(position_in_list - stocks_not_imported))
 
 
 def obv_score_array():
     list_files = (glob.glob(r"Daily Stock Analysis\Stocks\\*.csv"))
-    obv_score_array = []
+    obv_score_list = []
     interval = 0
     while interval < len(list_files):
-        data = pd.read_csv(list_files[interval]).tail(7)
+        obv_data = pd.read_csv(list_files[interval]).tail(7)
         pos_move = []
         neg_move = []
         obv_value = 0
         count = 0
         while count < 7:
-            if data.iloc[count, 1] < data.iloc[count, 4]:
+            if obv_data.iloc[count, 1] < obv_data.iloc[count, 4]:
                 pos_move.append(count)
-            elif data.iloc[count, 1] > data.iloc[count, 4]:
+            elif obv_data.iloc[count, 1] > obv_data.iloc[count, 4]:
                 neg_move.append(count)
             count += 1
-        for i in pos_move:
-            obv_value = round(obv_value + (data.iloc[i, 5] / data.iloc[i, 1]))
-        for i in neg_move:
-            obv_value = round(obv_value - (data.iloc[i, 5] / data.iloc[i, 1]))
+        for volume in pos_move:
+            obv_value = round(obv_value + (obv_data.iloc[volume, 5] / obv_data.iloc[volume, 1]))
+        for volume in neg_move:
+            obv_value = round(obv_value - (obv_data.iloc[volume, 5] / obv_data.iloc[volume, 1]))
         stock_name = ((os.path.basename(list_files[interval])).split(".csv")[0])
-        obv_score_array.append([stock_name, obv_value])
+        obv_score_list.append([stock_name, obv_value])
         interval += 1
 
-    obv_dataframe = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
+    obv_dataframe = pd.DataFrame(obv_score_list, columns=['Stock', 'OBV_Value'])
     obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
     obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)
     print(obv_dataframe)
@@ -180,23 +180,23 @@ def stock_data_engine():
     AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
                  r"scraper Class Library.dll")
     import CSharpwebscraper
-    scraper = CSharpwebscraper.Webscraper()
-    stock_info = scraper.Scraper(stock_tickers)
-    print(stock_info)
+    scrape_client = CSharpwebscraper.Webscraper()
+    scraped_stock_info = scrape_client.Scraper(stock_tickers)
+    print(scraped_stock_info)
     quote = {}
-    for i in range(len(stock_info)):
+    for i in range(len(scraped_stock_info)):
         if (i % 6) == 0:
-            quote['current price'] = float(stock_info[i].replace(",", ""))
+            quote['current price'] = float(scraped_stock_info[i].replace(",", ""))
         if (i % 6) == 1:
-            quote['open price'] = float(stock_info[i].replace(",", ""))
+            quote['open price'] = float(scraped_stock_info[i].replace(",", ""))
         if (i % 6) == 2:
-            quote['previous close'] = float(stock_info[i].replace(",", ""))
+            quote['previous close'] = float(scraped_stock_info[i].replace(",", ""))
         if (i % 6) == 3:
-            quote['indicator'] = str(stock_info[i])
+            quote['indicator'] = str(scraped_stock_info[i])
         if (i % 6) == 4:
             delimiter1 = '('
             delimiter2 = ')'
-            div = str(stock_info[i])
+            div = str(scraped_stock_info[i])
             dividend = div[div.find(delimiter1) + 1: div.find(delimiter2)]
             if dividend == 'N/A':
                 dividend = 0
@@ -205,7 +205,7 @@ def stock_data_engine():
                 dividend = float(div_string) / 100
             quote['dividend'] = dividend
         if (i % 6) == 5:
-            st = str(stock_info[i])
+            st = str(scraped_stock_info[i])
             quote['stock'] = st
             quote['time'] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             quote_data[st].append(quote)
@@ -342,14 +342,14 @@ def analysis_operations():
     # if the following conditions are met, then this represents a good trade opportunity
     # this portion works
     for sto in stock_buylist:
-        for pos, i in enumerate(quote_data[sto]):
+        for pos, Item in enumerate(quote_data[sto]):
             if dt.datetime.strptime(quote_data[sto][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
                 if pos == (len(quote_data[sto]) - 1) and quote_data[sto][pos]['current price'] < \
                         stock_prices[sto]:
                     stock_price_movement[sto] = 'short-term increase in price'
     for sto in stock_shortlist:
-        for pos, i in enumerate(quote_data[sto]):
+        for pos, Item in enumerate(quote_data[sto]):
             if dt.datetime.strptime(quote_data[sto][pos]['time'], "%Y-%m-%d %H:%M:%S") > \
                     (dt.datetime.now() - dt.timedelta(minutes=5)):
                 # if current price is lower than quote price
@@ -697,6 +697,7 @@ def check_for_market_close():
     if local_timezone == 'CDT' and dt.datetime.now() > (close - dt.timedelta(minutes=65)):
         raise Exception('The market is closing in 5 minutes, all positions have been closed')
 
+
 """
 
 END OF ALGO TRADER
@@ -728,24 +729,24 @@ def formatting_excel(name):
     excel.Application.Quit()
 
 
-def webscraping(tickers):
+def web_scraping(tickers):
     try:
         bond_url = 'http://www.marketwatch.com/investing/bond/tmubmusd01m?countrycode=bx'
         driver.get(bond_url)
         html = driver.execute_script('return document.body.innerHTML;')
         soup = BeautifulSoup(html, 'lxml')
         try:
-            bondlist = [entry.text for entry in
-                        soup.find_all('bg-quote', {'class': 'value', 'field': 'Last'})]
-            risk_free_rate = float(bondlist[0])
+            bond_list = [entry.text for entry in
+                         soup.find_all('bg-quote', {'class': 'value', 'field': 'Last'})]
+            risk_free_rate = float(bond_list[0])
             print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
         except IndexError:
             print("Failed to fetch 1-Month T-bond Yield! Setting to default value (0.01)")
             risk_free_rate = 0.01
 
-        for stock in tickers:
+        for url_stock in tickers:
             quote = {}
-            stock_url = 'https://finance.yahoo.com/quote/' + stock + '?p=' + stock
+            stock_url = 'https://finance.yahoo.com/quote/' + url_stock + '?p=' + url_stock
             driver.get(stock_url)
             html = driver.execute_script('return document.body.innerHTML;')
             soup = BeautifulSoup(html, 'lxml')
@@ -757,11 +758,11 @@ def webscraping(tickers):
             rt = formatted_return[formatted_return.find(delimiter1) + 1: formatted_return.find(delimiter2)]
             return_string = rt.split("%")[0]
             returns = float(return_string)
-            print(stock, returns)
-            quote['stock'] = stock
+            print(url_stock, returns)
+            quote['stock'] = url_stock
             quote['beta'] = beta_metric[0]
             quote['returns'] = round(returns, 4)
-            quote_data[stock] = quote
+            quote_data[url_stock] = quote
         # spy
         spy_url = 'https://finance.yahoo.com/quote/SPY?p=SPY'
         driver.get(spy_url)
@@ -775,35 +776,35 @@ def webscraping(tickers):
         return_string = rt.split("%")[0]
         spy_returns = float(return_string)
         return spy_returns, risk_free_rate
-    except Exception as e:
-        print(e)
+    except Exception as er:
+        print(er)
     finally:
         driver.quit()
 
 
-def purchasing_filter(activities_df):
+def purchasing_filter(purchases_df):
     # filtering out bull side long purchases
-    long_purchases_df = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] > 0)]
+    long_purchases_df = purchases_df.loc[(purchases_df['side'] == 'buy') & (purchases_df['cumulative_sum'] > 0)]
     total_long_purchases = round(long_purchases_df['net_trade'].sum(), 2)
     print("Gross cost of long positions:", total_long_purchases)
 
     # filtering out bear side 'buy to cover' purchases
-    short_purchases_df = activities_df.loc[(activities_df['side'] == 'buy') & (activities_df['cumulative_sum'] <= 0)]
+    short_purchases_df = purchases_df.loc[(purchases_df['side'] == 'buy') & (purchases_df['cumulative_sum'] <= 0)]
     total_short_purchases = round(short_purchases_df['net_trade'].sum(), 2)
     print("Gross cost of short positions:", total_short_purchases)
 
     # filtering bull side long sales
-    long_sales_df = activities_df.loc[activities_df['side'] == 'sell']
+    long_sales_df = purchases_df.loc[purchases_df['side'] == 'sell']
     total_long_sells = round(long_sales_df['net_trade'].sum(), 2)
     print("Gross profit of long positions:", total_long_sells)
 
     # filtering bear side short purchases
-    short_sales_df = activities_df.loc[activities_df['side'] == 'sell_short']
+    short_sales_df = purchases_df.loc[purchases_df['side'] == 'sell_short']
     total_short_sells = round(short_sales_df['net_trade'].sum(), 2)
     print("Gross profit of short positions:", total_short_sells)
 
-    long_buy_df = long_purchases_df.sort_values(['symbol', 'transaction_time'])
-    lb_df = pd.DataFrame(long_buy_df)
+    long_buys_df = long_purchases_df.sort_values(['symbol', 'transaction_time'])
+    lb_df = pd.DataFrame(long_buys_df)
     lb_df.reset_index(drop=True, inplace=True)
 
     long_sales_df = long_sales_df.sort_values(['symbol', 'transaction_time'])
@@ -824,9 +825,9 @@ def order_settlement():
     current_buy_pos = 0
     current_sell_pos = 0
     ###################################################################################################################
-    for place, it in enumerate(short_buy_order_book.copy(), start=current_buy_pos):
+    for unsettled_buy_position, it in enumerate(short_buy_order_book.copy(), start=current_buy_pos):
         try:
-            place = current_buy_pos
+            unsettled_buy_position = current_buy_pos
             o = 1
             buy_qty = short_buy_order_book[current_buy_pos][2]
             buy_value = short_buy_order_book[current_buy_pos][3]
@@ -845,14 +846,14 @@ def order_settlement():
                             del short_buy_order_book[current_buy_pos + j]
                         break
             current_buy_pos += o
-            place += o
+            unsettled_buy_position += o
         except KeyError:
             pass
     print(len(short_buy_order_book), short_buy_order_book)
 
-    for place, it in enumerate(short_sell_order_book.copy(), start=current_sell_pos):
+    for unsettled_sell_position, it in enumerate(short_sell_order_book.copy(), start=current_sell_pos):
         try:
-            place = current_sell_pos
+            unsettled_sell_position = current_sell_pos
             o = 1
             buy_qty = short_sell_order_book[current_sell_pos][2]
             buy_value = short_sell_order_book[current_sell_pos][3]
@@ -871,16 +872,16 @@ def order_settlement():
                             del short_sell_order_book[current_sell_pos + j]
                         break
             current_sell_pos += o
-            place += o
+            unsettled_sell_position += o
         except KeyError:
             pass
     print(len(short_sell_order_book), short_sell_order_book)
 
     current_buy_pos = 0
     current_sell_pos = 0
-    for place, it in enumerate(buy_order_book.copy(), start=current_buy_pos):
+    for buy_position, it in enumerate(buy_order_book.copy(), start=current_buy_pos):
         try:
-            place = current_buy_pos
+            buy_position = current_buy_pos
             o = 1
             buy_qty = buy_order_book[current_buy_pos][2]
             buy_value = buy_order_book[current_buy_pos][3]
@@ -899,14 +900,14 @@ def order_settlement():
                             del buy_order_book[current_buy_pos + h]
                         break
             current_buy_pos += o
-            place += o
+            buy_position += o
         except KeyError:
             pass
     print(len(buy_order_book), buy_order_book)
 
-    for place, it in enumerate(sell_order_book.copy(), start=current_sell_pos):
+    for sell_position, it in enumerate(sell_order_book.copy(), start=current_sell_pos):
         try:
-            place = current_sell_pos
+            sell_position = current_sell_pos
             o = 1
             sell_qty = sell_order_book[current_sell_pos][2]
             sell_value = sell_order_book[current_sell_pos][3]
@@ -925,7 +926,7 @@ def order_settlement():
                             del sell_order_book[current_sell_pos + p]
                         break
             current_sell_pos += o
-            place += o
+            sell_position += o
         except KeyError:
             pass
     print(len(sell_order_book), sell_order_book)
@@ -1018,8 +1019,8 @@ def trade_book_settlement():
 
                 else:
                     while True:
-                        bought_share_value = round(buy_order_book[current_buy_pos][3] / buy_order_book[current_buy_pos][2],
-                                                   2)
+                        bought_share_value = round(buy_order_book[current_buy_pos][3] /
+                                                   buy_order_book[current_buy_pos][2], 2)
                         sold_share_value = round(
                             sell_order_book[current_sell_pos][3] / sell_order_book[current_sell_pos][2], 2)
                         buy_quantity = buy_order_book[current_buy_pos][2]
@@ -1074,13 +1075,13 @@ if __name__ == '__main__':
     sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
-    stock_tickers = get_tickers()
-    api_calls(stock_tickers)
+    ticker_list_fetch = get_tickers()
+    api_calls(ticker_list_fetch)
     obv_score_array()
     notification = ToastNotifier()
     websocket.enableTrace(True)
-    websocket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
-    socket = websocket.WebSocketApp(websocket_url, on_message=on_message, on_error=on_error, on_close=on_close)
+    web_socket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
+    socket = websocket.WebSocketApp(web_socket_url, on_message=on_message, on_error=on_error, on_close=on_close)
     socket.on_open = on_open
     account = api.get_account()
     clock = api.get_clock()
@@ -1114,7 +1115,6 @@ if __name__ == '__main__':
             AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
                          r"scraper Class Library.dll")
             import CSharpwebscraper
-
             scraper = CSharpwebscraper.Webscraper()
             for position, item in enumerate(stock_tickers):
                 stock = [stock_tickers[position]]
@@ -1257,15 +1257,12 @@ if __name__ == '__main__':
         if cutoff_bool:
             break
 
-
     # START OF PORTFOLIO ANALYSIS
     if not os.path.isfile(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Portfolio Data.xlsx"):
         wb = openpyxl.Workbook()
         wb.save('Portfolio Data.xlsx')
 
     pd.options.mode.chained_assignment = None
-
-    # Can also limit the results by date if desired.
     days = 1
     while True:
         try:
@@ -1284,11 +1281,10 @@ if __name__ == '__main__':
             activities_df['net_trade'] = -activities_df.net_qty * activities_df.price
             activities_df['cumulative_sum'] = activities_df.groupby('symbol')['net_qty'].apply(lambda g: g.cumsum())
             break
-        except Exception as e:
+        except "Not enough trades to not be a test":
             days += 1
 
     activities_df.to_excel("Portfolio Activities.xlsx")
-
     ###################################################################################################################
     # Total Net Profit for Long and Short Trades
     long_buy_df, long_sell_df, short_buy_df, short_sell_df = purchasing_filter(activities_df)
@@ -1409,7 +1405,7 @@ if __name__ == '__main__':
     avg_short_winning_trade = round(short_gross_profit / short_winning_trades, 2)
     avg_short_losing_trade = round(short_gross_loss / short_losing_trades, 2)
 
-    todayspandl = round(total_gross_profit + total_gross_loss, 2)
+    todays_profit_and_loss = round(total_gross_profit + total_gross_loss, 2)
     total_gross_profit = round(total_gross_profit, 2)
     total_gross_loss = round(total_gross_loss, 2)
     print("\nProfit Metrics:")
@@ -1417,7 +1413,7 @@ if __name__ == '__main__':
     print("Average Winning Trade:", avg_winning_trade)
     print("Gross Loss:", total_gross_loss)
     print("Average Losing Trade:", avg_losing_trade)
-    print("Total Net Profit:", todayspandl)
+    print("Total Net Profit:", todays_profit_and_loss)
 
     # profit per symbol
     # handle having outstanding positions and remove the net positive positions so we can pin down the net gain
@@ -1438,30 +1434,26 @@ if __name__ == '__main__':
     profit_per_symbol = net_zero_trades.groupby('symbol').net_trade.sum()
     print("Net Profit per stock:")
     print(profit_per_symbol)
-
-    stock_tickers_involved = profit_per_symbol.index.tolist()
-    # print(stock_tickers_involved)
     #############################################################################
     pd.options.display.float_format = '{:.0f}'.format
     quote_data = {}
-    for stock in stock_tickers_involved:
+    for stock in stock_tickers:
         quote_data[stock] = []
     #########################################################################################
     # for quick debugging
     driver = webdriver.Chrome(ChromeDriverManager().install())
-    spyreturn, riskfreerate = webscraping(stock_tickers_involved)
+    spyreturn, riskfreerate = web_scraping(stock_tickers)
     spyreturn = '{:.4f}'.format(spyreturn)
     spyreturn = float(spyreturn)
     print(quote_data)
     print(spyreturn)
     #############################################################################
-    account = api.get_account()
-    stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers_involved) * 3)]
+    stock_metrics = [['' for m in range(1)] for i in range(len(stock_tickers) * 3)]
     spdr_string = str(spyreturn) + str('%')
     spdr_list = ["Daily return of $SPY", spdr_string]
 
     stock_index = 0
-    for stock in stock_tickers_involved:
+    for stock in stock_tickers:
         # the average max holdings of each stock is limited at 10% of the portfolio
         trade_size_relative_to_portfolio = 0.1
         beta = trade_size_relative_to_portfolio * float(quote_data[stock]['beta'])
@@ -1472,7 +1464,8 @@ if __name__ == '__main__':
         alpha = round((stock_profit_pct - (riskfreerate / 30)) - (beta * (spyreturn - (riskfreerate / 30))), 4)
 
         list1 = ["Performance of {}:".format(stock), str(market_returns_pct) + str('%')]
-        list2 = ["Performance of {} relative to $SPY:".format(stock), str(round(market_returns_pct - spyreturn, 2)) + str('%')]
+        list2 = ["Performance of {} relative to $SPY:".format(stock), str(round(market_returns_pct - spyreturn, 2)) +
+                 str('%')]
         list3 = ["\"Alpha\" trading performance of {}:".format(stock), str(alpha) + str('%')]
 
         stock_metrics[stock_index] = list1
@@ -1510,7 +1503,7 @@ if __name__ == '__main__':
 
     # this is the 2d list used to convert into a pandas dataframe for easy transcription onto an excel document
     data = [['Profit Metrics', '', '', ''],
-        ['Total Net Profit:', todayspandl, net_long_profit, net_short_profit],
+        ['Total Net Profit:', todays_profit_and_loss, net_long_profit, net_short_profit],
         ['Gross Profit:', total_gross_profit, long_gross_profit, short_gross_profit],
         ['Gross Loss:', total_gross_loss, long_gross_loss, short_gross_loss],
         ['Profit Factor:', total_profit_factor, long_profit_factor, short_profit_factor],
