@@ -132,7 +132,7 @@ def obv_score_array():
     obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
     obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)
     print(obv_dataframe)
-    obv_dataframe.to_csv("Daily Stock Analysis/OBV_Ranked.csv", index=False)
+    obv_dataframe.to_csv("Daily Stock Analysis/{}_OBV_Ranked.csv".format(date), index=False)
 
 
 """
@@ -254,11 +254,11 @@ def main_data_engine():
         t3.daemon = True
         t3.start()
         time.sleep(15)
+        t2.join()
+        t3.join()
         socket.keep_running = False
         socket.close()
         t1.join()
-        t2.join()
-        t3.join()
     except Exception as error:
         print(error)
         socket.close()
@@ -1075,9 +1075,14 @@ if __name__ == '__main__':
     sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
     url = "https://paper-api.alpaca.markets"
     api = trade_api.REST(key, sec, url, api_version='v2')
-    ticker_list_fetch = get_tickers()
-    api_calls(ticker_list_fetch)
-    obv_score_array()
+    date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
+    print('The date is: {}'.format(date))
+    if os.path.isfile('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date)):
+        print('OBV data exists for today')
+    else:
+        ticker_list_fetch = get_tickers()
+        api_calls(ticker_list_fetch)
+        obv_score_array()
     notification = ToastNotifier()
     websocket.enableTrace(True)
     web_socket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
@@ -1088,7 +1093,6 @@ if __name__ == '__main__':
     ###################################################################################################################
     account_balance = float(account.buying_power) / 4
     print('Trading Account status:', account.status)
-    date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
     # Get when the market opens or opened today
     fulltimezone = str(dt.datetime.now(dt.timezone.utc).astimezone().tzinfo)
     local_timezone = ''.join([c for c in fulltimezone if c.isupper()])
@@ -1102,9 +1106,9 @@ if __name__ == '__main__':
         start_reducing = False
         stock_tickers = []
         try:
-            if os.path.isfile('Daily Stock Analysis/OBV_Ranked.csv'):
-                if os.stat('Daily Stock Analysis/OBV_Ranked.csv').st_size > 0:
-                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
+            if os.path.isfile('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date)):
+                if os.stat('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date)).st_size > 0:
+                    with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date), 'r') as f:
                         reader = csv.reader(f)
                         for position, row in enumerate(reader):
                             if position > 0:
@@ -1124,7 +1128,7 @@ if __name__ == '__main__':
                     print(e, "Error Found with Tickers!")
                     line = stock_tickers[position]
                     lines = []
-                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'r') as f:
+                    with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date), 'r') as f:
                         reader = csv.reader(f)
                         for place, row in enumerate(reader):
                             if place > 0:
@@ -1136,7 +1140,7 @@ if __name__ == '__main__':
                                 lines.append(row)
                             else:
                                 lines.append(row)
-                    with open('Daily Stock Analysis/OBV_Ranked.csv', 'w') as w:
+                    with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date), 'w') as w:
                         writer = csv.writer(w, lineterminator='\n')
                         writer.writerows(lines)
                     retry = True
@@ -1225,7 +1229,7 @@ if __name__ == '__main__':
                 tradethread = th.Thread(target=trade_execution_operations)
                 tradethread.daemon = True
                 check_for_market_close()
-                main_data_engine()
+                socket_thread = main_data_engine()
                 print('Trades:', trade_data)
                 print('Quotes:', quote_data)
                 print('Indicators:', ti_data)
@@ -1438,7 +1442,7 @@ if __name__ == '__main__':
     pd.options.display.float_format = '{:.0f}'.format
     quote_data = {}
     for stock in stock_tickers:
-        quote_data[stock] = []
+        quote_data[stock] = {}
     #########################################################################################
     # for quick debugging
     driver = webdriver.Chrome(ChromeDriverManager().install())
