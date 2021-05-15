@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
 
     @client.command()
-    async def backupeloinformation(ctx):
+    async def backup(ctx):
         with open('Current ELO.txt', 'r') as file:
             data = file.readlines()
 
@@ -74,6 +74,11 @@ if __name__ == '__main__':
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         match = await client.wait_for("message", check=check)
+
+        match_backup = open("Match Backup.txt", "a+")
+        match_backup.write(str(match.content) + " (in case of fraudulent additions, this user inputted it) " +
+                           str(match.author) + str('\n'))
+        match_backup.close()
 
         match_array = match.content.split()
 
@@ -131,7 +136,6 @@ if __name__ == '__main__':
                     linewrite += str(string) + str(' ')
 
                 linewrite += str('\n')
-
                 f.writelines(linewrite)
 
         await ctx.send(f"Updated Ratings (automatically saved to file):-")
@@ -191,7 +195,7 @@ if __name__ == '__main__':
         embed.add_field(name='.ping', value='Returns bot response time in milliseconds', inline=False)
         embed.add_field(name='.add', value="Add somebody who wants to be ranked (only used when new people join)", inline=False)
         embed.add_field(name='.match', value="Add a new match to influence rating", inline=False)
-        embed.add_field(name='.backup', value="*For Administrator Use Only* Backup files in case of damage", inline=False)
+        embed.add_field(name='.backup', value="*For Administrator Use Only* Backup Current ELO", inline=False)
         await ctx.send(embed=embed)
 
 
