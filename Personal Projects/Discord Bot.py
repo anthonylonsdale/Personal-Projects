@@ -73,14 +73,14 @@ if __name__ == '__main__':
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
-        match = await client.wait_for("message", check=check)
+        match_msg = await client.wait_for("message", check=check)
 
         match_backup = open("Match Backup.txt", "a+")
-        match_backup.write(str(match.content) + " (in case of fraudulent additions, this user inputted it) " +
-                           str(match.author) + str('\n'))
+        match_backup.write(str(match_msg.content) + " (in case of fraudulent additions, this user inputted it) " +
+                           str(match_msg.author) + str('\n'))
         match_backup.close()
 
-        match_array = match.content.split()
+        match_array = match_msg.content.split()
 
         personone = match_array[0]
         persononewins = int(match_array[1])
@@ -114,7 +114,7 @@ if __name__ == '__main__':
                 break
         currentelofile.close()
 
-        K = 17
+        K = 12
         neweloplayerone, neweloplayertwo = EloRating(persononeelo, persontwoelo, K, persononewins, persontwowins)
 
         new_data = []
