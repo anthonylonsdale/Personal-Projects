@@ -19,8 +19,6 @@ import openpyxl
 import win32com.client as win32
 import os
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
 import numpy as np
 import time
 import sys
@@ -31,7 +29,7 @@ def get_tickers():
     table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     df = table[0]
     sp500tickers = df['Symbol'].to_list()
-    
+
     # these headers and params are subject to change in the event NASDAQ changes its API
     headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
@@ -405,7 +403,7 @@ def analysis_operations():
                         sell.append(element)
                 else:
                     weak_sell.append(element)
-        ##############################################################################
+    ####################################################################################################################
     if len(strong_buy) > 0:
         print('Stock Strong Buy List:', strong_buy)
     if len(buy) > 0:
@@ -438,11 +436,11 @@ def trade_execution_operations():
                 print(problem)
                 continue
 
-        for element in strong_buy:
+        for opportunity in strong_buy:
             try:
                 # for an element in the strong_buy indicator list, if it is equal to the current stock position,
                 # then we wont liquidate, if not then we will liquidate
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     # if we have an indicator that is different that we just calculated, we need to remove
@@ -450,72 +448,72 @@ def trade_execution_operations():
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
 
-        for element in buy:
+        for opportunity in buy:
             try:
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
 
-        for element in weak_buy:
+        for opportunity in weak_buy:
             try:
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
 
-        for element in strong_sell:
+        for opportunity in strong_sell:
             try:
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
 
-        for element in sell:
+        for opportunity in sell:
             try:
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
 
-        for element in weak_sell:
+        for opportunity in weak_sell:
             try:
-                if element in current_stock_position:
+                if opportunity in current_stock_position:
                     continue
                 else:
                     check_orders = api.list_orders(status='open')
                     for order in check_orders:
                         api.cancel_order(order.id)
-                    api.close_position(element)
+                    api.close_position(opportunity)
             except Exception as problem:
                 print(problem)
                 continue
@@ -542,12 +540,12 @@ def trade_execution_operations():
 
     print(block_purchase)
 
-    for element in strong_buy:
+    for opportunity in strong_buy:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.04) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -555,23 +553,23 @@ def trade_execution_operations():
             stop_loss = 0.9985 * price
             stoplosslimitprice = .9980 * price
             limit_price = 1.002 * price
-            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed strongbuy trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'strongbuy')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'strongbuy')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
             continue
 
-    for element in buy:
+    for opportunity in buy:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.03) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -579,23 +577,23 @@ def trade_execution_operations():
             limit_price = 1.0016 * price
             stop_loss = 0.9986 * price
             stoplosslimitprice = 0.9984 * price
-            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed buy trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'buy')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'buy')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
             continue
 
-    for element in weak_buy:
+    for opportunity in weak_buy:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.025) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -603,24 +601,24 @@ def trade_execution_operations():
             limit_price = 1.0012 * price
             stop_loss = 0.9988 * price
             stoplosslimitprice = 0.9986 * price
-            args = [element, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'buy', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed weakbuy trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'weakbuy')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'weakbuy')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
             continue
 
     # short trades
-    for element in strong_sell:
+    for opportunity in strong_sell:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.04) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -628,23 +626,23 @@ def trade_execution_operations():
             limit_price = .998 * price
             stop_loss = 1.0015 * price
             stoplosslimitprice = 1.0020 * price
-            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed strongsell trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'strongsell')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'strongsell')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
             continue
 
-    for element in sell:
+    for opportunity in sell:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.03) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -652,23 +650,23 @@ def trade_execution_operations():
             limit_price = .9984 * price
             stop_loss = 1.0012 * price
             stoplosslimitprice = 1.0016 * price
-            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed sell trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'sell')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'sell')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
             continue
 
-    for element in weak_sell:
+    for opportunity in weak_sell:
         try:
             for pos, it in enumerate(block_purchase):
-                if element in block_purchase[pos]:
-                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(element))
-            price = stock_prices[element]
+                if opportunity in block_purchase[pos]:
+                    raise Exception('{} Position has exceeded 10% of the portfolio value'.format(opportunity))
+            price = stock_prices[opportunity]
             account_percentage = (account_balance * 0.025) // price
             round_lot = int(account_percentage)
             if round_lot == 0:
@@ -676,12 +674,12 @@ def trade_execution_operations():
             limit_price = .9988 * price
             stop_loss = 1.0010 * price
             stoplosslimitprice = 1.0012 * price
-            args = [element, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
+            args = [opportunity, 'sell', str(round_lot), str(round(stop_loss, 2)), str(round(limit_price, 2)),
                     str(round(stoplosslimitprice, 2))]
             trader.Trader(args)
             notification.show_toast("Program Trades Executed", "Program executed weaksell trade of {} at {}".format(
-                                    element, time.strftime("%H:%M:%S")), duration=4)
-            pos = str(element + 'weaksell')
+                                    opportunity, time.strftime("%H:%M:%S")), duration=4)
+            pos = str(opportunity + 'weaksell')
             current_stock_position.append(pos)
         except Exception as error:
             print('The following error occurred during trade execution:\'{}\''.format(error))
@@ -699,18 +697,15 @@ def cleanup():
     # get rid of elements in lists that are dated 5 minutes and beyond to save memory
     if (end - start) > 300:
         for element in stock_tickers:
-            for p, i in enumerate(trade_data[element]):
-                if dt.datetime.strptime(i['time'], "%Y-%m-%d %H:%M:%S.%f") < \
-                        dt.datetime.now() - dt.timedelta(seconds=300):
-                    trade_data[element].remove(i)
-            for po, it in enumerate(quote_data[element]):
-                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < \
-                        dt.datetime.now() - dt.timedelta(seconds=300):
+            for p, it in enumerate(trade_data[element]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S.%f") < dt.datetime.now() - dt.timedelta(seconds=300):
+                    trade_data[element].remove(it)
+            for p, it in enumerate(quote_data[element]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - dt.timedelta(seconds=300):
                     quote_data[element].remove(it)
-            for pos, ite in enumerate(ti_data[element]):
-                if dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S") < \
-                        dt.datetime.now() - dt.timedelta(seconds=300):
-                    ti_data[element].remove(ite)
+            for p, it in enumerate(ti_data[element]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - dt.timedelta(seconds=300):
+                    ti_data[element].remove(it)
 
 
 def check_for_market_close():
@@ -727,9 +722,7 @@ def check_for_market_close():
 
 
 """
-
 END OF ALGO TRADER
-
 """
 
 
@@ -758,75 +751,62 @@ def formatting_excel(name):
 
 
 def web_scraping(tickers):
+    r = requests.get('https://www.marketwatch.com/investing/bond/tmubmusd01m?countrycode=bx')
+    soup = BeautifulSoup(r.text, 'lxml')
     try:
-        bond_url = 'http://www.marketwatch.com/investing/bond/tmubmusd01m?countrycode=bx'
-        driver.get(bond_url)
-        html = driver.execute_script('return document.body.innerHTML;')
-        soup = BeautifulSoup(html, 'lxml')
-        try:
-            bond_list = [entry.text for entry in
-                         soup.find_all('bg-quote', {'class': 'value', 'field': 'Last'})]
-            risk_free_rate = float(bond_list[0])
-            print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
-        except IndexError:
-            print("Failed to fetch 1-Month T-bond Yield! Setting to default value (0.01)")
-            risk_free_rate = 0.01
+        bond_list = [entry.text for entry in
+                     soup.find_all('bg-quote', {'class': 'value', 'field': 'Last'})]
+        risk_free_rate = float(bond_list[0])
+        print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+    except IndexError:
+        print("Failed to fetch 1-Month T-bond Yield! Setting to default value (0.01)")
+        risk_free_rate = 0.01
 
-        for url_stock in tickers:
-            quote = {}
-            stock_url = 'https://finance.yahoo.com/quote/' + url_stock + '?p=' + url_stock
-            driver.get(stock_url)
-            html = driver.execute_script('return document.body.innerHTML;')
-            soup = BeautifulSoup(html, 'lxml')
-            beta_metric = [entry.text for entry in soup.find_all('span', {'data-reactid': '144'})]
-            return_pct = [entry.text for entry in soup.find_all('span', {'data-reactid': '51'})]
-            delimiter1 = '('
-            delimiter2 = ')'
-            formatted_return = str(return_pct[0])
-            rt = formatted_return[formatted_return.find(delimiter1) + 1: formatted_return.find(delimiter2)]
-            return_string = rt.split("%")[0]
-            returns = float(return_string)
-            print(url_stock, returns)
-            quote['stock'] = url_stock
-            quote['beta'] = beta_metric[0]
-            quote['returns'] = round(returns, 4)
-            quote_data[url_stock] = quote
-        # spy
-        spy_url = 'https://finance.yahoo.com/quote/SPY?p=SPY'
-        driver.get(spy_url)
-        html = driver.execute_script('return document.body.innerHTML;')
-        soup = BeautifulSoup(html, 'lxml')
-        spy_returns_pct = [entry.text for entry in soup.find_all('span', {'data-reactid': '51'})]
+    for url_stock in tickers:
+        quote = {}
+        stock_url = 'https://finance.yahoo.com/quote/' + url_stock + '?p=' + url_stock
+        r = requests.get(stock_url)
+        soup = BeautifulSoup(r.text, 'lxml')
+        beta_metric = [entry.text for entry in soup.find_all('span', {'data-reactid': '144'})]
+        return_pct = [entry.text for entry in soup.find_all('span', {'data-reactid': '51'})]
         delimiter1 = '('
         delimiter2 = ')'
-        formatted_return = str(spy_returns_pct[0])
+        formatted_return = str(return_pct[0])
         rt = formatted_return[formatted_return.find(delimiter1) + 1: formatted_return.find(delimiter2)]
         return_string = rt.split("%")[0]
-        spy_returns = float(return_string)
-        return spy_returns, risk_free_rate
-    except Exception as er:
-        print(er)
-    finally:
-        driver.quit()
+        returns = float(return_string)
+        print(url_stock, returns)
+        quote['stock'] = url_stock
+        quote['beta'] = beta_metric[0]
+        quote['returns'] = round(returns, 4)
+        quote_data[url_stock] = quote
+    # spy
+    r = requests.get('https://finance.yahoo.com/quote/SPY?p=SPY')
+    soup = BeautifulSoup(r.text, 'lxml')
+    spy_returns_pct = [entry.text for entry in soup.find_all('span', {'data-reactid': '51'})]
+    delimiter1 = '('
+    delimiter2 = ')'
+    formatted_return = str(spy_returns_pct[0])
+    rt = formatted_return[formatted_return.find(delimiter1) + 1: formatted_return.find(delimiter2)]
+    return_string = rt.split("%")[0]
+    spy_returns = float(return_string)
+
+    return spy_returns, risk_free_rate
 
 
 def purchasing_filter(purchases_df):
-    # filtering out bull side long purchases
     long_purchases_df = purchases_df.loc[(purchases_df['side'] == 'buy') & (purchases_df['cumulative_sum'] > 0)]
     total_long_purchases = round(long_purchases_df['net_trade'].sum(), 2)
     print("Gross cost of long positions:", total_long_purchases)
 
-    # filtering out bear side 'buy to cover' purchases
     short_purchases_df = purchases_df.loc[(purchases_df['side'] == 'buy') & (purchases_df['cumulative_sum'] <= 0)]
     total_short_purchases = round(short_purchases_df['net_trade'].sum(), 2)
     print("Gross cost of short positions:", total_short_purchases)
 
-    # filtering bull side long sales
     long_sales_df = purchases_df.loc[purchases_df['side'] == 'sell']
     total_long_sells = round(long_sales_df['net_trade'].sum(), 2)
     print("Gross profit of long positions:", total_long_sells)
 
-    # filtering bear side short purchases
     short_sales_df = purchases_df.loc[purchases_df['side'] == 'sell_short']
     total_short_sells = round(short_sales_df['net_trade'].sum(), 2)
     print("Gross profit of short positions:", total_short_sells)
@@ -1045,7 +1025,7 @@ if __name__ == '__main__':
                     stock_buylist[ticker] = []
                     stock_shortlist[ticker] = []
                     stock_price_movement[ticker] = ''
-                ############################################################################################################
+                #######################################################################################################
                 while True:
                     try:
                         strong_buy = []
@@ -1410,7 +1390,6 @@ if __name__ == '__main__':
         quote_data[stock] = {}
     #########################################################################################
     # for quick debugging
-    driver = webdriver.Chrome(ChromeDriverManager().install())
     spyreturn, riskfreerate = web_scraping(stock_tickers)
     spyreturn = '{:.4f}'.format(spyreturn)
     spyreturn = float(spyreturn)
