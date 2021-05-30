@@ -49,7 +49,8 @@ def get_tickers():
     # let's try and filter out some more tickers before hand
     volume_start = 2340000
     mkt_cap_start = 500000000
-    print('Searching for stocks in the S&P 500 index with a volume of {} shares traded per second (on avg)'.format(volume_start // 23400))
+    print('Searching for stocks in the S&P 500 index with a volume of {} shares traded per second '
+          '(on avg)'.format(volume_start // 23400))
     print('and a minimum market cap of ${} billion'.format((mkt_cap_start / 1000000000)))
 
     volume_add = 0
@@ -168,8 +169,8 @@ START OF ALGO MAIN FUNCTIONS
 def on_message(ws, message):
     if message == '{"type":"ping"}':
         return
-    data = loads(message)
-    stock_fundamentals = data['data'][0]
+    DATA = loads(message)
+    stock_fundamentals = DATA['data'][0]
     time_integer = stock_fundamentals['t']
     timestamp = dt.datetime.fromtimestamp(time_integer / 1e3)
     timestamp = str("{}.{:03d}".format(timestamp.strftime('%Y-%m-%d %H:%M:%S'), timestamp.microsecond // 1000))
@@ -206,19 +207,19 @@ def stock_data_engine():
     scraped_stock_info = scrape_client.Scraper(stock_tickers)
     print(scraped_stock_info)
     quote = {}
-    for i in range(len(scraped_stock_info)):
-        if (i % 6) == 0:
-            quote['current price'] = float(scraped_stock_info[i].replace(",", ""))
-        if (i % 6) == 1:
-            quote['open price'] = float(scraped_stock_info[i].replace(",", ""))
-        if (i % 6) == 2:
-            quote['previous close'] = float(scraped_stock_info[i].replace(",", ""))
-        if (i % 6) == 3:
-            quote['indicator'] = str(scraped_stock_info[i])
-        if (i % 6) == 4:
+    for ITEM_POS in range(len(scraped_stock_info)):
+        if (ITEM_POS % 6) == 0:
+            quote['current price'] = float(scraped_stock_info[ITEM_POS].replace(",", ""))
+        if (ITEM_POS % 6) == 1:
+            quote['open price'] = float(scraped_stock_info[ITEM_POS].replace(",", ""))
+        if (ITEM_POS % 6) == 2:
+            quote['previous close'] = float(scraped_stock_info[ITEM_POS].replace(",", ""))
+        if (ITEM_POS % 6) == 3:
+            quote['indicator'] = str(scraped_stock_info[ITEM_POS])
+        if (ITEM_POS % 6) == 4:
             delimiter1 = '('
             delimiter2 = ')'
-            div = str(scraped_stock_info[i])
+            div = str(scraped_stock_info[ITEM_POS])
             dividend = div[div.find(delimiter1) + 1: div.find(delimiter2)]
             if dividend == 'N/A':
                 dividend = 0
@@ -226,8 +227,8 @@ def stock_data_engine():
                 div_string = dividend.split("%")[0]
                 dividend = float(div_string) / 100
             quote['dividend'] = dividend
-        if (i % 6) == 5:
-            st = str(scraped_stock_info[i])
+        if (ITEM_POS % 6) == 5:
+            st = str(scraped_stock_info[ITEM_POS])
             quote['stock'] = st
             quote['time'] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             quote_data[st].append(quote)
@@ -240,12 +241,12 @@ def stock_data_engine():
 def tech_indicators():
     resolution = ['1', '5', '15', '30', '60', 'D', 'W', 'M']
     for st in stock_tickers:
-        i = 0
+        TIME_PERIOD = 0
         while True:
             try:
                 timestamp_tech = time.strftime("%Y-%m-%d %H:%M:%S")
                 tech_url = 'https://finnhub.io/api/v1/scan/technical-indicator?symbol=' + st + \
-                           '&resolution=' + resolution[i] + '&token=bsq43v0fkcbdt6un6ivg'
+                           '&resolution=' + resolution[TIME_PERIOD] + '&token=bsq43v0fkcbdt6un6ivg'
                 r = get(tech_url)
                 ti = r.json()
                 technical = ti['technicalAnalysis']['count']
@@ -258,9 +259,9 @@ def tech_indicators():
                 df_tech.set_index('signal', inplace=True)
                 print(df_tech)
             except KeyError:
-                if i == 7:
+                if TIME_PERIOD == 7:
                     break
-                i += 1
+                TIME_PERIOD += 1
             break
 
 
@@ -287,33 +288,33 @@ def main_data_engine():
 
 
 def ticker_operations():
-    for element in stock_tickers:
-        timestamp = dt.datetime.strptime(quote_data[element][-1]['time'][11::], '%H:%M:%S').time()
-        indicator = quote_data[element][-1]['indicator']
+    for STOCK_TICKER in stock_tickers:
+        timestamp = dt.datetime.strptime(quote_data[STOCK_TICKER][-1]['time'][11::], '%H:%M:%S').time()
+        indicator = quote_data[STOCK_TICKER][-1]['indicator']
         if len(ti_data) > 0:
-            buy_votes = int(ti_data[element][-1]['buy'])
-            sell_votes = int(ti_data[element][-1]['sell'])
-            neutral_votes = int(ti_data[element][-1]['neutral'])
-            indicator_votes[element]['Bullish Votes'] += buy_votes
-            indicator_votes[element]['Bearish Votes'] += sell_votes
-            indicator_votes[element]['Neutral Votes'] += neutral_votes
+            buy_votes = int(ti_data[STOCK_TICKER][-1]['buy'])
+            sell_votes = int(ti_data[STOCK_TICKER][-1]['sell'])
+            neutral_votes = int(ti_data[STOCK_TICKER][-1]['neutral'])
+            indicator_votes[STOCK_TICKER]['Bullish Votes'] += buy_votes
+            indicator_votes[STOCK_TICKER]['Bearish Votes'] += sell_votes
+            indicator_votes[STOCK_TICKER]['Neutral Votes'] += neutral_votes
 
         if indicator == 'Bullish':
-            indicator_votes[element]['Bullish Votes'] += 1
+            indicator_votes[STOCK_TICKER]['Bullish Votes'] += 1
         if indicator == 'Bearish':
-            indicator_votes[element]['Bearish Votes'] += 1
+            indicator_votes[STOCK_TICKER]['Bearish Votes'] += 1
 
-        if indicator_votes[element]['Bullish Votes'] > indicator_votes[element]['Bearish Votes'] and \
-                indicator_votes[element]['Bullish Votes'] > indicator_votes[element]['Neutral Votes']:
-            stock_buylist[element].append('Very Bullish at: ' + str(timestamp))
-        elif indicator_votes[element]['Bullish Votes'] > indicator_votes[element]['Bearish Votes']:
-            stock_buylist[element].append('Bullish at: ' + str(timestamp))
+        if indicator_votes[STOCK_TICKER]['Bullish Votes'] > indicator_votes[STOCK_TICKER]['Bearish Votes'] and \
+                indicator_votes[STOCK_TICKER]['Bullish Votes'] > indicator_votes[STOCK_TICKER]['Neutral Votes']:
+            stock_buylist[STOCK_TICKER].append('Very Bullish at: ' + str(timestamp))
+        elif indicator_votes[STOCK_TICKER]['Bullish Votes'] > indicator_votes[STOCK_TICKER]['Bearish Votes']:
+            stock_buylist[STOCK_TICKER].append('Bullish at: ' + str(timestamp))
 
-        if indicator_votes[element]['Bearish Votes'] > indicator_votes[element]['Bullish Votes'] and \
-                indicator_votes[element]['Bearish Votes'] > indicator_votes[element]['Neutral Votes']:
-            stock_shortlist[element].append('Very Bearish at: ' + str(timestamp))
-        elif indicator_votes[element]['Bearish Votes'] > indicator_votes[element]['Bullish Votes']:
-            stock_shortlist[element].append('Bearish at: ' + str(timestamp))
+        if indicator_votes[STOCK_TICKER]['Bearish Votes'] > indicator_votes[STOCK_TICKER]['Bullish Votes'] and \
+                indicator_votes[STOCK_TICKER]['Bearish Votes'] > indicator_votes[STOCK_TICKER]['Neutral Votes']:
+            stock_shortlist[STOCK_TICKER].append('Very Bearish at: ' + str(timestamp))
+        elif indicator_votes[STOCK_TICKER]['Bearish Votes'] > indicator_votes[STOCK_TICKER]['Bullish Votes']:
+            stock_shortlist[STOCK_TICKER].append('Bearish at: ' + str(timestamp))
 
     print('Stocks of interest:', stock_tickers)
     print('Buy Side Stocklist:', stock_buylist)
@@ -322,20 +323,20 @@ def ticker_operations():
 
 
 def volume_operations():
-    for element in stock_tickers:
+    for STOCK_TICKER in stock_tickers:
         volume_past_30sec = 0
         volume_past_min = 0
         volume_past_2min = 0
         volume_past_5min = 0
         stock_price = 0
-        stock_list_length[element] = 0
+        stock_list_length[STOCK_TICKER] = 0
         length = []
-        stock_prices[element] = []
-        for pos, ite in enumerate(trade_data[element]):
-            if pos >= int(len(trade_data[element]) - 25):
+        stock_prices[STOCK_TICKER] = []
+        for pos, ite in enumerate(trade_data[STOCK_TICKER]):
+            if pos >= int(len(trade_data[STOCK_TICKER]) - 25):
                 stock_price += ite['price']
                 length.append(ite)
-                stock_list_length[element] = int(len(length))
+                stock_list_length[STOCK_TICKER] = int(len(length))
             ##############################################################################
             tradetime = dt.datetime.strptime(ite['time'], "%Y-%m-%d %H:%M:%S.%f")
             if tradetime > dt.datetime.now() - dt.timedelta(seconds=30):
@@ -348,11 +349,11 @@ def volume_operations():
                 volume_past_5min += int(ite['volume'])
         ##############################################################################
         try:
-            stock_prices[element] = float("{:.3f}".format(stock_price / stock_list_length[element]))
+            stock_prices[STOCK_TICKER] = float("{:.3f}".format(stock_price / stock_list_length[STOCK_TICKER]))
         except ZeroDivisionError:
-            stock_prices[element] = quote_data[element][-1]['current price']
+            stock_prices[STOCK_TICKER] = quote_data[STOCK_TICKER][-1]['current price']
             pass
-        volume_terms[element] = volume_past_30sec, volume_past_min, volume_past_2min, volume_past_5min
+        volume_terms[STOCK_TICKER] = volume_past_30sec, volume_past_min, volume_past_2min, volume_past_5min
         ##############################################################################
     print('volume by stock ordered 30sec, 1min, 2min and 5min:', volume_terms)
     print('stock prices:', stock_prices)
@@ -380,29 +381,30 @@ def analysis_operations():
                     stock_price_movement[sto] = 'short-term decrease in price'
     print(stock_price_movement)
     ##############################################################################
-    for element in stock_price_movement:
-        if 'increase' in stock_price_movement[element]:
-            if len(stock_buylist[element]) > 2:
-                if quote_data[element][-1]['current price'] > quote_data[element][-2]['current price'] > \
-                        quote_data[element][-3]['current price']:
-                    if 'Very Bullish' in stock_buylist[element][-1] and 'Very Bullish' in stock_buylist[element][-2]:
-                        strong_buy.append(element)
-                elif quote_data[element][-1]['current price'] > quote_data[element][-2]['current price']:
-                    if 'Bullish' in stock_buylist[element][-1] and 'Bullish' in stock_buylist[element][-2]:
-                        buy.append(element)
+    for STOCK_QUOTE in stock_price_movement:
+        if 'increase' in stock_price_movement[STOCK_QUOTE]:
+            if len(stock_buylist[STOCK_QUOTE]) > 2:
+                if quote_data[STOCK_QUOTE][-1]['current price'] > quote_data[STOCK_QUOTE][-2]['current price'] > \
+                        quote_data[STOCK_QUOTE][-3]['current price']:
+                    if 'Very Bullish' in stock_buylist[STOCK_QUOTE][-1] and 'Very Bullish' in \
+                            stock_buylist[STOCK_QUOTE][-2]:
+                        strong_buy.append(STOCK_QUOTE)
+                elif quote_data[STOCK_QUOTE][-1]['current price'] > quote_data[STOCK_QUOTE][-2]['current price']:
+                    if 'Bullish' in stock_buylist[STOCK_QUOTE][-1] and 'Bullish' in stock_buylist[STOCK_QUOTE][-2]:
+                        buy.append(STOCK_QUOTE)
                 else:
-                    weak_buy.append(element)
-        if 'decrease' in stock_price_movement[element]:
-            if len(stock_shortlist[element]) > 2:
-                if quote_data[element][-1]['current price'] < quote_data[element][-2]['current price'] < \
-                        quote_data[element][-3]['current price']:
-                    if 'Very Bearish' in stock_shortlist[element][-1] and 'Very Bearish' in element:
-                        strong_sell.append(element)
-                elif quote_data[element][-1]['current price'] < quote_data[element][-2]['current price']:
-                    if 'Bearish' in stock_shortlist[element][-1] and 'Bearish' in stock_shortlist[element][-2]:
-                        sell.append(element)
+                    weak_buy.append(STOCK_QUOTE)
+        if 'decrease' in stock_price_movement[STOCK_QUOTE]:
+            if len(stock_shortlist[STOCK_QUOTE]) > 2:
+                if quote_data[STOCK_QUOTE][-1]['current price'] < quote_data[STOCK_QUOTE][-2]['current price'] < \
+                        quote_data[STOCK_QUOTE][-3]['current price']:
+                    if 'Very Bearish' in stock_shortlist[STOCK_QUOTE][-1] and 'Very Bearish' in STOCK_QUOTE:
+                        strong_sell.append(STOCK_QUOTE)
+                elif quote_data[STOCK_QUOTE][-1]['current price'] < quote_data[STOCK_QUOTE][-2]['current price']:
+                    if 'Bearish' in stock_shortlist[STOCK_QUOTE][-1] and 'Bearish' in stock_shortlist[STOCK_QUOTE][-2]:
+                        sell.append(STOCK_QUOTE)
                 else:
-                    weak_sell.append(element)
+                    weak_sell.append(STOCK_QUOTE)
     ####################################################################################################################
     if len(strong_buy) > 0:
         print('Stock Strong Buy List:', strong_buy)
@@ -696,16 +698,19 @@ def check_trades():
 def cleanup():
     # get rid of elements in lists that are dated 5 minutes and beyond to save memory
     if (end - start) > 300:
-        for element in stock_tickers:
-            for p, it in enumerate(trade_data[element]):
-                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S.%f") < dt.datetime.now() - dt.timedelta(seconds=300):
-                    trade_data[element].remove(it)
-            for p, it in enumerate(quote_data[element]):
-                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - dt.timedelta(seconds=300):
-                    quote_data[element].remove(it)
-            for p, it in enumerate(ti_data[element]):
-                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - dt.timedelta(seconds=300):
-                    ti_data[element].remove(it)
+        for STOCK in stock_tickers:
+            for p, it in enumerate(trade_data[STOCK]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S.%f") < dt.datetime.now() - \
+                        dt.timedelta(seconds=300):
+                    trade_data[STOCK].remove(it)
+            for p, it in enumerate(quote_data[STOCK]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - \
+                        dt.timedelta(seconds=300):
+                    quote_data[STOCK].remove(it)
+            for p, it in enumerate(ti_data[STOCK]):
+                if dt.datetime.strptime(it['time'], "%Y-%m-%d %H:%M:%S") < dt.datetime.now() - \
+                        dt.timedelta(seconds=300):
+                    ti_data[STOCK].remove(it)
 
 
 def check_for_market_close():
@@ -728,17 +733,17 @@ END OF ALGO TRADER
 
 def data_to_excel(metrics):
     book = openpyxl.load_workbook('Portfolio Data.xlsx')
-    writer = pd.ExcelWriter('Portfolio Data.xlsx', engine='openpyxl')
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    metrics.to_excel(writer, sheet_name=sheet_name)
+    excel_writer = pd.ExcelWriter('Portfolio Data.xlsx', engine='openpyxl')
+    excel_writer.book = book
+    excel_writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    metrics.to_excel(excel_writer, sheet_name=sheet_name)
     try:
         sheet = book['Sheet']
         book.remove(sheet)
         book.save('Portfolio Data.xlsx')
     except KeyError:
         pass
-    writer.save()
+    excel_writer.save()
 
 
 def formatting_excel(name):
@@ -755,12 +760,12 @@ def web_scraping(tickers):
     soup = BeautifulSoup(r.text, 'lxml')
     try:
         bond_list = [entry.text for entry in
-                     soup.find_all('bg-quote', {'class': 'value', 'field': 'Last'})]
-        risk_free_rate = float(bond_list[0])
-        print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+                     soup.find_all('span', {'class': 'value'})]
+        bond_rate = float(bond_list[-1])
+        print("1 month risk-free-rate", str(bond_rate) + str('%'))
     except IndexError:
         print("Failed to fetch 1-Month T-bond Yield! Setting to default value (0.01)")
-        risk_free_rate = 0.01
+        bond_rate = 0.01
 
     for url_stock in tickers:
         quote = {}
@@ -791,7 +796,7 @@ def web_scraping(tickers):
     return_string = rt.split("%")[0]
     spy_returns = float(return_string)
 
-    return spy_returns, risk_free_rate
+    return spy_returns, bond_rate
 
 
 def purchasing_filter(purchases_df):
@@ -817,8 +822,8 @@ def suffix(d):
     return 'th' if 11 <= d <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(d % 10, 'th')
 
 
-def custom_strftime(format, t):
-    return t.strftime(format).replace('{S}', str(t.day) + suffix(t.day))
+def custom_strftime(time_format, t):
+    return t.strftime(time_format).replace('{S}', str(t.day) + suffix(t.day))
 
 
 if __name__ == '__main__':
@@ -906,7 +911,6 @@ if __name__ == '__main__':
                 obv_score_array()
 
         ###############################################################################################################
-
             while True:
                 minimum_position = 1.0
                 maximum_position = 3.0
@@ -924,8 +928,8 @@ if __name__ == '__main__':
                                             if row[0] not in stock_tickers:
                                                 stock_tickers.append(row[0])
                     print(stock_tickers)
-                    AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug\Web"
-                                 r"scraper Class Library.dll")
+                    AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin"
+                                 r"\Debug\Webscraper Class Library.dll")
                     import CSharpwebscraper
                     scraper = CSharpwebscraper.Webscraper()
                     for position, item in enumerate(stock_tickers):
@@ -1015,7 +1019,8 @@ if __name__ == '__main__':
                 stock_price_movement = {}
                 cutoff_bool = False
                 errormessage_market_close = 'The market is currently closed'
-                errormessage_5min_to_close = 'The market is closing in 5 minutes, be warned that any new positions may be held'
+                errormessage_5min_to_close = 'The market is closing in 5 minutes, be warned that any new positions ' \
+                                             'may be held until the next trading day'
                 errormessage_trade_fetch = 'No trades gathered'
                 for ticker in stock_tickers:
                     indicator_votes[ticker] = {'Bullish Votes': 0, 'Bearish Votes': 0, 'Neutral Votes': 0}
@@ -1065,8 +1070,9 @@ if __name__ == '__main__':
                         if e == errormessage_trade_fetch or ZeroDivisionError:
                             break
                         else:
-                            notification.show_toast("Program Critical Error", "Program Raised Error {}".format(e), duration=5)
-                            print('All pending orders will be cancelled and all positions will be liquidated immediately')
+                            notification.show_toast("Program Critical Error", "Program Raised Error {}".format(e),
+                                                    duration=5)
+                            print('All pending orders will be cancelled and all positions will be liquidated')
                             api.cancel_all_orders()
                             api.close_all_positions()
                 if cutoff_bool:
@@ -1113,7 +1119,8 @@ if __name__ == '__main__':
                 prev_day_activities = api.get_activities(activity_types='FILL', date=prev_day_date)
                 prev_days_activities_df = pd.DataFrame([activity._raw for activity in prev_day_activities])
                 prev_days_activities_df = prev_days_activities_df.iloc[::-1]
-                prev_days_activities_df[['price', 'qty']] = prev_days_activities_df[['price', 'qty']].apply(pd.to_numeric)
+                prev_days_activities_df[['price', 'qty']] = \
+                    prev_days_activities_df[['price', 'qty']].apply(pd.to_numeric)
                 prev_days_activities_df['net_qty'] = np.where(prev_days_activities_df.side == 'buy',
                                                               prev_days_activities_df.qty, -prev_days_activities_df.qty)
                 prev_days_activities_df['net_trade'] = -prev_days_activities_df.net_qty * prev_days_activities_df.price
@@ -1145,8 +1152,8 @@ if __name__ == '__main__':
 
                 for stock in open_tickers:
                     open_position_catalog[stock] = reversed(open_position_catalog[stock])
-                    activities_df = pd.concat([pd.DataFrame(open_position_catalog[stock]), activities_df], ignore_index=True)
-
+                    activities_df = pd.concat([pd.DataFrame(open_position_catalog[stock]), activities_df],
+                                              ignore_index=True)
             except Exception as e:
                 print("Based on the lack of previous days trades, there is probably not an open position")
             break
@@ -1187,6 +1194,7 @@ if __name__ == '__main__':
         length_of_df = grouped_trades_df.index
         for index, row in grouped_trades_df.copy().iterrows():
             if grouped_trades_df['type'][index] == 'partial_fill':
+                # noinspection PyTypeChecker
                 for i in range((index+1), (len(length_of_df) - 1)):
                     if grouped_trades_df['side'][index] == grouped_trades_df['side'][i]:
                         grouped_trades_df['qty'][i] += grouped_trades_df['qty'][index]
@@ -1296,7 +1304,8 @@ if __name__ == '__main__':
     print("Average stock held for:", round(avg_long_stock_hold_time, 2), 'seconds')
     print("Average short stock held for:", round(avg_short_stock_hold_time, 2), 'seconds')
 
-    avg_total_trade_length = time.strftime("%#M:%S", time.gmtime((avg_short_trade_hold_time + avg_long_trade_hold_time)))
+    avg_total_trade_length = time.strftime("%#M:%S", time.gmtime((avg_short_trade_hold_time +
+                                                                  avg_long_trade_hold_time)))
     avg_short_trade_length = time.strftime("%#M:%S", time.gmtime(avg_short_trade_hold_time))
     avg_long_trade_length = time.strftime("%#M:%S", time.gmtime(avg_long_trade_hold_time))
 
@@ -1450,24 +1459,26 @@ if __name__ == '__main__':
 
     # this is the 2d list used to convert into a pandas dataframe for easy transcription onto an excel document
     data = [['Profit Metrics', '', '', ''],
-        ['Total Net Profit:', todays_profit_and_loss, net_long_profit, net_short_profit],
-        ['Gross Profit:', total_gross_profit, long_gross_profit, short_gross_profit],
-        ['Gross Loss:', total_gross_loss, long_gross_loss, short_gross_loss],
-        ['Profit Factor:', total_profit_factor, long_profit_factor, short_profit_factor],
-        ['', '', '', ''],
-        ['Trade Metrics', '', '', ''],
-        ['Total Number of Trades:', int(total_long_trades + total_short_trades), total_long_trades, total_short_trades],
-        ['Percent Profitable:', str(total_percent_profitable) + str("%"), str(long_percent_profitable) + str('%'),
-         str(short_percent_profitable) + str('%')],
-        ['Average Stock Held Time (Seconds):', avg_total_trade_length, avg_long_trade_length, avg_short_trade_length],
-        ['Winning Trades:', long_winning_trades + short_winning_trades, long_winning_trades, short_winning_trades],
-        ['Average Winning Trade:', avg_winning_trade, avg_long_winning_trade, avg_short_winning_trade],
-        ['Losing Trades:', long_losing_trades + short_losing_trades, long_losing_trades, short_losing_trades],
-        ['Average Losing Trade:', avg_losing_trade, avg_long_losing_trade, avg_short_losing_trade],
-        ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades],
-        ['', '', '', ''],
-        ['Stock Metrics', '', '', ''],
-        spdr_list] + stock_metrics
+            ['Total Net Profit:', todays_profit_and_loss, net_long_profit, net_short_profit],
+            ['Gross Profit:', total_gross_profit, long_gross_profit, short_gross_profit],
+            ['Gross Loss:', total_gross_loss, long_gross_loss, short_gross_loss],
+            ['Profit Factor:', total_profit_factor, long_profit_factor, short_profit_factor],
+            ['', '', '', ''],
+            ['Trade Metrics', '', '', ''],
+            ['Total Number of Trades:', int(total_long_trades + total_short_trades), total_long_trades,
+             total_short_trades],
+            ['Percent Profitable:', str(total_percent_profitable) + str("%"), str(long_percent_profitable) + str('%'),
+             str(short_percent_profitable) + str('%')],
+            ['Average Stock Held Time (Seconds):', avg_total_trade_length, avg_long_trade_length,
+             avg_short_trade_length],
+            ['Winning Trades:', long_winning_trades + short_winning_trades, long_winning_trades, short_winning_trades],
+            ['Average Winning Trade:', avg_winning_trade, avg_long_winning_trade, avg_short_winning_trade],
+            ['Losing Trades:', long_losing_trades + short_losing_trades, long_losing_trades, short_losing_trades],
+            ['Average Losing Trade:', avg_losing_trade, avg_long_losing_trade, avg_short_losing_trade],
+            ['Even Trades', long_even_trades + short_even_trades, long_even_trades, short_even_trades],
+            ['', '', '', ''],
+            ['Stock Metrics', '', '', ''],
+            spdr_list] + stock_metrics
 
     # if i want to add further rows in the future, simply do
     # data + 2d list
