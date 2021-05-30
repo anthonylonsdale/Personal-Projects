@@ -188,7 +188,7 @@ def risk_free_rate():
     bond_list = [entry.text for entry in
                  soup.find_all('span', {'class': 'value'})]
     bond_rate = float(bond_list[-1])
-    print("1 month risk-free-rate", str(risk_free_rate) + str('%'))
+    print("1 month risk-free-rate", str(bond_rate) + str('%'))
     return bond_rate
 
 
@@ -216,4 +216,3 @@ if __name__ == '__main__':
     stock_data_engine()
     options_expirations, options_expirations_integers = options()
     options_calculations(options_expirations, options_expirations_integers)
-
