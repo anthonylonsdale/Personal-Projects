@@ -1,6 +1,3 @@
-# to be used as a module with the alpaca api being an argument
-
-
 import time
 import os
 import yfinance as yf
@@ -115,10 +112,9 @@ def obv_score_array(parent_dir):
 
 class APIbootstrap:
     def __init__(self):
-        key = "PKCPC6RJ84BG84W3PB60"
-        sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
-        url = "https://paper-api.alpaca.markets"
-        self.api = trade_api.REST(key, sec, url, api_version='v2')
+        token_file = open("alpaca_keys.txt")
+        keys = token_file.readlines()
+        self.api = trade_api.REST(keys[0], keys[1], "https://paper-api.alpaca.markets", api_version='v2')
 
     def get_tickers(self, *args):
         parent_dir = r"C:/Users/fabio/PycharmProjects/AlgoTrader"
@@ -156,9 +152,10 @@ class APIbootstrap:
             start_reducing = False
             stock_tickers = []
             try:
-                if os.path.isfile('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv)):
-                    if os.stat('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv)).\
-                            st_size > 0:
+                if os.path.isfile('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir,
+                                                                                          date_for_obv)):
+                    if os.stat('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir,
+                                                                                       date_for_obv)).st_size > 0:
                         with open('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv),
                                   'r') as f:
                             reader = csv.reader(f)
@@ -207,7 +204,7 @@ class APIbootstrap:
                 print(e)
                 print("An error with the automated stock fetcher was found")
                 break
-            return stock_tickers
+        return stock_tickers
 
 
 if __name__ == '__main__':
