@@ -1,4 +1,5 @@
-# updated to full functionality
+# to be used as a module with the alpaca api being an argument
+
 
 import time
 import os
@@ -7,11 +8,13 @@ import pandas as pd
 import shutil
 import glob
 import requests
-import openpyxl
 import alpaca_trade_api as trade_api
+import datetime as dt
+from clr import AddReference
+import csv
 
 
-def get_tickers():
+def get_tickers(api):
     tickers = []
     table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     df = table[0]
@@ -20,11 +23,12 @@ def get_tickers():
 
     # these headers and params are subject to change in the event NASDAQ changes its API
     headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
-               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chr'
-                             'ome/87.0.4280.141 Safari/537.36',
+               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                             ' Chrome/87.0.4280.141 Safari/537.36',
                'origin': 'https://www.nasdaq.com', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors',
                'sec-fetch-dest': 'empty', 'referer': 'https://www.nasdaq.com/', 'accept-language': 'en-US,en;q=0.9', }
     params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
+
     r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=params)
     data = r.json()['data']
     df = pd.DataFrame(data['rows'], columns=data['headers'])
@@ -33,7 +37,7 @@ def get_tickers():
     df = df[df.country == 'United States']
     df['marketCap'] = pd.to_numeric(df['marketCap'])
     df['volume'] = pd.to_numeric(df['volume'])
-    # Drop all stocks with less than 500 million in market cap and more than 2 trillion
+    # Drop all stocks with less than 500 million in market cap
     df = df[df.marketCap > 500000000]
     df = df[df.marketCap != 0 & df.marketCap.notnull()]
     # I believe an acceptable level of liquidity is at least 100 shares traded per second avg,
@@ -41,43 +45,33 @@ def get_tickers():
     df = df[df.volume > 2340000]
 
     # we should probably test these stocks to see if they are tradeable on alpaca
-    for index, row in df.iterrows():
+    for index, iterrow in df.iterrows():
         for i in range(len(sandp500tickers)):
-            stock = row['symbol']
-            if stock == sandp500tickers[i]:
+            ticker = iterrow['symbol']
+            if ticker == sandp500tickers[i]:
                 try:
-                    asset = api.get_asset(stock)
+                    asset = api.get_asset(ticker)
                     print(asset)
                     if asset.tradable and asset.easy_to_borrow and asset.marginable and asset.shortable:
-                        tickers.append(stock)
+                        tickers.append(ticker)
                 except Exception as error:
                     print(error)
                     pass
 
-    book = openpyxl.load_workbook('Ticker Selections.xlsx')
-    writer = pd.ExcelWriter('Ticker Selections.xlsx', engine='openpyxl')
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    df.to_excel(writer)
-    book.save('Ticker Selections.xlsx')
-    writer.save()
-
-    print(tickers)
-    print(len(tickers))
     return tickers
 
 
-def api_calls(tickers):
+def api_calls(tickers, parent_dir):
     yfinance_api_calls = 0
     stock_failures = 0
     stocks_not_imported = 0
     i = 0
     while (i < len(tickers)) and (yfinance_api_calls < 1800):
         try:
-            stock = tickers[i]  # Gets the current stock ticker
-            temp = yf.Ticker(str(stock))
+            ticker = tickers[i]  # Gets the current stock ticker
+            temp = yf.Ticker(str(ticker))
             his_data = temp.history(period="max")
-            his_data.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks\\" + stock + ".csv")
+            his_data.to_csv(r"{}/ALGO/Daily Stock Analysis/Stocks/{}.csv".format(parent_dir, ticker))
             time.sleep(2)
             yfinance_api_calls += 1
             stock_failures = 0
@@ -93,8 +87,8 @@ def api_calls(tickers):
     print("The amount of stocks we successfully imported: " + str(i - stocks_not_imported))
 
 
-def obv_score_array():
-    list_files = (glob.glob(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks\\*.csv"))
+def obv_score_array(parent_dir):
+    list_files = (glob.glob(r"{}/ALGO/Daily Stock Analysis/Stocks/*.csv".format(parent_dir)))
     new_data = []  # This will be a 2D array to hold our stock name and OBV score
     interval = 0  # Used for iteration
     while interval < len(list_files):
@@ -119,29 +113,103 @@ def obv_score_array():
     return new_data
 
 
-if __name__ == '__main__':
-    if not os.path.isfile(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Ticker Selections.xlsx"):
-        wb = openpyxl.Workbook()
-        wb.save('Ticker Selections.xlsx')
+class APIbootstrap:
+    def __init__(self):
+        key = "PKCPC6RJ84BG84W3PB60"
+        sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
+        url = "https://paper-api.alpaca.markets"
+        self.api = trade_api.REST(key, sec, url, api_version='v2')
 
-    try:
-        shutil.rmtree(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
-    except Exception as e:
-        print(e)
-        pass
-    os.mkdir(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\Stocks")
-    ###################################################################################################################
-    key = "PKCPC6RJ84BG84W3PB60"
-    sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
-    url = "https://paper-api.alpaca.markets"
-    api = trade_api.REST(key, sec, url, api_version='v2')
-    ###################################################################################################################
-    stock_tickers = get_tickers()
-    api_calls(stock_tickers)
-    obv_score_array = obv_score_array()
-    ###################################################################################################################
-    obv_dataframe = pd.DataFrame(obv_score_array, columns=['Stock', 'OBV_Value'])
-    obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)  # Rank the stocks by their OBV
-    obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)  # Sort the ranked stocks
-    print(obv_dataframe)
-    obv_dataframe.to_csv(r"C:\Users\fabio\PycharmProjects\AlgoTrader\Daily Stock Analysis\OBV_Ranked.csv", index=False)
+    def get_tickers(self, *args):
+        parent_dir = r"C:/Users/fabio/PycharmProjects/AlgoTrader"
+
+        date_for_obv = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
+        print(date_for_obv)
+        if os.path.isfile('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv)):
+            print('OBV data exists for today')
+        else:
+            try:
+                shutil.rmtree("{}/ALGO/Daily Stock Analysis/Stocks".format(parent_dir))
+                os.mkdir("{}/ALGO/Daily Stock Analysis/Stocks".format(parent_dir))
+            except FileNotFoundError:
+                try:
+                    os.mkdir("{}/ALGO/Daily Stock Analysis".format(parent_dir))
+                except FileExistsError:
+                    pass
+                os.mkdir("{}/ALGO/Daily Stock Analysis/Stocks".format(parent_dir))
+
+            stock_tickers = get_tickers(self.api)
+            api_calls(stock_tickers, parent_dir)
+            obv_array = obv_score_array(parent_dir)
+
+            obv_dataframe = pd.DataFrame(obv_array, columns=['Stock', 'OBV_Value'])
+            obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
+            obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)  # Sort the ranked stocks
+            print(obv_dataframe)
+            obv_dataframe.to_csv('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv),
+                                 index=False)
+
+        while True:
+            minimum_position = 1.0
+            maximum_position = 3.0
+            retry = False
+            start_reducing = False
+            stock_tickers = []
+            try:
+                if os.path.isfile('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv)):
+                    if os.stat('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv)).\
+                            st_size > 0:
+                        with open('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv),
+                                  'r') as f:
+                            reader = csv.reader(f)
+                            for position, row in enumerate(reader):
+                                if position > 0:
+                                    if minimum_position <= position <= maximum_position:
+                                        if row[0] not in stock_tickers:
+                                            stock_tickers.append(row[0])
+                print(stock_tickers)
+                AddReference(
+                    r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin"
+                    r"\Debug\Webscraper Class Library.dll")
+                import CSharpwebscraper
+
+                scraper = CSharpwebscraper.Webscraper()
+                for position, item in enumerate(stock_tickers):
+                    stock = [stock_tickers[position]]
+                    try:
+                        scraper.Scraper(stock)
+                    except Exception as e:
+                        print(e, "Error Found with Tickers!")
+                        line = stock_tickers[position]
+                        lines = []
+                        with open('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv),
+                                  'r') as f:
+                            reader = csv.reader(f)
+                            for place, row in enumerate(reader):
+                                if place > 0:
+                                    if row[0] == line:
+                                        start_reducing = True
+                                        continue
+                                    if start_reducing:
+                                        row[2] = float(row[2]) - 1
+                                    lines.append(row)
+                                else:
+                                    lines.append(row)
+                        with open('{}/ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(parent_dir, date_for_obv),
+                                  'w') as w:
+                            writer = csv.writer(w, lineterminator='\n')
+                            writer.writerows(lines)
+                        retry = True
+                        print(stock_tickers)
+                if not retry:
+                    break
+            except Exception as e:
+                print(e)
+                print("An error with the automated stock fetcher was found")
+                break
+            return stock_tickers
+
+
+if __name__ == '__main__':
+    Bootstrapper = APIbootstrap()
+    Bootstrapper.get_tickers()
