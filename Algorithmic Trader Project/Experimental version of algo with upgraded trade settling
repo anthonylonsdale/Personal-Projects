@@ -1,9 +1,6 @@
 # updated to full functionality
 
-import yfinance as yf
 import pandas as pd
-import shutil
-import glob
 import requests
 from win10toast import ToastNotifier
 from requests import get
@@ -13,7 +10,6 @@ import threading as th
 import alpaca_trade_api as trade_api
 import datetime as dt
 from clr import AddReference
-import csv
 from pandas import DataFrame
 import openpyxl
 import win32com.client as win32
@@ -23,147 +19,7 @@ import numpy as np
 import time
 import sys
 
-
-def get_tickers():
-    tickers = []
-    table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
-    df = table[0]
-    sp500tickers = df['Symbol'].to_list()
-
-    # these headers and params are subject to change in the event NASDAQ changes its API
-    headers = {'authority': 'api.nasdaq.com', 'accept': 'application/json, text/plain, */*',
-               'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                             ' Chrome/87.0.4280.141 Safari/537.36',
-               'origin': 'https://www.nasdaq.com', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors',
-               'sec-fetch-dest': 'empty', 'referer': 'https://www.nasdaq.com/', 'accept-language': 'en-US,en;q=0.9', }
-    params = (('tableonly', 'true'), ('limit', '25'), ('offset', '0'), ('download', 'true'),)
-
-    r = requests.get('https://api.nasdaq.com/api/screener/stocks', headers=headers, params=params)
-    json_data = r.json()['data']
-    df = pd.DataFrame(json_data['rows'], columns=json_data['headers'])
-    df = df[df.country == 'United States']
-    df['marketCap'] = pd.to_numeric(df['marketCap'])
-    df['volume'] = pd.to_numeric(df['volume'])
-    df = df[df.marketCap != 0 & df.marketCap.notnull()]
-
-    # let's try and filter out some more tickers before hand
-    volume_start = 2340000
-    mkt_cap_start = 500000000
-    print('Searching for stocks in the S&P 500 index with a volume of {} shares traded per second '
-          '(on avg)'.format(volume_start // 23400))
-    print('and a minimum market cap of ${} billion'.format((mkt_cap_start / 1000000000)))
-
-    volume_add = 0
-    mkt_cap_add = 0
-    print_ticker_boolean = True
-    while len(df.index) > 100:
-        volume_start += volume_add
-        mkt_cap_start += mkt_cap_add
-        df = df[df.volume > volume_start]
-        df = df[df.marketCap > mkt_cap_start]
-        volume_add += 10000
-        mkt_cap_add += 10000000
-        if print_ticker_boolean:
-            print('Found {} tickers that met our conditions, tightening restrictions'.format(str(len(df.index))))
-            print_ticker_boolean = False
-    print("-----------------------------------------------------------------------------------------------------------")
-    print('A total of {} tickers were found with a volume of {} shares traded per second (on avg)'.format(
-        len(df.index), volume_start // 23400))
-    print('with a minimum market cap of ${} billion'.format(mkt_cap_start / 1000000000))
-
-    for INDEX, ROW in df.iterrows():
-        for sp500ticker in range(len(sp500tickers)):
-            ticker_to_list = ROW['symbol']
-            if ticker_to_list == sp500tickers[sp500ticker]:
-                try:
-                    api_asset = api.get_asset(ticker_to_list)
-                    if api_asset.tradable and api_asset.easy_to_borrow and api_asset.marginable and api_asset.shortable:
-                        tickers.append(ticker_to_list)
-                except Exception as error:
-                    print(error)
-                    pass
-
-    no_of_tickers = str(len(tickers))
-    print('Gathering data for {} valid tickers'.format(no_of_tickers))
-
-    book = openpyxl.load_workbook('Ticker Selections.xlsx')
-    ex_writer = pd.ExcelWriter('Ticker Selections.xlsx', engine='openpyxl')
-    ex_writer.book = book
-    ex_writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    df.to_excel(ex_writer)
-    try:
-        sheet = book['Sheet']
-        book.remove(sheet)
-        book.save('Ticker Selections.xlsx')
-    except KeyError:
-        pass
-    ex_writer.save()
-    return tickers
-
-
-def api_calls(tickers):
-    y_finance_api_calls = 0
-    stocks_not_imported = 0
-    stock_failures = 0
-    position_in_list = 0
-    while (position_in_list < len(tickers)) and (y_finance_api_calls < 1800):
-        try:
-            stock_failures = 0
-            stock_analyzed = tickers[position_in_list]
-            temp = yf.Ticker(str(stock_analyzed))
-            his_data = temp.history(period='1mo')
-            his_data.to_csv(r"Daily Stock Analysis\Stocks\\" + stock_analyzed + ".csv")
-            time.sleep(2)
-            y_finance_api_calls += 1
-            position_in_list += 1
-            print('Number of stocks gathered:', position_in_list)
-        except ValueError:
-            print("Error with gathering Yahoo Finance data for {}".format(str(tickers[position_in_list])))
-            if stock_failures > 5:
-                position_in_list += 1
-                stocks_not_imported += 1
-            y_finance_api_calls += 1
-            stock_failures += 1
-    print("Data successfully imported for {} stocks".format(position_in_list - stocks_not_imported))
-
-
-def obv_score_array():
-    list_files = (glob.glob(r"Daily Stock Analysis\Stocks\\*.csv"))
-    obv_score_list = []
-    interval = 0
-    while interval < len(list_files):
-        obv_data = pd.read_csv(list_files[interval]).tail(7)
-        pos_move = []
-        neg_move = []
-        obv_value = 0
-        count = 0
-        while count < 7:
-            if obv_data.iloc[count, 1] < obv_data.iloc[count, 4]:
-                pos_move.append(count)
-            elif obv_data.iloc[count, 1] > obv_data.iloc[count, 4]:
-                neg_move.append(count)
-            count += 1
-        for volume in pos_move:
-            obv_value = round(obv_value + (obv_data.iloc[volume, 5] / obv_data.iloc[volume, 1]))
-        for volume in neg_move:
-            obv_value = round(obv_value - (obv_data.iloc[volume, 5] / obv_data.iloc[volume, 1]))
-        stock_name = ((os.path.basename(list_files[interval])).split(".csv")[0])
-        obv_score_list.append([stock_name, obv_value])
-        interval += 1
-
-    obv_dataframe = pd.DataFrame(obv_score_list, columns=['Stock', 'OBV_Value'])
-    obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
-    obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)
-    print(obv_dataframe)
-    obv_dataframe.to_csv("Daily Stock Analysis/{}_OBV_Ranked.csv".format(date_for_obv), index=False)
-
-
-"""
-
-END OF ANALYSIS FUNCTIONS
-START OF ALGO MAIN FUNCTIONS
-
-"""
+from ALGO.stock_analyzer import APIbootstrap
 
 
 def on_message(ws, message):
@@ -826,31 +682,23 @@ def custom_strftime(time_format, t):
     return t.strftime(time_format).replace('{S}', str(t.day) + suffix(t.day))
 
 
-if __name__ == '__main__':
-    if not os.path.isfile("Ticker Selections.xlsx"):
-        wb = openpyxl.Workbook()
-        wb.save('Ticker Selections.xlsx')
+def bootstrapper():
+    # Alpaca API Bootstrap
+    token_file = open("alpaca_keys.txt")
+    keys = token_file.readlines()
+    alpaca_api = trade_api.REST(keys[0], keys[1], "https://paper-api.alpaca.markets", api_version='v2')
 
-    try:
-        shutil.rmtree("Daily Stock Analysis/Stocks")
-        os.mkdir("Daily Stock Analysis/Stocks")
-    except Exception as e:
-        print(e)
-        pass
-    ###################################################################################################################
-    key = "PKCPC6RJ84BG84W3PB60"
-    sec = "U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7"
-    url = "https://paper-api.alpaca.markets"
-    api = trade_api.REST(key, sec, url, api_version='v2')
-    notification = ToastNotifier()
+    # Finnhub API Bootsrap
     websocket.enableTrace(True)
     web_socket_url = "wss://ws.finnhub.io?token=bsq43v0fkcbdt6un6ivg"
-    socket = websocket.WebSocketApp(web_socket_url, on_message=on_message, on_error=on_error, on_close=on_close)
-    socket.on_open = on_open
-    account = api.get_account()
-    clock = api.get_clock()
-    date_for_obv = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
+    finnhub_websocket = websocket.WebSocketApp(web_socket_url, on_message=on_message, on_error=on_error,
+                                               on_close=on_close)
+    finnhub_websocket.on_open = on_open
 
+    return alpaca_api, finnhub_websocket
+
+
+def time_initialization():
     fulltimezone = str(dt.datetime.now(dt.timezone.utc).astimezone().tzinfo)
     local_timezone = ''.join([c for c in fulltimezone if c.isupper()])
     proper_date = custom_strftime('%B {S}, %Y', dt.datetime.now())
@@ -858,10 +706,6 @@ if __name__ == '__main__':
     proper_time = dt.datetime.strftime(dt.datetime.now(), "%I:%M:%S %p")
     print('The time is:', proper_time, local_timezone)
 
-    account_balance = float(account.buying_power) / 4
-    print('Trading account status:', account.status)
-    print('Current account balance (without margin) is: $' + str(round(account_balance, 2)))
-    # used for normalizing times in EST
     cstdelta = dt.timedelta(hours=1)
     market_close = (clock.next_close - cstdelta).time()
     # the # command in the string truncates leading zeroes
@@ -871,7 +715,6 @@ if __name__ == '__main__':
     mkt_open_time = (clock.next_open - cstdelta).time()
     market_open_time_ampm = mkt_open_time.strftime("%#I:%M %p")
 
-    market_closed_boolean = False
     if not clock.is_open:
         print('The stock market is currently closed, but will reopen on:')
         print(mkt_open_date + ' at ' + market_open_time_ampm + ' ' + local_timezone)
@@ -879,7 +722,28 @@ if __name__ == '__main__':
     else:
         print('The stock market closes at ' + mkt_close_time_ampm + ' today')
 
-    if not market_closed_boolean:
+    return market_close
+
+
+if __name__ == '__main__':
+    notification = ToastNotifier()
+
+    api, socket = bootstrapper()
+    account = api.get_account()
+    clock = api.get_clock()
+
+    account_balance = float(account.buying_power) / 4
+    print('Trading account status:', account.status)
+    print('Current account balance (without margin) is: $' + str(round(account_balance, 2)))
+
+    market_close = time_initialization()
+
+    market_closed_boolean = False
+    manual_override_bool = False
+    if input("Manual override? (y/n)") == 'y':
+        manual_override_bool = True
+
+    if not market_closed_boolean or manual_override_bool:
         print("Select from one of the following choices:")
         print('Press 1 for Automated Stock Fetch and Trading')
         print('Press 2 for Manual Stock Fetch and Automated Trading')
@@ -903,67 +767,11 @@ if __name__ == '__main__':
 
         stock_tickers = []
         if choice == 1:
-            if os.path.isfile('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)):
-                print('OBV data exists for today')
-            else:
-                ticker_list_fetch = get_tickers()
-                api_calls(ticker_list_fetch)
-                obv_score_array()
-
-        ###############################################################################################################
-            while True:
-                minimum_position = 1.0
-                maximum_position = 3.0
-                retry = False
-                start_reducing = False
-                stock_tickers = []
-                try:
-                    if os.path.isfile('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)):
-                        if os.stat('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)).st_size > 0:
-                            with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'r') as f:
-                                reader = csv.reader(f)
-                                for position, row in enumerate(reader):
-                                    if position > 0:
-                                        if minimum_position <= position <= maximum_position:
-                                            if row[0] not in stock_tickers:
-                                                stock_tickers.append(row[0])
-                    print(stock_tickers)
-                    AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin"
-                                 r"\Debug\Webscraper Class Library.dll")
-                    import CSharpwebscraper
-                    scraper = CSharpwebscraper.Webscraper()
-                    for position, item in enumerate(stock_tickers):
-                        stock = [stock_tickers[position]]
-                        try:
-                            stock_info = scraper.Scraper(stock)
-                        except Exception as e:
-                            print(e, "Error Found with Tickers!")
-                            line = stock_tickers[position]
-                            lines = []
-                            with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'r') as f:
-                                reader = csv.reader(f)
-                                for place, row in enumerate(reader):
-                                    if place > 0:
-                                        if row[0] == line:
-                                            start_reducing = True
-                                            continue
-                                        if start_reducing:
-                                            row[2] = float(row[2]) - 1
-                                        lines.append(row)
-                                    else:
-                                        lines.append(row)
-                            with open('Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'w') as w:
-                                writer = csv.writer(w, lineterminator='\n')
-                                writer.writerows(lines)
-                            retry = True
-                    if not retry:
-                        break
-                except Exception as e:
-                    print(e)
-                    print("An error with the automated stock fetcher was found, using the manual stock fetcher")
-                    stock_tickers = []
-                    break
-
+            try:
+                stock_tickers = APIbootstrap().get_tickers(api)
+            except Exception as e:
+                print(e)
+                choice = 2
         if choice == 2:
             print("Input stock tickers separated by a space, the quotes and trades for each stock will be streamed")
             print("When you are done entering tickers, press Enter to show the quotes for each stock in order")
@@ -1187,7 +995,7 @@ if __name__ == '__main__':
         grouped_trades_df = pd.DataFrame(trades_list)
         excel_title = str(stock) + str(' Trades for ') + str(date) + str('.xlsx')
         grouped_trades_df['cumulative_sum'] = grouped_trades_df.groupby('symbol')['net_qty'].apply(lambda h: h.cumsum())
-        grouped_trades_df.to_excel(excel_title)
+        # grouped_trades_df.to_excel(excel_title)
 
         # here is where the trades will be settled
         rows_to_drop = []
@@ -1204,7 +1012,7 @@ if __name__ == '__main__':
                         break
         for rowtodrop in rows_to_drop:
             grouped_trades_df = grouped_trades_df.drop(rowtodrop)
-        grouped_trades_df.to_excel('Settled {} Trades, {}.xlsx'.format(stock, date))
+        # grouped_trades_df.to_excel('Settled {} Trades, {}.xlsx'.format(stock, date))
         same_side_orders = []
         txn_time1 = None
         net_trade1 = None
