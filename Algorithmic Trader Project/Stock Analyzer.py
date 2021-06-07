@@ -10,8 +10,7 @@ from clr import AddReference
 import csv
 
 
-def get_tickers():
-    tickers = []
+def get_tickers(tickers, api):
     table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     df = table[0]
     sandp500tickers = df['Symbol'].to_list()
@@ -41,8 +40,8 @@ def get_tickers():
     # which is 2.34 million per normal trading day (6.5 hours)
     df = df[df.volume > 2340000]
 
-    api = trade_api.REST('PKCPC6RJ84BG84W3PB60', 'U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7',
-                         trade_api.stream.URL("https://paper-api.alpaca.markets"), api_version='v2')
+    # api = trade_api.REST('PKCPC6RJ84BG84W3PB60', 'U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7',
+    #                      trade_api.stream.URL("https://paper-api.alpaca.markets"), api_version='v2')
     # we should probably test these stocks to see if they are tradeable on alpaca
     for index, iterrow in df.iterrows():
         for i in range(len(sandp500tickers)):
@@ -92,7 +91,7 @@ def obv_score_array(stock_tickers):
             close = data.iloc[j, 4]
             volume = data.iloc[j, 6]
             mfm = ((close - low) - (high - close)) / (high - low)
-            
+
             if close > open:
                 accumulationdistribution += round(mfm * volume)
             if close < open:
@@ -106,13 +105,15 @@ class APIbootstrap:
     def __init__(self):
         token_file = open("alpaca_keys.txt")
         keys = token_file.readlines()
-        self.api = trade_api.REST(keys[0], keys[1], trade_api.stream.URL("https://paper-api.alpaca.markets"),
-                                  api_version='v2')
+        key = keys[0].rstrip('\n')
+        sec_key = keys[1].rstrip('\n')
+        self.api = trade_api.REST(key, sec_key,
+                                  base_url=trade_api.stream.URL("https://paper-api.alpaca.markets"), api_version='v2')
+        self.pruned_tickers = []
+        self.file_date = dt.datetime.date(dt.datetime.now())
 
     def get_tickers(self):
-        date_for_obv = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
-        print(date_for_obv)
-        if os.path.isfile('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)):
+        if os.path.isfile(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv'):
             print('OBV data exists for today')
         else:
             try:
@@ -125,16 +126,15 @@ class APIbootstrap:
                     pass
                 os.mkdir("../ALGO/Daily Stock Analysis/Stocks")
 
-            stock_tickers = get_tickers()
+            stock_tickers = get_tickers(self.pruned_tickers, self.api)
             api_calls(stock_tickers)
             obv_array = obv_score_array(stock_tickers)
 
             obv_dataframe = pd.DataFrame(obv_array, columns=['Stock', 'OBV_Value'])
             obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
-            obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)  # Sort the ranked stocks
+            obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)
             print(obv_dataframe)
-            obv_dataframe.to_csv('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv),
-                                 index=False)
+            obv_dataframe.to_csv(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', index=False)
 
         while True:
             minimum_position = 1.0
@@ -143,9 +143,9 @@ class APIbootstrap:
             start_reducing = False
             stock_tickers = []
             try:
-                if os.path.isfile('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)):
-                    if os.stat('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv)).st_size > 0:
-                        with open('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'r') as f:
+                if os.path.isfile(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv'):
+                    if os.stat(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv').st_size > 0:
+                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'r') as f:
                             reader = csv.reader(f)
                             for position, row in enumerate(reader):
                                 if position > 0:
@@ -153,21 +153,19 @@ class APIbootstrap:
                                         if row[0] not in stock_tickers:
                                             stock_tickers.append(row[0])
                 print(stock_tickers)
-                AddReference(
-                    r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin"
-                    r"\Debug\Webscraper Class Library.dll")
+                AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug"
+                             r"\Webscraper Class Library.dll")
                 import CSharpwebscraper
 
                 scraper = CSharpwebscraper.Webscraper()
-                for position, item in enumerate(stock_tickers):
-                    stock = [stock_tickers[position]]
+                for stock in stock_tickers:
                     try:
-                        scraper.Scraper(stock)
+                        scraper.Scraper([stock])
                     except Exception as e:
                         print(e, "Error Found with Tickers!")
-                        line = stock_tickers[position]
+                        line = stock
                         lines = []
-                        with open('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'r') as f:
+                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'r') as f:
                             reader = csv.reader(f)
                             for place, row in enumerate(reader):
                                 if place > 0:
@@ -180,11 +178,10 @@ class APIbootstrap:
                                 else:
                                     lines.append(row)
 
-                        with open('../ALGO/Daily Stock Analysis/{}_OBV_Ranked.csv'.format(date_for_obv), 'w') as w:
+                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'w') as w:
                             writer = csv.writer(w, lineterminator='\n')
                             writer.writerows(lines)
                         retry = True
-                        print(stock_tickers)
                 if not retry:
                     break
             except Exception as e:
