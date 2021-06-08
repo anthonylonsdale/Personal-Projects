@@ -40,8 +40,6 @@ def get_tickers(tickers, api):
     # which is 2.34 million per normal trading day (6.5 hours)
     df = df[df.volume > 2340000]
 
-    # api = trade_api.REST('PKCPC6RJ84BG84W3PB60', 'U1r9Z2QknL9FwAaTztfLl5g1DTxpa5m97qyWCGZ7',
-    #                      trade_api.stream.URL("https://paper-api.alpaca.markets"), api_version='v2')
     # we should probably test these stocks to see if they are tradeable on alpaca
     for index, iterrow in df.iterrows():
         for i in range(len(sandp500tickers)):
@@ -90,13 +88,15 @@ def obv_score_array(stock_tickers):
             low = data.iloc[j, 3]
             close = data.iloc[j, 4]
             volume = data.iloc[j, 6]
-            mfm = ((close - low) - (high - close)) / (high - low)
-
+            
+            # divide by the open price to normalize it, that way accum/dist is reflective of money instead of 
+            # number of shares
+            mfm = (((close - low) - (high - close)) / (high - low)) / open
+            
             if close > open:
                 accumulationdistribution += round(mfm * volume)
             if close < open:
                 accumulationdistribution -= round(mfm * volume)
-
         new_data.append([stock_tickers[i], accumulationdistribution])
     return new_data
 
@@ -107,35 +107,36 @@ class APIbootstrap:
         keys = token_file.readlines()
         key = keys[0].rstrip('\n')
         sec_key = keys[1].rstrip('\n')
-        self.api = trade_api.REST(key, sec_key,
-                                  base_url=trade_api.stream.URL("https://paper-api.alpaca.markets"), api_version='v2')
-        self.pruned_tickers = []
-        self.file_date = dt.datetime.date(dt.datetime.now())
+        self._api = trade_api.REST(key, sec_key, base_url=trade_api.stream.URL("https://paper-api.alpaca.markets"),
+                                   api_version='v2')
+        self._pruned_tickers = []
+        self._file_date = dt.datetime.date(dt.datetime.now())
+        self._file_name = f'../ALGO/Daily Stock Analysis/{self._file_date}_ACC_DIST_Ranked.csv'
+        self._stocks_folder = "../ALGO/Daily Stock Analysis/Stocks"
 
     def get_tickers(self):
-        if os.path.isfile(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv'):
+        if os.path.isfile(self._file_name):
             print('OBV data exists for today')
         else:
             try:
-                shutil.rmtree("../ALGO/Daily Stock Analysis/Stocks")
-                os.mkdir("../ALGO/Daily Stock Analysis/Stocks")
+                shutil.rmtree(self._stocks_folder)
+                os.mkdir(self._stocks_folder)
             except FileNotFoundError:
                 try:
                     os.mkdir("../ALGO/Daily Stock Analysis")
                 except FileExistsError:
                     pass
-                os.mkdir("../ALGO/Daily Stock Analysis/Stocks")
+                os.mkdir(self._stocks_folder)
 
-            stock_tickers = get_tickers(self.pruned_tickers, self.api)
+            stock_tickers = get_tickers(self._pruned_tickers, self._api)
             api_calls(stock_tickers)
-            obv_array = obv_score_array(stock_tickers)
+            accum_dist_array = obv_score_array(stock_tickers)
 
-            obv_dataframe = pd.DataFrame(obv_array, columns=['Stock', 'OBV_Value'])
-            obv_dataframe["Stocks_Ranked"] = obv_dataframe["OBV_Value"].rank(ascending=False)
-            obv_dataframe.sort_values("OBV_Value", inplace=True, ascending=False)
-            print(obv_dataframe)
-            obv_dataframe.to_csv(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', index=False)
-
+            accum_dist_df = pd.DataFrame(accum_dist_array, columns=['Stock', 'Accumulation/Distribution Value'])
+            accum_dist_df["Stocks_Ranked"] = accum_dist_df['Accumulation/Distribution Value'].rank(ascending=False)
+            accum_dist_df.sort_values('Accumulation/Distribution Value', inplace=True, ascending=False)
+            accum_dist_df.to_csv(self._file_name, index=False)
+            print(accum_dist_df)
         while True:
             minimum_position = 1.0
             maximum_position = 3.0
@@ -143,9 +144,9 @@ class APIbootstrap:
             start_reducing = False
             stock_tickers = []
             try:
-                if os.path.isfile(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv'):
-                    if os.stat(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv').st_size > 0:
-                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'r') as f:
+                if os.path.isfile(self._file_name):
+                    if os.stat(self._file_name).st_size > 0:
+                        with open(self._file_name, 'r') as f:
                             reader = csv.reader(f)
                             for position, row in enumerate(reader):
                                 if position > 0:
@@ -165,7 +166,7 @@ class APIbootstrap:
                         print(e, "Error Found with Tickers!")
                         line = stock
                         lines = []
-                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'r') as f:
+                        with open(self._file_name, 'r') as f:
                             reader = csv.reader(f)
                             for place, row in enumerate(reader):
                                 if place > 0:
@@ -178,7 +179,7 @@ class APIbootstrap:
                                 else:
                                     lines.append(row)
 
-                        with open(f'../ALGO/Daily Stock Analysis/{self.file_date}_OBV_Ranked.csv', 'w') as w:
+                        with open(self._file_name, 'w') as w:
                             writer = csv.writer(w, lineterminator='\n')
                             writer.writerows(lines)
                         retry = True
