@@ -1,8 +1,6 @@
 #include "pch.h"
-#include <iostream>
 #include <cmath>
 #include <vector>
-#include <sstream>
 
 using namespace std;
 
@@ -54,7 +52,7 @@ DLLEXPORT double CallPricing(double Spot, double Strike, double Rate, double Tim
     }
     Option_Price = valueTree[0][0];
     //std::cout << "Calculated price using "<<iterations<<" iterations is " << Stock_Price << std::endl;
-    cout << Option_Price;
+    //cout << Option_Price;
     return Option_Price;
 }
 
