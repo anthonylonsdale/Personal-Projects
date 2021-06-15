@@ -8,6 +8,16 @@ using namespace std;
 
 #define DLLEXPORT extern "C" __declspec(dllexport)
 
+/*
+file was specifically built using no external dependencies!!
+compiled using x64 architecture and only x64
+main entry point for this file is the CallPricing function, which is called as a DLL from
+my python program using CTYPEs in order to price options contracts very quickly.
+The intention is to keep this c plus plus file as fast and lean as possible due to the
+magnitude of calculations we have to perform. 1000 iterations seems to strike an optimal
+balance between pricing accuracy and speed.
+*/
+
 DLLEXPORT double CallPricing(double Spot, double Strike, double Rate, double Time, double Sigma, double Yield, int iterations)
 {
     double Option_Price;
