@@ -4,14 +4,14 @@ the regular options table export to excel, but we need to gut out all trading co
 and options pricing
 """
 import requests
-import pandas as pd
 import datetime as dt
-import openpyxl
-import os
 import clr
+import pandas as pd
 import ctypes
 from bs4 import BeautifulSoup
 import yfinance as yf
+import openpyxl
+import concurrent.futures
 
 
 def stock_data_engine():
@@ -21,15 +21,13 @@ def stock_data_engine():
     scraper = CSharpwebscraper.Webscraper()
     stock_info = scraper.Initial(stock_tickers)
     quote_info = scraper.Scraper(stock_tickers)
-    print(stock_info)
-    print(quote_info)
 
     current_stock = None
     for index, item in enumerate(quote_info):
         if item in stock_tickers:
             current_stock = item
             continue
-        if (index % 6 == 1):
+        if index % 6 == 1:
             item = item.replace(',', '')
             item = float(item)
         quote_data[current_stock].append(item)
@@ -39,7 +37,7 @@ def stock_data_engine():
         if item in stock_tickers:
             current_stock = item
             continue
-        if (index % 10) == 1:
+        if index % 10 == 1:
             delimiter1 = '('
             delimiter2 = ')'
             div = str(item)
@@ -51,129 +49,88 @@ def stock_data_engine():
                 dividend = float(div_string) / 100
                 item = round(dividend, 4)
         initial_data[current_stock].append(item)
-        if (index % 10) == 9:
+        if index % 10 == 9:
             initial_data[current_stock].append(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     print(initial_data)
     print(quote_data)
 
 
-def options():
-    book = openpyxl.load_workbook('Options Data.xlsx')
-    writer = pd.ExcelWriter('Options Data.xlsx', engine='openpyxl')
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    for stock in stock_tickers:
-        ticker = yf.Ticker(stock)
-        for exp in ticker.options:
-            options = ticker.option_chain(exp)
-            call_table = options.calls
-            call_table.set_index('strike', inplace=True)
-            call_table.to_excel(writer, sheet_name=stock + ' Calls ({})'.format(exp))
-            put_table = options.puts
-            put_table.set_index('strike', inplace=True)
-            put_table.to_excel(writer, sheet_name=stock + ' Puts ({})'.format(exp))
-            writer.save()
-    try:
-        sheet = book['Sheet']
-        book.remove(sheet)
-        book.save('Options Data.xlsx')
-    except KeyError:
-        pass
-
-
-def options_calculations():
-    todays_date = dt.datetime.today()
+def options(stock):
+    todays_date = dt.datetime.today().date()
     iterations = 1000
 
     handle = ctypes.cdll.LoadLibrary(r"C:\Users\fabio\source\repos\CallPricingDll\CallPricingDll\x64\Rel"
                                      r"ease\CallPricingDll.dll")
+
     handle.CallPricing.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
                                    ctypes.c_double, ctypes.c_double, ctypes.c_int]
     handle.CallPricing.restype = ctypes.c_double
 
-    handle2 = ctypes.cdll.LoadLibrary(r"C:\Users\fabio\source\repos\PutPricingDll\x64\Release\PutPricing.dll")
-    handle2.PutPricing.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
-                                   ctypes.c_double, ctypes.c_double, ctypes.c_int]
-    handle2.PutPricing.restype = ctypes.c_double
+    handle.PutPricing.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
+                                  ctypes.c_double, ctypes.c_double, ctypes.c_int]
+    handle.PutPricing.restype = ctypes.c_double
 
-    for stock in stock_tickers:
+    openpyxl.Workbook().save(f"{stock} Options Data {todays_date}.xlsx")
+    book = openpyxl.load_workbook(f"{stock} Options Data {todays_date}.xlsx")
+    writer = pd.ExcelWriter(f"{stock} Options Data {todays_date}.xlsx", engine='openpyxl')
+    writer.book = book
+    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    try:
         i = 0
-        ticker = yf.Ticker(stock)
-        expiration_dates = ticker.options
+        yfticker = yf.Ticker(stock)
+        expiration_dates = yfticker.options
+
+        dividend = initial_data[stock][0]
+        spot = quote_data[stock][0]
 
         for expiry in expiration_dates:
+            options_chain = yfticker.option_chain(expiry)
+            call_table = options_chain.calls
+            put_table = options_chain.puts
+            call_table.to_excel(writer, sheet_name=f'{stock} Calls {expiry}')
+            put_table.to_excel(writer, sheet_name=f'{stock} Puts {expiry}')
+
+            # 2 is strike, 3 is last price, 9 is open interest and 10 is implied volatility
+            call_vals = call_table[call_table.columns[[2, 3, 9, 10]]].to_numpy()
+            put_vals = put_table[put_table.columns[[2, 3, 9, 10]]].to_numpy()
+
             option_value[stock].append({expiry: {'overvalued_call_options': 0, 'undervalued_call_options': 0,
                                                  'overvalued_put_options': 0, 'undervalued_put_options': 0}})
-            call_sheet_name = str(stock) + str(' Calls ({})').format(expiry)
-            try:
-                df_calls = pd.read_excel("Options Data.xlsx", sheet_name=call_sheet_name)
-            except ValueError:
-                continue
-            dividend = initial_data[stock][0]
-            spot = quote_data[stock][0]
-            expiry = dt.datetime.strptime(expiry, '%Y-%m-%d')
-            time_dt = expiry - todays_date
+            exp = dt.datetime.strptime(expiry, '%Y-%m-%d')
+            time_dt = exp - dt.datetime.today()
             time_to_expiry = time_dt.days
-            for j in range(len(df_calls.index) - 1):
-                """ the subprocess returns nan for implied volatility of 0, just skip the options with imp. vol == 0
-                also skip the options we dont care about, any open with open interest of less than 10 can have a 
-                manipulated price """
-                vol_percentage = str(df_calls['impliedVolatility'][j])
-                vol = vol_percentage.split("%")[0]
-                volatility = float(vol.replace(",", "")) / 100
-                if volatility == 0.00:
+
+            for index, row in enumerate(call_vals):
+                sigma = row[3]
+                if sigma == 0.00:
                     continue
-                try:
-                    if int(df_calls['openInterest'][j]) < 10:
-                        continue
-                except ValueError:
+                if row[2] < 10:
                     continue
 
-                strike = df_calls['strike'][j]
-                sigma = volatility
-
+                strike = row[0]
                 option_price = handle.CallPricing(spot, strike, rate, time_to_expiry, sigma, dividend, iterations)
-                # if calculated option price is higher than the actual price, the actual option is undervalued
-                try:
-                    if option_price > float(df_calls['lastPrice'][j]):
-                        option_value[stock][i][expiry]['undervalued_call_options'] += 1
-                    # if the opposite is true, the actual option is overvalued.
-                    if option_price < float(df_calls['lastPrice'][j]):
-                        option_value[stock][i][expiry]['overvalued_call_options'] += 1
-                except KeyError:
-                    pass
-            #######################################################################################################
-            put_sheet_name = str(stock) + str(' Puts ({})').format(expiry)
-            try:
-                df_puts = pd.read_excel("Options Data.xlsx", sheet_name=put_sheet_name)
-            except ValueError:
-                continue
-            for k in range(len(df_puts.index)):
-                vol_percentage = str(df_puts['impliedVolatility'][k])
-                vol = vol_percentage.split("%")[0]
-                volatility = float(vol.replace(",", "")) / 100
-                if volatility == 0.00:
+                if option_price > row[1]:
+                    option_value[stock][i][expiry]['undervalued_call_options'] += 1
+                if option_price < row[1]:
+                    option_value[stock][i][expiry]['overvalued_call_options'] += 1
+
+            for index, row in enumerate(put_vals):
+                sigma = row[3]
+                if sigma == 0.00:
                     continue
-                try:
-                    if int(df_puts['openInterest'][k]) < 10:
-                        continue
-                except ValueError:
+                if row[2] < 10:
                     continue
 
-                strike = df_puts['strike'][k]
-                sigma = volatility
-
-                option_price = handle2.PutPricing(spot, strike, rate, time_to_expiry, sigma, dividend, iterations)
-                try:
-                    if option_price > float(df_puts['lastPrice'][k]):
-                        option_value[stock][i][expiry]['undervalued_put_options'] += 1
-                    if option_price < float(df_puts['lastPrice'][k]):
-                        option_value[stock][i][expiry]['overvalued_put_options'] += 1
-                except KeyError:
-                    pass
+                strike = row[0]
+                option_price = handle.PutPricing(spot, strike, rate, time_to_expiry, sigma, dividend, iterations)
+                if option_price > row[1]:
+                    option_value[stock][i][expiry]['undervalued_put_options'] += 1
+                if option_price < row[1]:
+                    option_value[stock][i][expiry]['overvalued_put_options'] += 1
             i += 1
-    print(option_value)
+    finally:
+        book.save(f"{stock} Options Data {todays_date}.xlsx")
 
 
 def risk_free_rate():
@@ -188,12 +145,6 @@ def risk_free_rate():
 
 if __name__ == '__main__':
     # we want to make sure a new excel file is used each time the program opens to reduce issues of corrupted files
-    options_cwd = os.getcwd() + r'\Options Data.xlsx'
-    if os.path.isfile(r"{}".format(options_cwd)):
-        os.remove(options_cwd)
-    wb = openpyxl.Workbook()
-    wb.save('Options Data.xlsx')
-
     date = dt.datetime.date(dt.datetime.now(dt.timezone.utc))
     print('The date is:', str(dt.date.today()), 'The time is', str(dt.datetime.now().time()), 'CST')
     # manual
@@ -201,7 +152,6 @@ if __name__ == '__main__':
     print("When you are done entering tickers, press Enter to show the options contracts for each stock in order")
     stock_tickers = input('Enter Ticker(s): ').upper().split()
     #############################################################################################################
-    start = dt.datetime.now()
     initial_data = {}
     quote_data = {}
     option_value = {}
@@ -211,6 +161,9 @@ if __name__ == '__main__':
         option_value[ticker] = []
     rate = risk_free_rate()
     stock_data_engine()
-    options()
-    options_calculations()
-    print(dt.datetime.now() - start)
+    
+    # this line increase performance dramatically
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(stock_tickers)) as executor:
+        for stock in stock_tickers:
+            future = executor.submit(options, stock)
+    print(option_value)
