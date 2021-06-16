@@ -4,10 +4,11 @@ import pandas as pd
 import shutil
 import glob
 import requests
-import alpaca_trade_api as trade_api
 import datetime as dt
-from clr import AddReference
 import csv
+
+
+from ALGO.stock_data_engine_core import stockDataEngine
 
 
 def get_tickers(tickers, api):
@@ -57,6 +58,7 @@ def get_tickers(tickers, api):
 
 
 def api_calls(tickers):
+    yf.pdr_override()
     data = yf.download(tickers=tickers, threads=True, group_by='ticker', period="1mo")
     data = data.round(decimals=2)
 
@@ -83,32 +85,27 @@ def obv_score_array(stock_tickers):
 
         accumulationdistribution = 0
         for j in range(7):
-            open = data.iloc[j, 1]
+            open_price = data.iloc[j, 1]
             high = data.iloc[j, 2]
             low = data.iloc[j, 3]
             close = data.iloc[j, 4]
             volume = data.iloc[j, 6]
-            
-            # divide by the open price to normalize it, that way accum/dist is reflective of money instead of 
+
+            # divide by the open price to normalize it, that way accum/dist is reflective of money instead of
             # number of shares
-            mfm = (((close - low) - (high - close)) / (high - low)) / open
-            
-            if close > open:
+            mfm = (((close - low) - (high - close)) / (high - low)) / open_price
+
+            if close > open_price:
                 accumulationdistribution += round(mfm * volume)
-            if close < open:
+            if close < open_price:
                 accumulationdistribution -= round(mfm * volume)
         new_data.append([stock_tickers[i], accumulationdistribution])
     return new_data
 
 
 class APIbootstrap:
-    def __init__(self):
-        token_file = open("alpaca_keys.txt")
-        keys = token_file.readlines()
-        key = keys[0].rstrip('\n')
-        sec_key = keys[1].rstrip('\n')
-        self._api = trade_api.REST(key, sec_key, base_url=trade_api.stream.URL("https://paper-api.alpaca.markets"),
-                                   api_version='v2')
+    def __init__(self, _api=None):
+        self._api = _api
         self._pruned_tickers = []
         self._file_date = dt.datetime.date(dt.datetime.now())
         self._file_name = f'../ALGO/Daily Stock Analysis/{self._file_date}_ACC_DIST_Ranked.csv'
@@ -136,10 +133,10 @@ class APIbootstrap:
             accum_dist_df["Stocks_Ranked"] = accum_dist_df['Accumulation/Distribution Value'].rank(ascending=False)
             accum_dist_df.sort_values('Accumulation/Distribution Value', inplace=True, ascending=False)
             accum_dist_df.to_csv(self._file_name, index=False)
-            print(accum_dist_df)
+
         while True:
-            minimum_position = 1.0
-            maximum_position = 3.0
+            _minimum_position = 1.0
+            _maximum_position = 3.0
             retry = False
             start_reducing = False
             stock_tickers = []
@@ -148,36 +145,31 @@ class APIbootstrap:
                     if os.stat(self._file_name).st_size > 0:
                         with open(self._file_name, 'r') as f:
                             reader = csv.reader(f)
-                            for position, row in enumerate(reader):
-                                if position > 0:
-                                    if minimum_position <= position <= maximum_position:
-                                        if row[0] not in stock_tickers:
-                                            stock_tickers.append(row[0])
-                print(stock_tickers)
-                AddReference(r"C:\Users\fabio\source\repos\Webscraper Class Library\Webscraper Class Library\bin\Debug"
-                             r"\Webscraper Class Library.dll")
-                import CSharpwebscraper
+                            for position, _row in enumerate(reader):
+                                if _minimum_position <= position <= _maximum_position:
+                                    if _row[0] not in stock_tickers:
+                                        stock_tickers.append(_row[0])
 
-                scraper = CSharpwebscraper.Webscraper()
+                print(stock_tickers)
+
                 for stock in stock_tickers:
                     try:
-                        scraper.Scraper([stock])
+                        stockDataEngine(stock)
                     except Exception as e:
-                        print(e, "Error Found with Tickers!")
-                        line = stock
+                        print(f"Error Found with Tickers! {e}")
                         lines = []
                         with open(self._file_name, 'r') as f:
                             reader = csv.reader(f)
-                            for place, row in enumerate(reader):
+                            for place, _row in enumerate(reader):
                                 if place > 0:
-                                    if row[0] == line:
+                                    if _row[0] == stock:
                                         start_reducing = True
                                         continue
                                     if start_reducing:
-                                        row[2] = float(row[2]) - 1
-                                    lines.append(row)
+                                        _row[2] = float(_row[2]) - 1
+                                    lines.append(_row)
                                 else:
-                                    lines.append(row)
+                                    lines.append(_row)
 
                         with open(self._file_name, 'w') as w:
                             writer = csv.writer(w, lineterminator='\n')
@@ -186,12 +178,6 @@ class APIbootstrap:
                 if not retry:
                     break
             except Exception as e:
-                print(e)
-                print("An error with the automated stock fetcher was found")
+                print(f"An error with the automated stock fetcher was found :{e}")
                 break
         return stock_tickers
-
-
-if __name__ == '__main__':
-    Bootstrapper = APIbootstrap()
-    Bootstrapper.get_tickers()
