@@ -1,7 +1,5 @@
 #include "pch.h"
-#include <vector>
-
-using namespace std;
+#include <iostream>
 
 #define DLLEXPORT extern "C" __declspec(dllexport)
 
@@ -15,32 +13,35 @@ magnitude of calculations we have to perform. 1000 iterations seems to strike an
 balance between pricing accuracy and speed.
 */
 
-DLLEXPORT double CallPricing(double Spot, double Strike, double Rate, double Time, double Sigma, double Yield, int iterations)
+DLLEXPORT double CallPricing(float Spot, float Strike, float Rate, float Time, float Sigma, float Yield)
 {
-    double Option_Price, delta, u, d, q;
+    double Option_Price, u, d, q;
 
+    const int n = 1000;
     Time = Time / 365;
-    delta = Time / iterations;
-    u = exp(Sigma * sqrt(delta));
+    const float delta = Time / n;
+    u = std::expf(Sigma * std::sqrtf(delta));
     d = 1 / u;
-    q = (exp((Rate - Yield) * delta) - d) / (u - d);
+    q = (std::expf((Rate - Yield) * delta) - d) / (u - d);
     // create storage for the stock price tree and option price tree
-    vector<vector<double>> stockTree(iterations + 1, vector<double>(iterations + 1));
+    auto *stockTree = new double[n + 1][n + 1];
     // setup and initialise the stock price tree
-    for (int i = 0;i <= iterations;i++)
+    for (int i = 0;i <= n;i++)
     {
         for (int j = 0;j <= i;j++)
         {
             stockTree[i][j] = Spot * pow(u, j) * pow(d, i - j);
         }
     }
-    vector<vector<double>> valueTree(iterations + 1, vector<double>(iterations + 1));
+    auto *valueTree = new double[n + 1][n + 1];
 
-    for (int j = 0;j <= iterations;j++)
+    for (int j = 0;j <= n;j++)
     {
-        valueTree[iterations][j] = max(stockTree[iterations][j] - Strike, 0.);
+        valueTree[n][j] = max(stockTree[n][j] - Strike, 0.);
     }
-    for (int i = iterations - 1;i >= 0;i--)
+    delete[]stockTree;
+
+    for (int i = n - 1;i >= 0;i--)
     {
         for (int j = 0;j <= i;j++)
         {
@@ -48,33 +49,36 @@ DLLEXPORT double CallPricing(double Spot, double Strike, double Rate, double Tim
         }
     }
     Option_Price = valueTree[0][0];
+    delete[]valueTree;
     return Option_Price;
 }
 
-DLLEXPORT double PutPricing(double Spot, double Strike, double Rate, double Time, double Sigma, double Yield, int iterations)
+DLLEXPORT double PutPricing(float Spot, float Strike, float Rate, float Time, float Sigma, float Yield)
 {
-    double Option_Price, delta, u, d, q;
+    double Option_Price, u, d, q;
+    const int n = 1000;
 
     Time = Time / 365;
-    delta = Time / iterations;
-    u = exp(Sigma * sqrt(delta));
+    const float delta = Time / n;
+    u = std::expf(Sigma * std::sqrtf(delta));
     d = 1 / u;
-    q = (exp((Rate - Yield) * delta) - d) / (u - d);
+    q = (std::expf((Rate - Yield) * delta) - d) / (u - d);
 
-    vector<vector<double>> stockTree(iterations + 1, vector<double>(iterations + 1));
-    for (int i = 0;i <= iterations;i++)
+    auto *stockTree = new double[n + 1][n + 1];
+    for (int i = 0;i <= n;i++)
     {
         for (int j = 0;j <= i;j++)
         {
             stockTree[i][j] = Spot * pow(u, j) * pow(d, i - j);
         }
     }
-    vector<vector<double>> valueTree(iterations + 1, vector<double>(iterations + 1));
-    for (int j = 0;j <= iterations;j++)
+    auto *valueTree = new double[n + 1][n + 1];
+    for (int j = 0;j <= n;j++)
     {
-        valueTree[iterations][j] = max(Strike - stockTree[iterations][j], 0.);
+        valueTree[n][j] = max(Strike - stockTree[n][j], 0.);
     }
-    for (int i = iterations - 1;i >= 0;i--)
+    delete[]stockTree;
+    for (int i = n - 1;i >= 0;i--)
     {
         for (int j = 0;j <= i;j++)
         {
@@ -82,6 +86,7 @@ DLLEXPORT double PutPricing(double Spot, double Strike, double Rate, double Time
         }
     }
     Option_Price = valueTree[0][0];
+    delete[]valueTree;
     return Option_Price;
 }
 
