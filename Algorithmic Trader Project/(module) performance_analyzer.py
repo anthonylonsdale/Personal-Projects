@@ -270,7 +270,6 @@ class portfolioAnalysis:
 
     def trade_calculations(self, trade_book, short_trade_book, long_order_time_held, short_order_time_held,
                            profit_per_symbol):
-        short_hold_time = 0
         longtime = 0
         longquantity = 0
         long_length = 0
