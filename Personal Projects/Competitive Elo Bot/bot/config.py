@@ -1,30 +1,19 @@
-# Discord's authentication token for the bot
-# **Eventually this will be separate**
-token = "ODQwNzY4NTg4MDAwMTMzMTUx.YJdAxA.b0E9L5ik-2S0BM_5Hn2cysTOoj0"
-
 # Storing file paths as strings
 matches_path = "data/matches.db"
 ratings_path = "data/ratings.db"
 ratings_master_path = "data/ratings_master.db"
 blocked_ids_path = "data/banned_ids.db"
+guild_settings_path = "data/guild_settings.db"
+env_path = 'data/.env'
+
+path_list = [matches_path, ratings_master_path, ratings_path, blocked_ids_path,
+             guild_settings_path, env_path]
+
 days_of_backup_file_storage = 14
-
-# Time in seconds before correspondence with bot is removed
+response_time = 60
 delete_delay = 45
+leaderboard_members = 25
 maxwinsallowed = 15
-starting_elo = 1200
-global_elo_floor = 900
-starting_sigma = 150
-name_of_bot = "Competitive Elo Tracker"
-
-# Discord server's channel ID for the bot
-bot_channel_id = 847304034310291456
-leaderboard_channel_id = 845769329068605491
-# Chadley's Discord ID
-owner_id = 813330702712045590
-# Server's admin role's ID
-#bot_admin_role_id = 843673834333667369
-bot_admin_role_id = 847978194702172160
 
 rank0 = "Novice"
 rank1 = "Class C"
@@ -45,10 +34,10 @@ class rankEmoji:
         self.gm = self.client.get_emoji(847972250685931540)
         self.m = self.client.get_emoji(847972968474083329)
         self.pm = self.client.get_emoji(847972981598584872)
-        self.classa = self.client.get_emoji(847972981598584872)
-        self.classb = self.client.get_emoji(847972981598584872)
-        self.classc = self.client.get_emoji(847972981598584872)
-        self.novice = self.client.get_emoji(847972981598584872)
+        self.classa = self.client.get_emoji(847972991630573568)
+        self.classb = self.client.get_emoji(847973003774263356)
+        self.classc = self.client.get_emoji(847973016532418610)
+        self.novice = self.client.get_emoji(847973027957571634)
 
     def rank_emoji(self):
         return {rank0: self.novice, rank1: self.classc, rank2: self.classb, rank3: self.classa, rank4: self.pm,
