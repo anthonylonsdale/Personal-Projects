@@ -66,16 +66,16 @@ class Options:
                     sigma = row['impliedVolatility']
                     if sigma == 0.00:
                         continue
-                    if row['openInterest'] < 10:
-                        continue
 
                     strike = row['strike']
                     option_price = handle.CallPricing(spot, strike, self.rate, time_to_expiry, sigma, dividend)
                     call_table.at[index, 'option_value'] = option_price
 
-                    if option_price > row['lastPrice']:
+                    spread = (row['bid'] + row['ask']) / 2
+
+                    if option_price > spread:
                         self.option_value[stock][i][expiry]['undervalued_call_options'] += 1
-                    if option_price < row['lastPrice']:
+                    if option_price < spread:
                         self.option_value[stock][i][expiry]['overvalued_call_options'] += 1
 
                 for index, row in put_table.iterrows():
@@ -87,11 +87,13 @@ class Options:
 
                     strike = row['strike']
                     option_price = handle.PutPricing(spot, strike, self.rate, time_to_expiry, sigma, dividend)
-                    put_table.at[index, 'option_value'] = option_price
+                    put_table.at[index, 'option_value'] = float(option_price)
 
-                    if option_price > row['lastPrice']:
+                    spread = (row['bid'] + row['ask']) / 2
+
+                    if option_price > spread:
                         self.option_value[stock][i][expiry]['undervalued_put_options'] += 1
-                    if option_price < row['lastPrice']:
+                    if option_price < spread:
                         self.option_value[stock][i][expiry]['overvalued_put_options'] += 1
                 i += 1
                 call_table.to_excel(writer, sheet_name=f'{stock} Calls {expiry}')
