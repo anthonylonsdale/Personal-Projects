@@ -70,4 +70,4 @@ Current Commands:
 
 .members = *Requires \'Bot Admin\' role* Displays all members registered on the bot
 
-.filecontents = *Requires \'Bot Admin\' role* Displays contents of Elo files
+.filecontents = *Requires \'Bot Admin\' role* Displays contents of database files for your specific server
