@@ -1,11 +1,9 @@
 #include "pch.h"
 #include <iostream>
-#include <immintrin.h>
-#include <math.h>
-#include <vector>
 
 #define DLLEXPORT extern "C" __declspec(dllexport)
 #define SQRT_MAGIC_F 0x5f3759df 
+
 
 /*
 file was specifically built using no external dependencies!!
@@ -17,7 +15,7 @@ magnitude of calculations we have to perform. 1000 iterations seems to strike an
 balance between pricing accuracy and speed.
 */
 
-float  sqrt2(const float x)
+float sqrt2(const float x)
 {
     const float xhalf = 0.5f * x;
 
@@ -35,7 +33,7 @@ DLLEXPORT double CallPricing(float Spot, float Strike, float Rate, float Time, f
 {
     double Option_Price, u, d, q, rfr;
 
-    const int n = 500;
+    const int n = 100;
     Time = Time / 365;
     const float delta = Time / n;
 
@@ -76,7 +74,7 @@ DLLEXPORT double CallPricing(float Spot, float Strike, float Rate, float Time, f
 DLLEXPORT double PutPricing(float Spot, float Strike, float Rate, float Time, float Sigma, float Yield)
 {
     double Option_Price, u, d, q, rfr;
-    const int n = 500;
+    const int n = 100;
 
     Time = Time / 365;
     const float delta = Time / n;
