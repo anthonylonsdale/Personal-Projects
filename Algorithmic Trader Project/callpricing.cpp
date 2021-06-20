@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #define DLLEXPORT extern "C" __declspec(dllexport)
+#define SQRT_MAGIC_F 0x5f3759df 
 
 /*
 file was specifically built using no external dependencies!!
@@ -13,6 +14,19 @@ The intention is to keep this c plus plus file as fast and lean as possible due 
 magnitude of calculations we have to perform. 1000 iterations seems to strike an optimal
 balance between pricing accuracy and speed.
 */
+float sqrt2(const float x)
+{
+    const float xhalf = 0.5f * x;
+
+    union // get bits for floating value
+    {
+        float x;
+        int i;
+    } u;
+    u.x = x;
+    u.i = SQRT_MAGIC_F - (u.i >> 1);  // gives initial guess y0
+    return x * u.x * (1.5f - xhalf * u.x * u.x); // Newton step, repeating increases accuracy 
+}
 
 DLLEXPORT double CallPricing(float s, float k, float rf, float t, float v)
 {
@@ -23,7 +37,7 @@ DLLEXPORT double CallPricing(float s, float k, float rf, float t, float v)
 
     const double delta = t * divisor;
 
-    u = std::exp(v * std::sqrt(delta));
+    u = std::exp(v * sqrt2(delta));
     d = 1 / u;
     rfr = std::exp(rf * delta);
     q = (rfr - d) / (u - d);
@@ -63,7 +77,7 @@ DLLEXPORT double PutPricing(float Spot, float Strike, float Rate, float Time, fl
 
     const double delta = Time * divisor;
 
-    u = std::exp(Sigma * std::sqrt(delta));
+    u = std::exp(Sigma * sqrt2(delta));
     d = 1 / u;
     rfr = std::exp((Rate)*delta);
     q = (rfr - d) / (u - d);
