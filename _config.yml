@@ -2,7 +2,7 @@ theme: jekyll-theme-cayman
 # Site settings
 title: Anthony Lonsdale's Portfolio
 description: A Collection of Personal Projects and Programs
-# baseurl: "/particle" # the subpath of your site, e.g. /blog
+baseurl: "/home"
 
 # User settings
 username: Anthony Lonsdale
