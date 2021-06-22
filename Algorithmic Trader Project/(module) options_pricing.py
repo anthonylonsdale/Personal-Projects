@@ -4,7 +4,6 @@ import ctypes
 import yfinance as yf
 import openpyxl
 import concurrent.futures
-import numpy as np
 
 
 class Options:
@@ -52,19 +51,9 @@ class Options:
             spot = self.quote_data[stock][0]
 
             for expiry in expiration_dates:
-                options_chain = yfticker.option_chain(expiry)
-                call_table = options_chain.calls
-                put_table = options_chain.puts
-                call_table['option_value'] = 0.00
-                put_table['option_value'] = 0.00
-
-                self.option_value[stock].append({expiry: {'overvalued_call_options': 0, 'undervalued_call_options': 0,
-                                                          'overvalued_put_options': 0, 'undervalued_put_options': 0}})
-
                 exp = dt.datetime.strptime(expiry, '%Y-%m-%d').date()
-                time_to_expiry = exp - today
-                # np.busday_count(today, exp)
-                time_to_expiry = int(time_to_expiry.days)
+                days_expiration = exp - today
+                time_to_expiry = int(days_expiration.days)
 
                 bond_yield = float(self.rate[0])
                 if 30 <= time_to_expiry <= 60:
@@ -76,6 +65,14 @@ class Options:
                 elif time_to_expiry > 182:
                     continue
 
+                options_chain = yfticker.option_chain(expiry)
+                call_table = options_chain.calls
+                put_table = options_chain.puts
+                call_table['option_value'] = 0.00
+                put_table['option_value'] = 0.00
+
+                self.option_value[stock].append({expiry: {'overvalued_call_options': 0, 'undervalued_call_options': 0,
+                                                          'overvalued_put_options': 0, 'undervalued_put_options': 0}})
                 # calls_well_priced = 0
                 # total_calls = 0
                 # puts_well_priced = 0
@@ -86,7 +83,7 @@ class Options:
 
                 for index, row in call_table.iterrows():
                     sigma = row['impliedVolatility']
-                    if sigma < 0.0001 or row['bid'] < 0.1 or row['volume'] < 10 or row['openInterest'] < 10:
+                    if sigma < 0.0001 or row['bid'] < 0.05 or row['volume'] < 10 or row['openInterest'] < 10:
                         continue
 
                     strike = row['strike']
@@ -108,7 +105,7 @@ class Options:
 
                 for index, row in put_table.iterrows():
                     sigma = row['impliedVolatility']
-                    if sigma == 0.00 or row['bid'] < 0.1 or row['volume'] < 10 or row['openInterest'] < 10:
+                    if sigma == 0.00 or row['bid'] < 0.05 or row['volume'] < 10 or row['openInterest'] < 10:
                         continue
                     strike = row['strike']
 
