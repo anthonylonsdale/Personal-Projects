@@ -4,6 +4,7 @@ import ctypes
 import yfinance as yf
 import openpyxl
 import concurrent.futures
+import numpy as np
 
 
 class Options:
@@ -12,8 +13,6 @@ class Options:
         self.initial_data = initial_data
         self.quote_data = quote_data
         self.rate = rate
-        self.significantly_mispriced_options = 0
-        self.well_priced_options = 0
         self.option_value = {}
         for ticker in stock_tickers:
             self.option_value[ticker] = []
@@ -26,18 +25,17 @@ class Options:
         return self.option_value
 
     def options(self, stock):
-        todays_date = dt.datetime.today().date()
-        url = f"../ALGO/Daily Stock Analysis/Options/{stock} Options Data {todays_date}.xlsx"
+        today = dt.date.today()
+        url = f"../ALGO/Daily Stock Analysis/Options/{stock} Options Data {today}.xlsx"
 
         handle = ctypes.cdll.LoadLibrary(r"C:\Users\fabio\source\repos\CallPricingDll\CallPricingDll\x64\Rel"
                                          r"ease\CallPricingDll.dll")
 
         handle.CallPricing.argtypes = [ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float,
-                                       ctypes.c_float, ctypes.c_float]
+                                       ctypes.c_float]
         handle.CallPricing.restype = ctypes.c_double
-
-        handle.PutPricing.argtypes = [ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float,
-                                      ctypes.c_float, ctypes.c_float]
+        handle.PutPricing.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
+                                      ctypes.c_double]
         handle.PutPricing.restype = ctypes.c_double
 
         wb = openpyxl.Workbook()
@@ -62,9 +60,12 @@ class Options:
 
                 self.option_value[stock].append({expiry: {'overvalued_call_options': 0, 'undervalued_call_options': 0,
                                                           'overvalued_put_options': 0, 'undervalued_put_options': 0}})
-                exp = dt.datetime.strptime(expiry, '%Y-%m-%d')
-                time_dt = exp - dt.datetime.today()
-                time_to_expiry = time_dt.days + 1
+
+                exp = dt.datetime.strptime(expiry, '%Y-%m-%d').date()
+                time_to_expiry = exp - today
+                # np.busday_count(today, exp)
+                time_to_expiry = int(time_to_expiry.days)
+
                 bond_yield = float(self.rate[0])
                 if 30 <= time_to_expiry <= 60:
                     bond_yield = float(self.rate[1])
@@ -72,57 +73,67 @@ class Options:
                     bond_yield = float(self.rate[2])
                 elif 91 < time_to_expiry <= 182:
                     bond_yield = float(self.rate[3])
-                elif 182 < time_to_expiry <= 365:
-                    bond_yield = float(self.rate[4])
-                elif time_to_expiry > 365:
-                    bond_yield = float(self.rate[5])
+                elif time_to_expiry > 182:
+                    continue
+
+                # calls_well_priced = 0
+                # total_calls = 0
+                # puts_well_priced = 0
+                # total_puts = 0
+
+                bond_yield -= dividend  # dividend should be factored in
+                bond_yield -= 0.02  # nominal inflation rate
 
                 for index, row in call_table.iterrows():
                     sigma = row['impliedVolatility']
-                    if sigma == 0.00:
-                        continue
-                    if row['volume'] < 10 or row['openInterest'] < 10:
+                    if sigma < 0.0001 or row['bid'] < 0.1 or row['volume'] < 10 or row['openInterest'] < 10:
                         continue
 
                     strike = row['strike']
-                    option_price = handle.CallPricing(spot, strike, bond_yield, time_to_expiry, sigma, dividend)
+                    option_price = handle.CallPricing(spot, strike, bond_yield, time_to_expiry, sigma)
+
                     call_table.at[index, 'option_value'] = option_price
                     spread = (row['bid'] + row['ask']) / 2
                     call_table.at[index, 'lastPrice'] = spread
+
+                    # error = ((option_price - spread) / spread)
+                    # if -0.05 < error < 0.05:
+                    #     calls_well_priced += 1
+                    # total_calls += 1
 
                     if option_price > spread:
                         self.option_value[stock][i][expiry]['undervalued_call_options'] += 1
                     if option_price < spread:
                         self.option_value[stock][i][expiry]['overvalued_call_options'] += 1
 
-                    if option_price > 1.01 * spread or option_price < .99 * spread:
-                        self.well_priced_options += 1
-                    else:
-                        self.significantly_mispriced_options += 1
-
                 for index, row in put_table.iterrows():
                     sigma = row['impliedVolatility']
-                    if sigma == 0.00:
+                    if sigma == 0.00 or row['bid'] < 0.1 or row['volume'] < 10 or row['openInterest'] < 10:
                         continue
-                    if row['volume'] < 10 or row['openInterest'] < 10:
-                        continue
-
                     strike = row['strike']
-                    option_price = handle.PutPricing(spot, strike, bond_yield, time_to_expiry, sigma, dividend)
+
+                    option_price = handle.PutPricing(spot, strike, bond_yield, time_to_expiry, sigma)
+
                     put_table.at[index, 'option_value'] = float(option_price)
                     spread = (row['bid'] + row['ask']) / 2
                     put_table.at[index, 'lastPrice'] = spread
+
+                    # error = ((option_price - spread) / spread)
+                    # if -0.05 < error < 0.05:
+                    #     puts_well_priced += 1
+                    # total_puts += 1
 
                     if option_price > spread:
                         self.option_value[stock][i][expiry]['undervalued_put_options'] += 1
                     if option_price < spread:
                         self.option_value[stock][i][expiry]['overvalued_put_options'] += 1
 
-                    if option_price > 1.01 * spread or option_price < .99 * spread:
-                        self.well_priced_options += 1
-                    else:
-                        self.significantly_mispriced_options += 1
-
+                # pct_well_priced = (calls_well_priced / total_calls) * 100
+                # pct_well_priced_2 = (puts_well_priced / total_puts) * 100
+                # print(f"{round(pct_well_priced, 2)}% of calls well priced (within 5% of the bid/ask spread) "
+                #       f"for {stock} options expiring {expiry}")
+                # print(f"{round(pct_well_priced_2, 2)}% of puts well priced (within 5% of the bid/ask spread) "
+                #       f"for {stock} options expiring {expiry}")
                 i += 1
                 call_table.to_excel(writer, sheet_name=f'{stock} Calls {expiry}')
                 put_table.to_excel(writer, sheet_name=f'{stock} Puts {expiry}')
@@ -135,5 +146,3 @@ class Options:
             except KeyError:
                 pass
             book.save(url)
-            pricing = self.well_priced_options / (self.well_priced_options + self.significantly_mispriced_options) * 100
-            print(f"{round(pricing, 2)}% of {stock}\'s options are priced within 1% of their real value")
