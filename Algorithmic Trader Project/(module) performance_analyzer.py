@@ -1,43 +1,27 @@
-import openpyxl
 import pandas as pd
 import datetime as dt
 import numpy as np
 import time
+from clr import AddReference
 
 from ALGO.stock_data_module import stockDataEngine, spy_returns
-from ALGO.bond_yield_fetch import onemonthyield
+from ALGO.bond_yield_fetch import treasuryYields
 
 
 def data_to_excel(data, sheet_name):
+    path = r"C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Portfolio Data.xlsx"
     metrics = pd.DataFrame(data, columns=['Performance Summary', 'All Trades', 'Long Trades', 'Short Trades'])
-    book = openpyxl.load_workbook(filename='Portfolio Data.xlsx')
-    excel_writer = pd.ExcelWriter('Portfolio Data.xlsx', engine='openpyxl')
-    excel_writer.book = book
-    excel_writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    metrics.to_excel(excel_writer, sheet_name=sheet_name)
 
-    worksheets = book.sheetnames
-    wks = None
-    for sheet in worksheets:
-        if sheet == sheet_name:
-            wks = book[sheet]
+    with pd.ExcelWriter(path) as writer:
+        metrics.to_excel(writer, sheet_name=sheet_name)
 
-    dims = {}
-    for row in wks.rows:
-        for cell in row:
-            if cell.value:
-                dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
-    for col, value in dims.items():
-        wks.column_dimensions[col].width = value + 1
-
-    try:
-        sheet = book['Sheet']
-        book.remove(sheet)
-        book.save('Portfolio Data.xlsx')
-    except KeyError:
-        pass
-    excel_writer.save()
-    book.close()
+    AddReference(r"C:\Users\fabio\source\repos\Excel-Interop\Excel-Interop\bin\Debug\Excel-Interop.dll")
+    import Excel_Interop
+    args = [path, sheet_name]
+    formatting = Excel_Interop.ExcelFormatting()
+    formatting.Main(args)
+    
+    print("Data table of portfolio performance metrics has been exported to Microsoft Excel")
 
 
 class portfolioAnalysis:
@@ -54,7 +38,7 @@ class portfolioAnalysis:
             try:
                 spec_date = dt.datetime.today() - dt.timedelta(days=self.days)
                 date = spec_date.strftime('%Y-%m-%d')
-                print('Attempting to analyze portfolio on {}'.format(date))
+                # print('Attempting to analyze portfolio on {}'.format(date))
                 activities = self.api.get_activities(activity_types='FILL', date=date)
                 activities_df = pd.DataFrame([activity._raw for activity in activities])
                 if not len(activities_df) > 10:
@@ -79,21 +63,20 @@ class portfolioAnalysis:
                     prev_days_activities_df = prev_days_activities_df.iloc[::-1]
                     prev_days_activities_df[['price', 'qty']] = \
                         prev_days_activities_df[['price', 'qty']].apply(pd.to_numeric)
-                    prev_days_activities_df['net_qty'] = np.where(prev_days_activities_df.side == 'buy',
-                                                                  prev_days_activities_df.qty,
-                                                                  -prev_days_activities_df.qty)
-                    prev_days_activities_df[
-                        'net_trade'] = -prev_days_activities_df.net_qty * prev_days_activities_df.price
-                    prev_days_activities_df['cumulative_sum'] = prev_days_activities_df.groupby('symbol')[
-                        'net_qty'].apply(
-                        lambda h: h.cumsum())
+                    prev_days_activities_df['net_qty'] = \
+                        np.where(prev_days_activities_df.side == 'buy', prev_days_activities_df.qty,
+                                 -prev_days_activities_df.qty)
+                    prev_days_activities_df['net_trade'] = \
+                        -prev_days_activities_df.net_qty * prev_days_activities_df.price
+                    prev_days_activities_df['cumulative_sum'] = \
+                        prev_days_activities_df.groupby('symbol')['net_qty'].apply(lambda h: h.cumsum())
                     prev_days_activities_df.to_excel("Portfolio Activities, {}.xlsx".format(prev_day_date))
 
-                    nonzero_trades = prev_days_activities_df.groupby('symbol').filter(
-                        lambda trade: sum(trade.net_qty) != 0)
+                    nonzero_trades = \
+                        prev_days_activities_df.groupby('symbol').filter(lambda trade: sum(trade.net_qty) != 0)
                     open_position_catalog = {}
                     open_tickers = nonzero_trades.symbol.unique()
-                    print(open_tickers)
+                    # print(open_tickers)
 
                     nonzero_trades = nonzero_trades.iloc[::-1]
                     for stock in open_tickers:
@@ -245,10 +228,10 @@ class portfolioAnalysis:
                 if len(same_side_orders) == 0:
                     reset_flag = True
 
-        print(trade_book)
-        print(short_trade_book)
-        print(long_order_time_held)
-        print(short_order_time_held)
+        # print(trade_book)
+        # print(short_trade_book)
+        # print(long_order_time_held)
+        # print(short_order_time_held)
 
         total_profit = 0
         profit_per_symbol = {}
@@ -260,10 +243,10 @@ class portfolioAnalysis:
             for element in short_trade_book[stock]:
                 total_profit += float(element)
                 profit_per_symbol[stock] += float(element)
-        print(round(total_profit, 2))
-        print("Note that there may be a slight discrepancy in calculated prices vs what alpaca's interface shows, \n"
-              "This is simply due to the fact this calculation concerns CLOSED trades, and doesnt consider the \n"
-              "changing value of stock(s) held")
+        # print(round(total_profit, 2))
+        # print("Note that there may be a slight discrepancy in calculated prices vs what alpaca's interface shows, \n"
+        #       "This is simply due to the fact this calculation concerns CLOSED trades, and doesnt consider the \n"
+        #       "changing value of stock(s) held")
 
         self.trade_calculations(trade_book, short_trade_book, long_order_time_held, short_order_time_held,
                                 profit_per_symbol)
@@ -287,20 +270,20 @@ class portfolioAnalysis:
                 shortquantity += short_order_time_held[stock][i][1]
                 short_length += 1
 
-        avg_long_stock_hold_time = round(longtime / longquantity, 2)
-        avg_short_stock_hold_time = round(shorttime / shortquantity, 2)
+        # avg_long_stock_hold_time = round(longtime / longquantity, 2)
+        # avg_short_stock_hold_time = round(shorttime / shortquantity, 2)
         avg_long_trade_hold_time = round(longtime / long_length, 2)
         avg_short_trade_hold_time = round(shorttime / short_length, 2)
-        print("Average stock held for:", round(avg_long_stock_hold_time, 2), 'seconds')
-        print("Average short stock held for:", round(avg_short_stock_hold_time, 2), 'seconds')
+        # print("Average stock held for:", round(avg_long_stock_hold_time, 2), 'seconds')
+        # print("Average short stock held for:", round(avg_short_stock_hold_time, 2), 'seconds')
 
         avg_total_trade_length = time.strftime("%#M:%S", time.gmtime((avg_short_trade_hold_time +
                                                                       avg_long_trade_hold_time)))
         avg_short_trade_length = time.strftime("%#M:%S", time.gmtime(avg_short_trade_hold_time))
         avg_long_trade_length = time.strftime("%#M:%S", time.gmtime(avg_long_trade_hold_time))
 
-        print("Average long trade held for:", avg_long_trade_length)
-        print("Average short trade held for:", avg_short_trade_length)
+        # print("Average long trade held for:", avg_long_trade_length)
+        # print("Average short trade held for:", avg_short_trade_length)
         ##################################################################
         total_gross_profit = 0
         total_gross_loss = 0
@@ -328,11 +311,11 @@ class portfolioAnalysis:
                 net_short_profit += short_trade_book[stock][i]
 
         net_short_profit = round(net_short_profit, 2)
-        print("Short-side net profit:", net_short_profit)
-        print("Short-side profitable trades:", short_winning_trades)
-        print("Short-side even trades:", short_even_trades)
-        print("Short-side Losing trades:", short_losing_trades)
-        print("Total short-side trades:", total_short_trades)
+        # print("Short-side net profit:", net_short_profit)
+        # print("Short-side profitable trades:", short_winning_trades)
+        # print("Short-side even trades:", short_even_trades)
+        # print("Short-side Losing trades:", short_losing_trades)
+        # print("Total short-side trades:", total_short_trades)
 
         # initialization of long variables
         long_gross_profit = 0
@@ -358,11 +341,11 @@ class portfolioAnalysis:
                 net_long_profit += trade_book[stock][i]
 
         net_long_profit = round(net_long_profit, 4)
-        print("\nLong-side net profit:", net_long_profit)
-        print("Long-side profitable trades:", long_winning_trades)
-        print("Long-side even trades:", long_even_trades)
-        print("Long-side losing trades:", long_losing_trades)
-        print("Total long-side trades", total_long_trades)
+        # print("\nLong-side net profit:", net_long_profit)
+        # print("Long-side profitable trades:", long_winning_trades)
+        # print("Long-side even trades:", long_even_trades)
+        # print("Long-side losing trades:", long_losing_trades)
+        # print("Total long-side trades", total_long_trades)
 
         avg_winning_trade = round((total_gross_profit / (long_winning_trades + short_winning_trades)), 4)
         avg_losing_trade = round((total_gross_loss / (total_long_trades + short_losing_trades)), 4)
@@ -375,19 +358,21 @@ class portfolioAnalysis:
         total_gross_profit = round(total_gross_profit, 4)
         total_gross_loss = round(total_gross_loss, 4)
 
-        print("\nProfit Metrics:")
-        print("Gross Profit:", total_gross_profit)
-        print("Average Winning Trade:", avg_winning_trade)
-        print("Gross Loss:", total_gross_loss)
-        print("Average Losing Trade:", avg_losing_trade)
-        print("Total Net Profit:", todays_profit_and_loss)
+        # print("\nProfit Metrics:")
+        # print("Gross Profit:", total_gross_profit)
+        # print("Average Winning Trade:", avg_winning_trade)
+        # print("Gross Loss:", total_gross_loss)
+        # print("Average Losing Trade:", avg_losing_trade)
+        # print("Total Net Profit:", todays_profit_and_loss)
 
         pd.options.display.float_format = '{:.0f}'.format
         data_engine = stockDataEngine(self.stock_tickers)
         init_data = data_engine.inital_quote_data_fetch()
         quote_data = data_engine.quote_data_processor()
         spyreturn = float(spy_returns())
-        riskfreerate = float(onemonthyield())
+        bond_object = treasuryYields()
+        bond_yields = bond_object.treasury_bond_yields()
+        riskfreerate = float(bond_yields[0])
 
         stock_metrics = [['' for m in range(1)] for i in range(len(self.stock_tickers) * 3)]
         spdr_string = str(spyreturn) + str('%')
