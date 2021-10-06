@@ -14,7 +14,6 @@ class WebsocketBootStrapper:
         self.socket.on_open = self.on_open
         self.trade_data = {}
         self.stock_tickers = stock_tickers
-        self.close = False
         for ticker in self.stock_tickers:
             self.trade_data[ticker] = []
 
@@ -22,9 +21,11 @@ class WebsocketBootStrapper:
         self.socket.run_forever()
 
     def return_data(self):
-        # self.socket.keep_running = False
-        # self.socket.close()
         return self.trade_data
+
+    def close_ws(self):
+        self.socket.keep_running = False
+        self.socket.close()
 
     def on_message(self, ws, message):
         if message == '{"type":"ping"}':
