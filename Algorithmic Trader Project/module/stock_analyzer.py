@@ -8,7 +8,7 @@ import datetime as dt
 import csv
 
 
-from ALGO.stock_data_engine_core import stockDataEngine
+from ALGO.stock_data_module import stockDataEngine
 
 
 def get_tickers(tickers, api):
@@ -108,7 +108,7 @@ class APIbootstrap:
         self._api = _api
         self._pruned_tickers = []
         self._file_date = dt.datetime.date(dt.datetime.now())
-        self._file_name = f'../ALGO/Daily Stock Analysis/{self._file_date}_ACC_DIST_Ranked.csv'
+        self._file_name = f'../ALGO/Daily Stock Analysis/Accum-Dist Ranks/{self._file_date}_ACC_DIST_Ranked.csv'
         self._stocks_folder = "../ALGO/Daily Stock Analysis/Stocks"
 
     def get_tickers(self):
