@@ -236,10 +236,6 @@ if __name__ == '__main__':
         print('Press 1 for Automated Stock Fetch and Trading')
         print('Press 2 for Manual Stock Fetch and Automated Trading')
         print('Press 3 for Portfolio Analysis')
-        print('This program is developed solely by Anthony M. Lonsdale')
-        print('Contact Information:')
-        print('E-mail: alons3253@gmail.com')
-        print('Cell: 816-872-7762')
 
         choice = None
         while True:
