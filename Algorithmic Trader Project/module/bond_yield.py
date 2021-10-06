@@ -12,6 +12,7 @@ signals more investors are purchasing bonds, causing
 yields to decrease, and the opposite is true.
 """
 
+
 class treasuryYields:
     def __init__(self):
         self.bond_yields = {}
@@ -52,16 +53,11 @@ class treasuryYields:
             pass
         book.save(self.url)
 
-        onemonthyield = bond_df.iloc[13, 0]
-        twomonthyield = bond_df.iloc[13, 1]
-        threemonthyield = bond_df.iloc[13, 2]
-        sixmonthyield = bond_df.iloc[13, 3]
-        oneyryield = bond_df.iloc[13, 4]
-        twoyryield = bond_df.iloc[13, 5]
+        onemonthyield = float(bond_df.iloc[-1, 0]) / 100
+        twomonthyield = float(bond_df.iloc[-1, 1]) / 100
+        threemonthyield = float(bond_df.iloc[-1, 2]) / 100
+        sixmonthyield = float(bond_df.iloc[-1, 3]) / 100
+        oneyryield = float(bond_df.iloc[-1, 4]) / 100
+        twoyryield = float(bond_df.iloc[-1, 5]) / 100
         return (onemonthyield, twomonthyield, threemonthyield,
                 sixmonthyield, oneyryield, twoyryield)
-
-
-if __name__ == "__main__":
-    bond_object = treasuryYields()
-    bond_object.treasury_bond_yields()
