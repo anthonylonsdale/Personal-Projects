@@ -2,25 +2,24 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 import time
-from clr import AddReference
+import os
 
 from ALGO.stock_data_module import stockDataEngine, spy_returns
-from ALGO.bond_yield_fetch import treasuryYields
+from ALGO.bond_yield_fetch_module import treasuryYields
+from ALGO.excel_formatting_module import ExcelFormatting
 
 
 def data_to_excel(data, sheet_name):
-    path = r"C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Portfolio Data.xlsx"
+    cwd = os.getcwd()
+    path = cwd + r"\Portfolio-Analysis\Portfolio Data.xlsx"
     metrics = pd.DataFrame(data, columns=['Performance Summary', 'All Trades', 'Long Trades', 'Short Trades'])
 
     with pd.ExcelWriter(path) as writer:
         metrics.to_excel(writer, sheet_name=sheet_name)
 
-    AddReference(r"C:\Users\fabio\source\repos\Excel-Interop\Excel-Interop\bin\Debug\Excel-Interop.dll")
-    import Excel_Interop
-    args = [path, sheet_name]
-    formatting = Excel_Interop.ExcelFormatting()
-    formatting.Main(args)
-    
+    formatter = ExcelFormatting(file_path=path, worksheet_name=sheet_name)
+    formatter.formatting()
+
     print("Data table of portfolio performance metrics has been exported to Microsoft Excel")
 
 
@@ -277,13 +276,13 @@ class portfolioAnalysis:
         # print("Average stock held for:", round(avg_long_stock_hold_time, 2), 'seconds')
         # print("Average short stock held for:", round(avg_short_stock_hold_time, 2), 'seconds')
 
-        avg_total_trade_length = time.strftime("%#M:%S", time.gmtime((avg_short_trade_hold_time +
+        avg_ttl_trade_time = time.strftime("%#M:%S", time.gmtime((avg_short_trade_hold_time +
                                                                       avg_long_trade_hold_time)))
-        avg_short_trade_length = time.strftime("%#M:%S", time.gmtime(avg_short_trade_hold_time))
-        avg_long_trade_length = time.strftime("%#M:%S", time.gmtime(avg_long_trade_hold_time))
+        avg_short_trade_time = time.strftime("%#M:%S", time.gmtime(avg_short_trade_hold_time))
+        avg_long_trade_time = time.strftime("%#M:%S", time.gmtime(avg_long_trade_hold_time))
 
-        # print("Average long trade held for:", avg_long_trade_length)
-        # print("Average short trade held for:", avg_short_trade_length)
+        # print("Average long trade held for:", avg_long_trade_time)
+        # print("Average short trade held for:", avg_short_trade_time)
         ##################################################################
         total_gross_profit = 0
         total_gross_loss = 0
@@ -381,12 +380,17 @@ class portfolioAnalysis:
         stock_index = 0
         account = self.api.get_account()
         for stock in self.stock_tickers:
+            print(stock)
+            # init data is a list of dicts
+            # quote data is just a dict
             # the average max holdings of each stock is limited at 10% of the portfolio
+            print(init_data)
+            print(quote_data)
             trade_size_relative_to_portfolio = 0.1
-            beta = trade_size_relative_to_portfolio * float(init_data[stock][8])
+            beta = trade_size_relative_to_portfolio * float(init_data[stock][0]['beta'])
             buying_power = float(account.buying_power) / 4
             stock_profit_pct = round((profit_per_symbol[stock] / buying_power) * 100, 4)
-            market_returns_pct = round((quote_data[stock][0] - float(init_data[stock][4])) / 100, 4)
+            market_returns_pct = round((quote_data[stock]['current price'] - float(init_data[stock][0]['open'])) / 100, 4)
             # divide the 1 month risk free rate by 30 to approximate the rate of bond return for 1 day
             alpha = round((stock_profit_pct - (riskfreerate / 30)) - (beta * (spyreturn - (riskfreerate / 30))), 4)
 
@@ -415,10 +419,10 @@ class portfolioAnalysis:
         else:
             short_profit_factor = round((short_gross_profit / short_gross_loss), 4)
 
-        total_percent_profitable = round(((long_winning_trades + short_winning_trades) /
+        ttl_pct_pftability = round(((long_winning_trades + short_winning_trades) /
                                           (total_long_trades + total_short_trades)) * 100, 4)
-        long_percent_profitable = round((long_winning_trades / total_long_trades) * 100, 4)
-        short_percent_profitable = round((short_winning_trades / total_short_trades) * 100, 4)
+        long_pct_pftability = round((long_winning_trades / total_long_trades) * 100, 4)
+        short_pct_pftability = round((short_winning_trades / total_short_trades) * 100, 4)
 
         # this is the 2d list used to convert into a pandas dataframe for easy transcription onto an excel document
         data = [['Profit Metrics', '', '', ''],
@@ -430,11 +434,9 @@ class portfolioAnalysis:
                 ['Trade Metrics', '', '', ''],
                 ['Total Number of Trades:', int(total_long_trades + total_short_trades), total_long_trades,
                  total_short_trades],
-                ['Percent Profitable:', str(total_percent_profitable) + str("%"),
-                 str(long_percent_profitable) + str('%'),
-                 str(short_percent_profitable) + str('%')],
-                ['Average Stock Held Time (Seconds):', avg_total_trade_length, avg_long_trade_length,
-                 avg_short_trade_length],
+                ['Percent Profitable:', f'{ttl_pct_pftability}%', f'{long_pct_pftability}%',
+                 f'{short_pct_pftability}%'],
+                ['Average Stock Held Time (Seconds):', avg_ttl_trade_time, avg_long_trade_time, avg_short_trade_time],
                 ['Winning Trades:', long_winning_trades + short_winning_trades, long_winning_trades,
                  short_winning_trades],
                 ['Average Winning Trade:', avg_winning_trade, avg_long_winning_trade, avg_short_winning_trade],
