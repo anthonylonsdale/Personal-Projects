@@ -5,7 +5,7 @@ namespace Excel_Interop
 {
     public class ExcelFormatting
     {
-        public static void ExcelRun(String filename, String wks)
+        public static void ExcelRun(String filename)
         {
             object m = Type.Missing;
 
@@ -15,10 +15,16 @@ namespace Excel_Interop
 
             Excel.Workbooks xlWorkbooks = excelApp.Workbooks;
             Excel.Workbook xlWorkbook = xlWorkbooks.Open(filename);
-            Excel.Worksheet xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets[wks];
+            //Excel.Worksheet xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets[wks];
 
-            xlWorksheet.Columns.AutoFit();
-            xlWorksheet.Rows.AutoFit();
+            foreach ( Excel.Worksheet worksheet in xlWorkbook.Worksheets )
+            {
+                worksheet.Columns.AutoFit();
+                worksheet.Rows.AutoFit();
+            }
+
+            //xlWorksheet.Columns.AutoFit();
+            //xlWorksheet.Rows.AutoFit();
 
             xlWorkbook.Close(SaveChanges: true, Filename: filename);
             excelApp.Quit();
@@ -28,15 +34,15 @@ namespace Excel_Interop
 
             xlWorkbooks = null;
             xlWorkbook = null;
-            xlWorksheet = null;
+            //worksheet = null;
             excelApp = null;
         }
 
         public static void Main(String[] args)
         {
             String filename = args[0];
-            String wks = args[1];
-            ExcelRun(filename, wks);
+            //String wks = args[1];
+            ExcelRun(filename);
         }
     }
 }
