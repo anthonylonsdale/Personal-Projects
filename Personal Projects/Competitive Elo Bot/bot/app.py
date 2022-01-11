@@ -8,8 +8,9 @@ import glob
 import re
 import asyncio
 import logging
-import sqlite3
+import traceback
 import aiosqlite
+from urllib.request import pathname2url
 from dotenv import load_dotenv
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -25,43 +26,50 @@ def days_hours_minutes(td):
 
 async def check_admin(guild_id):
     async with aiosqlite.connect(guild_settings_path) as db:
-        async with db.execute("select bot_admin_id from guilds where guild_id = ?", (guild_id,)) as c:
-            admin_id = await c.fetchone()
-            if admin_id is None:
+        async with db.execute_fetchall("select bot_admin_id from guilds where guild_id = ?", (guild_id,)) as c:
+            try:
+                bot_admin_id = c[0][0]
+                return bot_admin_id
+            except IndexError:
                 return None
-            return admin_id[0]
+
+
+async def file_init():
+    for path in path_list:
+        if not os.path.isfile(path):
+            if path == guild_settings_path:
+                await initialize_guild_settings()
+                continue
+            db = await aiosqlite.connect(path)
+            await db.close()
+    return
 
 
 if __name__ == '__main__':
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(filename='./data/discord.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
-    for path in path_list:
-        if not os.path.isfile(path):
-            if path == guild_settings_path:
-                loop = asyncio.new_event_loop()
-                asyncio.get_event_loop().run_until_complete(initialize_guild_settings())
-                continue
-            db_conn = sqlite3.connect(path)
-            db_conn.close()
-
+    asyncio.run(file_init())
     prefix = '.'
+    asyncio.set_event_loop(asyncio.new_event_loop())
     client = commands.Bot(command_prefix=prefix)
     client.remove_command('help')
     start_time = datetime.datetime.now().astimezone()
 
     load_dotenv(env_path)
-    token = os.getenv("TEST_BOT")
+    # token = os.getenv("PRODUCTION_BOT_TOKEN")
+    token = os.getenv("TEST_BOT_TOKEN")
 
 
     @client.command("ping", aliases=['p'])
     async def ping(ctx):
         await ctx.send(f'Bot Response Time: {round(client.latency * 1000)}ms ', delete_after=delete_delay)
 
-    @client.command('reset_settings')
+
+    @client.command('resetsettings')
     @commands.has_permissions(administrator=True)
     async def reset(ctx):
         def check(message):
@@ -106,51 +114,42 @@ if __name__ == '__main__':
         if 'y' == yn.content:
             await ctx.send("please supply the channel id of the bot channel", delete_after=delete_delay)
             try:
-                res = await client.wait_for("message", check=check, timeout=180)
-                try:
-                    await client.fetch_channel(int(res.content))
-                    bot_channel_id = res.content
-                except Exception:
-                    await ctx.send("You supplied an invalid response", delete_after=delete_delay)
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                bot = await client.wait_for("message", check=check, timeout=180)
+                await client.fetch_channel(int(bot.content))
+                bot_channel_id = bot.content
+            except asyncio.TimeoutError or Exception:
+                await ctx.send("You either supplied an invalid channel or took too long", delete_after=delete_delay)
                 return
+
             await ctx.send("please supply the channel id of the leaderboard channel", delete_after=delete_delay)
             try:
-                res = await client.wait_for("message", check=check, timeout=180)
-                try:
-                    await client.fetch_channel(int(res.content))
-                    leaderboard_channel_id = int(res.content)
-                except Exception:
-                    await ctx.send("You supplied an invalid response", delete_after=delete_delay)
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                board = await client.wait_for("message", check=check, timeout=180)
+                await client.fetch_channel(int(board.content))
+                leaderboard_channel_id = int(board.content)
+            except asyncio.TimeoutError or Exception as e:
+                await ctx.send("You either supplied an invalid channel or took too long", delete_after=delete_delay)
                 return
         elif 'n' == yn.content:
             await ctx.send("Input hyphenated bot channel and leaderboard channel names separated by a space, in that "
                            "order. Example: ratings-bot-channel leaderboard-channel:", delete_after=delete_delay)
             try:
                 channel_names = await client.wait_for("message", check=check, timeout=response_time)
-            except asyncio.TimeoutError:
-                await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
-                return
-
-            try:
                 ch_names = channel_names.content.split(' ')
                 if len(ch_names) > 2:
                     raise Exception("Too many arguments provided")
                 bot_channel_name = ch_names[0]
                 leaderboard_channel_name = ch_names[1]
-
                 bot_channel = await ctx.message.guild.create_text_channel(str(bot_channel_name))
                 leaderboard_channel = await ctx.message.guild.create_text_channel(leaderboard_channel_name)
                 bot_channel_id = bot_channel.id
                 leaderboard_channel_id = leaderboard_channel.id
+            except asyncio.TimeoutError:
+                await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                return
             except Exception as e:
                 await ctx.send(f"You did not follow the provided format! {e}", delete_after=delete_delay)
                 return
+
         else:
             await ctx.send("You supplied an invalid response", delete_after=delete_delay)
             return
@@ -165,57 +164,51 @@ if __name__ == '__main__':
         if 'y' == ynr.content:
             await ctx.send("Input role ID to serve as Bot Administrator", delete_after=delete_delay)
             try:
-                try:
-                    r_id = await client.wait_for("message", check=check, timeout=response_time)
-                    role = discord.utils.get(ctx.guild.roles, id=int(r_id.content))
-                    bot_admin_id = int(r_id.content)
-                except Exception:
-                    await ctx.send("An error has occurred", delete_after=delete_delay)
-                    return
+                r_id = await client.wait_for("message", check=check, timeout=response_time)
+                discord.utils.get(ctx.guild.roles, id=int(r_id.content))
+                bot_admin_id = int(r_id.content)
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                return
+            except Exception:
+                await ctx.send("An error has occurred", delete_after=delete_delay)
                 return
         elif 'n' == ynr.content:
             role = await ctx.message.guild.create_role(name="Bot Admin")
             bot_admin_id = role.id
             user = ctx.message.author
             await user.add_roles(role)
-            await ctx.send("The \"Bot Admin\" Role has been created, feel free to give the role to other members but"
-                           " please do not delete it as the id is hardcoded in the database.",
-                           delete_after=delete_delay)
+            await ctx.send("The \"Bot Admin\" Role has been created, feel free to give the role to other members but "
+                           "please do not delete it as the id is hardcoded in the database.", delete_after=delete_delay)
         else:
             await ctx.send("You supplied an invalid response", delete_after=delete_delay)
             return
 
         await ctx.send("Input starting elo and starting sigma and global ratings floor, separated by spaces "
                        "Example: 1200 150 900:", delete_after=delete_delay)
-
         try:
             ratings_set = await client.wait_for("message", check=check, timeout=180)
-        except asyncio.TimeoutError:
-            await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
-            return
-
-        try:
             ratings_settings = ratings_set.content.split(' ')
             if len(ratings_settings) > 3:
                 raise Exception("Too many arguments provided")
             starting_elo = ratings_settings[0]
             starting_sigma = ratings_settings[1]
             global_elo_floor = ratings_settings[2]
+        except asyncio.TimeoutError:
+            await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+            return
         except Exception as e:
             await ctx.send(f"You did not follow the provided format! {e}", delete_after=delete_delay)
             return
 
         async with aiosqlite.connect(guild_settings_path) as db:
-            params = (ctx.guild.id, bot_channel_id, leaderboard_channel_id, bot_admin_id, starting_elo, starting_sigma,
-                      global_elo_floor,)
-            await db.execute("insert into guilds values (?, ?, ?, ?, ?, ?, ?)", params)
+            await db.execute("insert into guilds values (?, ?, ?, ?, ?, ?, ?)",
+                             (ctx.guild.id, bot_channel_id, leaderboard_channel_id, bot_admin_id, starting_elo,
+                              starting_sigma, global_elo_floor,))
             await db.commit()
 
         init_tables = createGuildSettings(guild_id=ctx.guild.id)
         await init_tables.initialize_tables()
-
         await ctx.send('''Settings have been initialized for this server, GLHF!\n
                        A few things to keep in mind as you get started using the bot and its features:\n
                        1) The bot only accepts commands invoked in the bot channel (to mitigate bot spam issues)\n
@@ -223,11 +216,12 @@ if __name__ == '__main__':
                        invoke the .reset_settings command which is restricted to users with adminstrator permissions
                        (and can also be read from any channel).\n
                        3) The leaderboard will automatically update itself upon entry of a command, if it is deleted 
-                       it will automatically recreate itself''',
-                       delete_after=120)
+                       it will automatically recreate itself\n
+                       4) The Bot Admin role is given elevated privileges which can potentially be abused, assign it
+                       to others with caution.''', delete_after=120)
 
 
-    @client.command("block", aliases=['bl', 'ban'])
+    @client.command("block", aliases=['b', 'ban'])
     async def block_id(ctx, id_to_block=None):
         bot_admin_id = await check_admin(ctx.guild.id)
         role = ctx.guild.get_role(bot_admin_id)
@@ -245,32 +239,28 @@ if __name__ == '__main__':
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
                 return
-
             id_to_block = blockid.content
 
         try:
             banned_id = int(id_to_block)
+            user = await client.fetch_user(banned_id)
         except ValueError:
             try:
                 banned_id = int(id_to_block[3:-1])
+                user = await client.fetch_user(banned_id)
             except ValueError:
                 await ctx.send("Invalid input detected!", delete_after=delete_delay)
                 return
-        try:
-            user = await client.fetch_user(banned_id)
-        except Exception:
-            await ctx.send("You provided an invalid ID!", delete_after=delete_delay)
-            return
-        name = user.name
 
+        name = user.name
         async with aiosqlite.connect(blocked_ids_path) as db:
             await db.execute(f"insert or ignore into bans_{ctx.guild.id} (discord_id, discord_name) values (?, ?)",
                              (banned_id, name,))
             await db.commit()
-            await ctx.send(f'<@{banned_id}> You have been banned from using {client.user.name}', delete_after=delete_delay)
+        await ctx.send(f'<@{banned_id}> You have been banned from using {client.user.name}', delete_after=delete_delay)
 
-    # completed
-    @client.command("unblock", aliases=['un', 'unban'])
+
+    @client.command("unblock", aliases=['ub', 'unban'])
     async def unblock_id(ctx, id_to_unblock=None):
         bot_admin_id = await check_admin(ctx.guild.id)
         role = ctx.guild.get_role(bot_admin_id)
@@ -286,113 +276,146 @@ if __name__ == '__main__':
 
             try:
                 unblockid = await client.wait_for("message", check=check, timeout=response_time)
+                id_to_unblock = unblockid.content
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
                 return
 
-            id_to_unblock = unblockid.content
-
         try:
             unbanned_id = int(id_to_unblock)
+            await client.fetch_user(unbanned_id)
         except ValueError:
             try:
                 unbanned_id = int(id_to_unblock[3:-1])
+                await client.fetch_user(unbanned_id)
             except ValueError:
                 await ctx.send("Invalid input detected!", delete_after=delete_delay)
                 return
 
-        try:
-            user = await client.fetch_user(unbanned_id)
-        except Exception:
-            await ctx.send("You provided an invalid ID!", delete_after=delete_delay)
-            return
-
         async with aiosqlite.connect(blocked_ids_path) as db:
-            await db.execute("delete from bans_" + f'{ctx.guild.id}' + " where discord_id = ?", (unbanned_id,))
+            await db.execute(f"delete from bans_{ctx.guild.id} where discord_id = ?", (unbanned_id,))
             await db.commit()
-            await ctx.send(f"<@{unbanned_id}> You have been unbanned from using {client.user.name}",
-                           delete_after=delete_delay)
+        await ctx.send(f"<@{unbanned_id}> You have been unbanned from using {client.user.name}",
+                       delete_after=delete_delay)
 
-    # completed
-    @tasks.loop(hours=12)
-    async def backup(ctx):
-        todays_date = datetime.date.today().strftime("%m-%d-%Y")
-        backup_file = f'./data/ratings_backup_{todays_date}.db'
-        source = sqlite3.connect(ratings_path)
-        destination = sqlite3.connect(backup_file)
-        source.backup(destination)
-        source.close()
 
-        backup_file = f'./data/ratings_master_backup_{todays_date}.db'
-        source = sqlite3.connect(ratings_master_path)
-        destination = sqlite3.connect(backup_file)
-        source.backup(destination)
-        source.close()
+    class Backup(commands.Cog):
+        def __init__(self):
+            self.backup.start()
 
-        backup_file = f'./data/matches_backup_{todays_date}.db'
-        source = sqlite3.connect(matches_path)
-        destination = sqlite3.connect(backup_file)
-        source.backup(destination)
-        source.close()
+        @tasks.loop(hours=12)
+        async def backup(self):
+            todays_date = datetime.date.today().strftime("%m-%d-%Y")
+            for file in paths:
+                source = await aiosqlite.connect(f'./data/{file}.db')
+                destination = await aiosqlite.connect(f'./data/{file}_backup_{todays_date}.db')
+                await source.backup(destination)
+                await source.close()
 
-        backup_file = f'./data/guild_settings_backup_{todays_date}.db'
-        source = sqlite3.connect(guild_settings_path)
-        destination = sqlite3.connect(backup_file)
-        source.backup(destination)
-        source.close()
+            # prunes old backups
+            backup_files = glob.glob('./data/*_backup_*.db')
+            for file in backup_files:
+                re_match = re.search(r'\d{2}-\d{2}-\d{4}', file)
+                date = datetime.datetime.strptime(re_match.group(), '%m-%d-%Y').date()
+                date_cutoff = datetime.date.today() - datetime.timedelta(days=days_of_backup_file_storage)
+                if date_cutoff > date:
+                    pruned_backup = str('./') + str(file)
+                    os.remove(pruned_backup)
+            logger.debug("Backup of all files made")
 
-        backup_file = f'./data/banned_ids_backup_{todays_date}.db'
-        source = sqlite3.connect(blocked_ids_path)
-        destination = sqlite3.connect(backup_file)
-        source.backup(destination)
-        source.close()
+            ids = []
+            for guild in client.guilds:
+                ids.append(guild.id)
 
-        # prunes old backups
-        backup_files = glob.glob('./data/*_backup_*.db')
-        for file in backup_files:
-            re_match = re.search(r'\d{2}-\d{2}-\d{4}', file)
-            date = datetime.datetime.strptime(re_match.group(), '%m-%d-%Y').date()
-            date_cutoff = datetime.date.today() - datetime.timedelta(days=days_of_backup_file_storage)
-            if date_cutoff > date:
-                pruned_backup = str('./') + str(file)
-                os.remove(pruned_backup)
+            async with aiosqlite.connect(guild_settings_path) as db:
+                async with db.execute_fetchall("select guild_id from guilds") as cursor:
+                    for row in cursor:
+                        if row[0] not in ids:
+                            await db.execute("delete from guilds where guild_id = ?", (row[0],))
+                            await db.commit()
+                            drop_guild_tables = dropGuildSettings(row[0])
+                            await drop_guild_tables.drop_tables()
 
-        await ctx.send(f"ELO backed up for today {todays_date}", delete_after=delete_delay)
 
-    # completed
-    @client.command("restoreratings", aliases=['rr', 'restore'])
-    @commands.is_owner()
+    @client.command("restore", aliases=['r'])
     async def restore(ctx):
-        backup_files = glob.glob('./data/ratings_backup_*.db')
+        backup_files = glob.glob('./data/*_backup_*.db')
         if len(backup_files) == 0:
             await ctx.send("No backups to restore from", delete_after=delete_delay)
             return
 
-        await ctx.send(f"Input date to restore ratings from (format mo-dy-year).\n"
-                       f"Available dates to restore from: {backup_files}", delete_after=delete_delay)
+        backup_dates = []
+        for f in backup_files:
+            re_match = re.search(r'\d{2}-\d{2}-\d{4}', f)
+            date = re_match.group()
+            if date not in backup_dates:
+                backup_dates.append(date)
+
+        await ctx.send(f"Input date to restore table from (format mo-dy-year).\n"
+                       f"Available dates to restore from: {backup_dates}", delete_after=delete_delay)
 
         def check(message):
             return message.author == ctx.author and message.channel == ctx.channel
 
+        tables_to_select = []
         try:
             date_to_restore = await client.wait_for("message", check=check, timeout=response_time)
+            for index, path in enumerate(paths):
+                db = f'./data/{path}_backup_{date_to_restore.content}.db'
+                dburi = f'file:{pathname2url(db)}?mode=rw'
+                async with aiosqlite.connect(dburi, uri=True) as db:
+                    table_name = f'{tables[index]}_{ctx.guild.id}'
+                    result = await db.execute_fetchall(f"select name from sqlite_master where type=\'table\'")
+                    for element in result:
+                        if table_name == element[0]:
+                            tables_to_select.append(table_name)
         except asyncio.TimeoutError:
             await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
             return
-
-        try:
-            backup_file = f'./data/ratings_backup_{date_to_restore.content}.db'
-            source = sqlite3.connect(backup_file)
-            destination = sqlite3.connect(ratings_path)
-            source.backup(destination)
-            source.close()
         except Exception as e:
-            await ctx.send(f"Could not find backup for the date specified, error: {e}", delete_after=delete_delay)
+            await ctx.send("An error has occurred with the restore function!", delete_after=delete_delay)
             return
 
-        await ctx.send(f'ELO data restored from backup made on {date_to_restore.content}', delete_after=delete_delay)
+        if len(tables_to_select) > 0:
+            available_tables = ''
+            for table in tables_to_select:
+                available_tables += table.replace(f"_{ctx.guild.id}", '') + '\n'
+            await ctx.send(f"Available tables:\n{available_tables}Input table to restore from (without ID):",
+                           delete_after=delete_delay)
+        else:
+            await ctx.send(f"No tables found!", delete_after=delete_delay)
+            return
 
-    # completed
+        try:
+            table_selection = await client.wait_for("message", check=check, timeout=response_time)
+            selected_table = table_selection.content
+            if str(selected_table + f'_{ctx.guild.id}') not in tables_to_select:
+                raise Exception("Table not found")
+        except asyncio.TimeoutError:
+            await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+            return
+        except Exception as e:
+            await ctx.send("Table wasn't found!", delete_after=delete_delay)
+            return
+
+        for index, path in enumerate(tables):
+            if selected_table == path:
+                file = paths[index]
+                new_file = f'./data/{file}.db'
+                file_path = f'./data/{file}_backup_{date_to_restore.content}.db'
+                async with aiosqlite.connect(new_file) as db:
+                    await db.execute(f"delete from {selected_table}_{ctx.guild.id};")
+                    async with aiosqlite.connect(file_path) as backupdb:
+                        async for line in backupdb.iterdump():
+                            if "CREATE TABLE" in line and str(ctx.guild.id) in line:
+                                await db.execute(f"drop table if exists {selected_table}_{ctx.guild.id}")
+                                await db.execute(line)
+                                await db.commit()
+                            elif "INSERT INTO" in line and str(ctx.guild.id) in line:
+                                await db.execute(line)
+                                await db.commit()
+
+
     @client.command("listmembers", aliases=['lm'])
     async def list_members(ctx):
         bot_admin_id = await check_admin(ctx.guild.id)
@@ -402,15 +425,16 @@ if __name__ == '__main__':
             return
 
         members = ''
-        i = 0
         async with aiosqlite.connect(ratings_master_path) as db:
-            async with db.execute(f"select clan_id, player_name from players_{ctx.guild.id}") as cursor:
-                async for row in cursor:
+            async with db.execute_fetchall(f"select clan_id, player_name from players_{ctx.guild.id}") as c:
+                for row in c:
+                    if row[0] == '<>':
+                        members += f'{row[1]}\n'
+                        continue
                     members += f'{row[0]}{row[1]}\n'
-                    i += 1
-                await ctx.send(f"There are {i} ranked members:\n{members}", delete_after=delete_delay)
+                await ctx.send(f"There are {len(c)} ranked members:\n{members}", delete_after=delete_delay)
 
-    # completed
+
     @client.command("match", aliases=['m'])
     async def match(ctx, personone: str = None, persononewins: int = None, persontwo: str = None,
                     persontwowins: int = None):
@@ -435,14 +459,18 @@ if __name__ == '__main__':
 
             try:
                 match_msg = await client.wait_for("message", check=check, timeout=response_time)
+                match_array = match_msg.content.split()
+                personone = match_array[0]
+                persononewins = int(match_array[1])
+                persontwo = match_array[2]
+                persontwowins = int(match_array[3])
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
                 return
-            match_array = match_msg.content.split()
-            personone = match_array[0]
-            persononewins = int(match_array[1])
-            persontwo = match_array[2]
-            persontwowins = int(match_array[3])
+            except Exception as e:
+                await ctx.send("You provided invalid arguments, there should be 4 distinct arguments, player1, the "
+                               "number of times that player1 has won, player2 and the number of times player2 won.",
+                               delete_after=delete_delay)
 
         if persononewins > maxwinsallowed or persontwowins > maxwinsallowed:
             await ctx.send(f'You have exceeded the number of wins allowed in a single session ({maxwinsallowed})',
@@ -559,8 +587,8 @@ if __name__ == '__main__':
 
         author = str(ctx.author)
         author_id = ctx.author.id
-
         role = ctx.guild.get_role(bot_admin_id)
+
         if ctx.author.id == p1_info[0]:
             await ctx.send(f'<@{p2_info[0]}> A match involving you was just added. The match results have been sent '
                            f'to you for your perusal', delete_after=delete_delay)
@@ -578,7 +606,6 @@ if __name__ == '__main__':
                             f'{personone} and {persontwowins} wins for {persontwo}, if this result is incorrect, please'
                             f' contact the Bot Administrators.\nOld Elo: {p2_old_rating}   Old Sigma: {p2_old_sigma}.'
                             f'\nNew Elo: {p2_new_rating}   New Sigma: {p2_new_sigma}.')
-
         else:
             if role in ctx.author.roles:
                 await ctx.send(f'<@{p1_info[0]}> <@{p2_info[0]}> A match involving you was just added. The match '
@@ -590,12 +617,14 @@ if __name__ == '__main__':
 
         async with aiosqlite.connect(ratings_path) as db:
             await db.execute(f"update ratings_{guild_id} set rating = ?, sigma = ?, wins = wins + ?, losses = "
-                             "losses + ? where discord_id = ?;",
-                             (p1_new_rating, p1_new_sigma, persononewins, persontwowins, p1_info[0],))
+                             "losses + ?, last_updated = ? where discord_id = ?;",
+                             (p1_new_rating, p1_new_sigma, persononewins, persontwowins,
+                              datetime.datetime.now().astimezone(), p1_info[0],))
             await db.commit()
             await db.execute(f"update ratings_{guild_id} set rating = ?, sigma = ?, wins = wins + ?, losses = "
-                             "losses + ? where discord_id = ?;",
-                             (p2_new_rating, p2_new_sigma, persontwowins, persononewins, p2_info[0],))
+                             "losses + ?, last_updated = ? where discord_id = ?;",
+                             (p2_new_rating, p2_new_sigma, persontwowins, persononewins,
+                              datetime.datetime.now().astimezone(), p2_info[0],))
             await db.commit()
 
         async with aiosqlite.connect(matches_path) as db:
@@ -633,8 +662,8 @@ if __name__ == '__main__':
         await ctx.send(f"Updated Ratings (automatically saved to file):\n\n{personone}\'s Rank: {emoji1} {color1}\n"
                        f"{persontwo}\'s Rank: {emoji2} {color2}", delete_after=delete_delay)
 
-    # completed
-    @client.command("filecontents", aliases=['fc'])
+
+    @client.command("files", aliases=['f'])
     async def file_contents(ctx):
         bot_admin_id = await check_admin(ctx.guild.id)
         role = ctx.guild.get_role(bot_admin_id)
@@ -648,50 +677,19 @@ if __name__ == '__main__':
         guild_id = ctx.guild.id
         user = await client.fetch_user(ctx.author.id)
 
-        i = 1
-        ratings_embed = discord.Embed(title="Contents of \'ratings.db\'")
-        async with aiosqlite.connect(ratings_path) as db:
-            async with db.execute(f"select * from ratings_{guild_id}") as cur:
-                async for row in cur:
-                    ratings_embed.add_field(name=str(i), value=str(row), inline=False)
-                    i += 1
-        await user.send(embed=ratings_embed, delete_after=delete_delay)
-
-        i = 1
-        ratings_master_embed = discord.Embed(title="Contents of \'ratings_master.db\'")
-        async with aiosqlite.connect(ratings_master_path) as db:
-            async with db.execute(f"select * from players_{guild_id}") as cur:
-                async for row in cur:
-                    ratings_master_embed.add_field(name=str(i), value=str(row), inline=False)
-                    i += 1
-        await user.send(embed=ratings_master_embed, delete_after=delete_delay)
-
-        i = 1
-        matches_embed = discord.Embed(title="Contents of \'matches.db\'")
-        async with aiosqlite.connect(matches_path) as db:
-            async with db.execute(f"select * from matches_{guild_id}") as cur:
-                async for row in cur:
-                    matches_embed.add_field(name=str(i), value=str(row), inline=False)
-                    i += 1
-        await user.send(embed=matches_embed, delete_after=delete_delay)
-
-        i = 1
-        bans_embed = discord.Embed(title="Contents of \'banned_ids.db\'")
-        async with aiosqlite.connect(blocked_ids_path) as db:
-            async with db.execute(f"select * from bans_{guild_id}") as cur:
-                async for row in cur:
-                    bans_embed.add_field(name=str(i), value=str(row), inline=False)
-                    i += 1
-        await user.send(embed=bans_embed, delete_after=delete_delay)
-
-        i = 1
-        guilds_embed = discord.Embed(title="Contents of \'guild_settings.db\'")
-        async with aiosqlite.connect(guild_settings_path) as db:
-            async with db.execute("select * from guilds where guild_id = ?", (guild_id,)) as cur:
-                async for row in cur:
-                    guilds_embed.add_field(name=str(i), value=str(row), inline=False)
-                    i += 1
-        await user.send(embed=guilds_embed, delete_after=delete_delay)
+        for i in range(len(paths)):
+            embed = discord.Embed(title=f"Contents of {paths[i]}")
+            async with aiosqlite.connect(f"./data/{paths[i]}.db") as db:
+                if paths[i] == 'matches':
+                    for row in await db.execute_fetchall(f"select * from {tables[i]}_{guild_id}"):
+                        embed.add_field(name=f"Row ID: {row[0]}", value=str(row), inline=False)
+                elif paths[i] == 'guild_settings':
+                    for row in await db.execute_fetchall("select rowid, * from guilds where guild_id = ?", (guild_id,)):
+                        embed.add_field(name=f"Row ID: {row[0]}", value=str(row), inline=False)
+                else:
+                    for row in await db.execute_fetchall(f"select rowid, * from {tables[i]}_{guild_id}"):
+                        embed.add_field(name=f"Row ID: {row[0]}", value=str(row), inline=False)
+            await user.send(embed=embed, delete_after=delete_delay)
 
         await ctx.send("Input the file and line that you want to delete:\nFormat: file_name  line-#)",
                        delete_after=delete_delay)
@@ -708,33 +706,31 @@ if __name__ == '__main__':
 
         split_msg = msg.content.split(' ')
         file_name = split_msg[0]
-        line_no = split_msg[1]
+        row_id = split_msg[1]
 
         if 'matches' in file_name:
             async with aiosqlite.connect(matches_path) as db:
-                await db.execute(f"delete from matches_{guild_id} where rowid = ?;", (line_no,))
+                await db.execute(f"delete from matches_{guild_id} where rowid = ?;", (row_id,))
                 await db.commit()
         elif 'ratings_master' in file_name:
             async with aiosqlite.connect(ratings_master_path) as db:
-                await db.execute(f"delete from players_{guild_id} where rowid = ?;", (line_no,))
+                await db.execute(f"delete from players_{guild_id} where rowid = ?;", (row_id,))
                 await db.commit()
         elif 'ratings' in file_name:
             async with aiosqlite.connect(ratings_path) as db:
-                await db.execute(f"delete from ratings_{guild_id} where rowid = ?;", (line_no,))
+                await db.execute(f"delete from ratings_{guild_id} where rowid = ?;", (row_id,))
                 await db.commit()
         elif 'banned' in file_name:
             async with aiosqlite.connect(blocked_ids_path) as db:
-                await db.execute(f"delete from players_{guild_id} where rowid = ?;", (line_no,))
+                await db.execute(f"delete from bans_{guild_id} where rowid = ?;", (row_id,))
                 await db.commit()
         elif 'settings' in file_name:
-            async with aiosqlite.connect(guild_settings_path) as db:
-                await db.execute("delete from guilds where rowid = ?;", (line_no,))
-                await db.commit()
+            await reset(ctx)
+            return
+        await ctx.send(f"Line {row_id} in File {file_name} has been removed", delete_after=delete_delay)
 
-        await ctx.send(f"Line {line_no} in File {file_name} has been removed", delete_after=delete_delay)
 
-    # completed
-    @client.command("editelo", aliases=['ee'])
+    @client.command("editrating", aliases=['er'])
     async def edit_elo(ctx, name: str = None, newelo: str = None):
         bot_admin_id = await check_admin(ctx.guild.id)
         role = ctx.guild.get_role(bot_admin_id)
@@ -761,7 +757,7 @@ if __name__ == '__main__':
             await db.commit()
             await ctx.send(f"{name}\'s elo has been changed to {newelo}")
 
-    # completed
+
     @client.command("editsigma", aliases=['es'])
     async def edit_sigma(ctx, name: str = None, newsigma: str = None):
         bot_admin_id = await check_admin(ctx.guild.id)
@@ -791,7 +787,7 @@ if __name__ == '__main__':
             await db.commit()
             await ctx.send(f'{name}\'s sigma has been changed to {newsigma}')
 
-    # completed and rewritten in async format
+
     @client.command('editname', aliases=['en'])
     async def edit_member(ctx, name: str = None):
         guild_id = ctx.guild.id
@@ -825,23 +821,21 @@ if __name__ == '__main__':
                                   (new_name.content,)) as cur:
                 search = await cur.fetchone()
                 if search is not None:
-                    await ctx.send("Name already exists!", delete_after=delete_delay)
+                    await ctx.send(f"Name {new_name} already exists!", delete_after=delete_delay)
                     return
 
-            async with db.execute(f"select discord_id from players_{guild_id} where player_name = ?",
-                                  (name,)) as cur:
+            async with db.execute(f"select discord_id from players_{guild_id} where player_name = ?", (name,)) as cur:
                 search = await cur.fetchone()
                 if search is None:
                     await ctx.send(f"Name {name} does not exist!", delete_after=delete_delay)
                     return
-            # if bot admin
+
             if role in ctx.author.roles:
                 author_id = search[0]
             elif author_id != search[0]:
                 await ctx.send("Only Bot admins may change other member's names!", delete_after=delete_delay)
                 return
 
-            # a non bot admin can only ever change their own name
             await db.execute(f"update players_{guild_id} set player_name = ? where discord_id = ?;",
                              (new_name.content, author_id,))
             await db.commit()
@@ -852,7 +846,7 @@ if __name__ == '__main__':
             await db.commit()
             await ctx.send(f"<@{author_id}> Your name was changed from {name} to {new_name.content}")
 
-    # completed and rewritten in async format
+
     @client.command('stats', aliases=['s'])
     async def member_stats(ctx, name: str = None):
         def check(message):
@@ -904,13 +898,14 @@ if __name__ == '__main__':
             async with db.execute("select clan_id, player_name, rating, sigma, wins, losses, last_updated from ratings_"
                                   f"{guild_id} where player_name = ? and discord_id = ?", (name, discord_id,)) as cur:
                 r = await cur.fetchone()
-                tslm = datetime.datetime.utcnow() - datetime.datetime.fromisoformat(r[6])
+                tslm = datetime.datetime.now().astimezone() - datetime.datetime.fromisoformat(r[6])
                 t = days_hours_minutes(tslm)
-                await ctx.send(f"Stats for {r[0]}{r[1]}:\nRating: {r[2]}\nSigma: {r[3]}\nWins: {r[4]}\nLosses: {r[5]}\n"
-                               f"Time since last match: {t[0]} days, {t[1]} hours and {t[2]} minutes",
+                wr = round((r[4] / (r[4] + r[5])) * 100, 2)
+                await ctx.send(f"Stats for {r[0]}{r[1]}:\nRating: {r[2]}\nSigma: {r[3]}\nWins: {r[4]}\nLosses: {r[5]}"
+                               f"\nWinrate: {wr}%\nTime since last match: {t[0]} days, {t[1]} hours and {t[2]} minutes",
                                delete_after=delete_delay)
 
-    # completed and rewritten in async format
+
     @client.command("add", aliases=['a'])
     async def add_member(ctx, name: str = None, d_id=None):
         def check(message):
@@ -931,20 +926,22 @@ if __name__ == '__main__':
             await ctx.send(f"Input new member for competitive ranking, Format is <clan>name, i.e. <BestClan>Example.\n"
                            f"Warning, your unique Discord tag will be associated with your inputted name, so do not "
                            f"input anybody except yourself. If you make a typo, please use the .editname command.\n"
-                           f"Elo starts at {starting_elo} and Sigma starts at {starting_sigma} for all players.\n"
-                           f"Bot Admins are allowed to enter in members other than themselves by specifying <clan>name"
-                           f"then discord_id i.e. <BestClan>Example 112233445566778899", delete_after=delete_delay)
+                           f"Elo starts at {starting_elo} and Sigma starts at {starting_sigma} for all players.")
             try:
                 msg = await client.wait_for("message", check=check, timeout=response_time)
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
                 return
             name = msg.content
+        else:
+            print(name)
+            if '@' in name:
+                pass
+
 
         try:
-            split = name.split('>')
-            clan = split[0] + '>'
-            name = split[1]
+            clan = re.findall('[^>]+>', name)[0]
+            name = name.replace(clan, '')
         except IndexError:
             clan = '<>'
 
@@ -962,12 +959,11 @@ if __name__ == '__main__':
                         return
 
         user = await client.fetch_user(author_id)
-
         async with aiosqlite.connect(ratings_master_path) as db:
-            async with db.execute(f"select 1 from players_{guild_id} where discord_id = ? limit 1", (author_id,)) as cur:
-                if await cur.fetchone() is None:
-                    await cur.execute(f"insert into players_{guild_id} (discord_id, discord_name, clan_id, player_name)"
-                                      f" values (?, ?, ?, ?)", (author_id, str(user), clan, name,))
+            async with db.execute(f"select 1 from players_{guild_id} where discord_id = ? limit 1", (author_id,)) as c:
+                if await c.fetchone() is None:
+                    await c.execute(f"insert into players_{guild_id} (discord_id, discord_name, clan_id, player_name) "
+                                    f"values (?, ?, ?, ?)", (author_id, str(user), clan, name,))
                     await db.commit()
                 else:
                     await ctx.send(f'<@{ctx.author.id}> This Discord ID was already detected in the database! If you '
@@ -979,9 +975,10 @@ if __name__ == '__main__':
                              f"sigma, wins, losses) values (?, ?, ?, ?, ?, ?, ?, ?)",
                              (author_id, str(user), clan, name, starting_elo, starting_sigma, 0, 0))
             await db.commit()
-            await ctx.send(f'<@{author_id}> was successfully registered in the database, GLHF!', delete_after=delete_delay)
+            await ctx.send(f'<@{author_id}> was successfully registered in the database, GLHF!',
+                           delete_after=delete_delay)
 
-    # completed and rewritten in async format
+
     @client.command('delete', aliases=['d'])
     async def delete_member(ctx, name: str = None):
         guild_id = ctx.guild.id
@@ -1010,93 +1007,105 @@ if __name__ == '__main__':
             pass
 
         async with aiosqlite.connect(ratings_master_path) as db:
-            cur = await db.execute(f"select player_name from players_{guild_id} where player_name like ?",
-                                   ('%' + name + '%',))
-            name = await cur.fetchone()
-            await ctx.send(f"Are you sure you want to delete {name[0]}? (y/n)")
-            try:
-                yn = await client.wait_for("message", check=check, timeout=response_time)
-            except asyncio.TimeoutError:
-                await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
-                return
+            async with db.execute(f"select player_name, discord_id from players_{guild_id} where player_name like ?",
+                                  ('%' + name + '%',)) as c:
+                names = await c.fetchall()
+                if len(names) == 0:
+                    await ctx.send(f"Name was not found!", delete_after=delete_delay)
+                    return
+                if len(names) == 1:
+                    await ctx.send(f"Are you sure you want to delete {names[0][0]}? (y/n)", delete_after=delete_delay)
+                    try:
+                        yn = await client.wait_for("message", check=check, timeout=response_time)
+                    except asyncio.TimeoutError:
+                        await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                        return
 
-            if 'y' == yn.content:
-                await cur.execute(f"delete from players_{guild_id} where player_name = ?", (name[0],))
-                await db.commit()
-                async with aiosqlite.connect(ratings_path) as dbr:
-                    await dbr.execute(f"delete from ratings_{guild_id} where player_name = ?;", (name[0],))
-                    await dbr.commit()
-                await ctx.send(f'{name[0]} was removed from the database!', delete_after=delete_delay)
-            else:
-                await ctx.send("Command aborted, no deletions have occurred.", delete_after=delete_delay)
-                return
+                    if 'y' == yn.content:
+                        await c.execute(f"delete from players_{guild_id} where player_name = ?", (names[0][0],))
+                        await db.commit()
+                        async with aiosqlite.connect(ratings_path) as dbr:
+                            await dbr.execute(f"delete from ratings_{guild_id} where player_name = ?;", (names[0][0],))
+                            await dbr.commit()
+                        await ctx.send(f'{names[0][0]} was removed from the database!', delete_after=delete_delay)
+                    else:
+                        await ctx.send("Command aborted, no deletions have occurred.", delete_after=delete_delay)
+                        return
+                else:
+                    members = ''
+                    for i in range(len(names)):
+                        members += names[i][0] + '\n'
+                    await ctx.send(f"Multiple names were found!\n{members}Please specifiy which player you want "
+                                   f"to drop", delete_after=delete_delay)
+                    try:
+                        name = await client.wait_for("message", check=check, timeout=response_time)
+                    except asyncio.TimeoutError:
+                        await ctx.send("Sorry, you didn't reply in time!", delete_after=delete_delay)
+                        return
+                    name = name.content
 
-    # completed and rewritten in async format
+                    for i in range(len(names)):
+                        if name == names[i][0]:
+                            async with aiosqlite.connect(ratings_master_path) as db:
+                                await db.execute(f"delete from players_{guild_id} where discord_id = ?", (names[i][1],))
+                                await db.commit()
+                            async with aiosqlite.connect(ratings_path) as d:
+                                await d.execute(f"delete from ratings_{guild_id} where discord_id = ?", (names[i][1],))
+                                await d.commit()
+                            await ctx.send(f"{names[i][0]} with Discord ID {names[i][1]} has been deleted",
+                                           delete_after=delete_delay)
+                            return
+                    await ctx.send("Name was not found! No information was changed", delete_after=delete_delay)
+
+
     async def leaderboard(message):
         try:
             emoji_object = rankEmoji(client=client)
             rank_emojis = emoji_object.rank_emoji()
+            guild_id = message.guild.id
+            new_embed = discord.Embed(title=f"Current Top {leaderboard_members} leaderboard by Elo rating:")
+            async with aiosqlite.connect(ratings_path) as db:
+                async with db.execute_fetchall(f"select * from ratings_{guild_id}") as cs:
+                    cs.sort(key=lambda x: x[5], reverse=True)
+                    for index, row in enumerate(cs):
+                        if index == (leaderboard_members - 1):
+                            break
+
+                        clan_id = row[3]
+                        player_name = row[4]
+                        elo = row[5]
+                        sigma = row[6]
+                        wins = row[7]
+                        losses = row[8]
+
+                        name_string = f"{index+1}) {clan_id if clan_id != '<>' else ''}{player_name}"
+                        wr = str(round(((wins / (wins + losses)) * 100), 2)) + '%' if wins > 0 or losses > 0 else 'N/A'
+                        value_string = f'\nRating: {elo} Sigma: {sigma} \nWins: {wins} Losses: {losses} Winrate: {wr}'
+
+                        rank = None
+                        em = None
+                        for k in ranks:
+                            if elo >= ranks[k]:
+                                rank = k
+                                em = rank_emojis[k]
+                            else:
+                                break
+                        new_embed.add_field(name=name_string, value=f'Rank: {rank} {em}{value_string}', inline=False)
 
             async with aiosqlite.connect(guild_settings_path) as db:
-                cur = await db.execute("select leaderboard_channel_id from guilds where guild_id = ?",
-                                       (message.guild.id,))
-                leaderboard_channel = await cur.fetchone()
-                channel = discord.utils.get(message.guild.text_channels, id=leaderboard_channel[0])
-                msgs = await channel.history(limit=100).flatten()
+                async with db.execute_fetchall("select leaderboard_channel_id from guilds where guild_id = ?",
+                                               (guild_id,)) as c:
+                    channel = discord.utils.get(message.guild.channels, id=c[0][0])
 
-            ratings = []
-            new_embed = discord.Embed(title=f"Current Top {leaderboard_members} leaderboard by Elo rating:")
-
-            async with aiosqlite.connect(ratings_path) as db:
-                async with db.execute(f"select * from ratings_{message.guild.id}") as cs:
-                    async for row in cs:
-                        ratings.append(row)
-                    ratings.sort(key=lambda x: x[5], reverse=True)
-
-            for index, row in enumerate(ratings):
-                if index == (leaderboard_members - 1):
-                    break
-
-                clan_id = row[3]
-                player_name = row[4]
-                rating = row[5]
-                sigma = row[6]
-                wins = row[7]
-                losses = row[8]
-
-                if clan_id == '<>':
-                    name_string = f'{index+1}) {player_name}'
-                else:
-                    name_string = f'{index+1}) {clan_id}{player_name}'
-
-                try:
-                    winrate_pct = round(((wins / (wins + losses)) * 100), 2)
-                    winrate = str(winrate_pct) + '%'
-                except ZeroDivisionError:
-                    winrate = 'N/A'
-
-                value_string = f'\nRating: {rating} Sigma: {sigma} \nWins: {wins} Losses: {losses} Winrate: {winrate}'
-                rank = None
-                em = None
-                for k in ranks:
-                    if rating >= ranks[k]:
-                        rank = k
-                        em = rank_emojis[k]
-                    else:
-                        break
-                new_embed.add_field(name=name_string, value=f'Rank: {rank} {em}{value_string}',
-                                    inline=False)
-
-            if len(msgs) == 0:
-                await channel.send(embed=new_embed)
-            else:
-                for message in msgs:
-                    if message.author.name == client.user.name:
-                        message = await channel.fetch_message(message.id)
-                        await message.edit(embed=new_embed)
+                    async for message in channel.history(limit=200):
+                        if message.author == client.user:
+                            msg = await channel.fetch_message(message.id)
+                            await msg.edit(embed=new_embed)
+                            return
+                    await channel.send(embed=new_embed)
         except Exception as e:
             await message.channel.send("An error occurred with the leaderboard function", delete_after=delete_delay)
-            pass
+            return
 
 
     @client.command('uptime', aliases=['up'])
@@ -1111,41 +1120,75 @@ if __name__ == '__main__':
         await ctx.send(f"{client.user.name} has been up for {time_format}", delete_after=10)
 
 
+    @client.command('invite', aliases=['i'])
+    async def invite_link(ctx):
+        # Bot has the following permissions: Manage Roles and channels, view channels, Send messages, manage messages,
+        # embed links, attach files, read message history, mention everyone, use external emojis
+        oauth2_url = discord.utils.oauth_url(str(client.user.id), permissions=discord.Permissions(1342695440))
+        await ctx.send(oauth2_url, delete_after=delete_delay)
+
+
     @client.command('help', aliases=['h'])
     async def help_command(ctx):
         embed = discord.Embed(colour=discord.Colour.blue())
-        embed.set_author(name='Help:')
+        embed.set_author(name='Help and Documentation:')
         embed.add_field(name='Developers:', value='Bobo#6885 <@813330702712045590>, Sean#4318 <@202947434236739584>',
+                        inline=False)
+        embed.add_field(name='Commands:',
+                        value='All commands are listed below, with the parenthesis giving the format for how the '
+                              'command ought to be invoked. The user has the option to specify the arguments in the '
+                              'same message that invokes the command i.e. (.add <Clan>Example), or to separate the '
+                              'command and its arguments into different messages i.e. (.add) then (<Clan>Example). '
+                              'Each argument is listed in quotes but quotes are used for demonstration and should not '
+                              'be used when invoking the command, the type of the argument is also listed.',
                         inline=False)
         file = discord.File("./data/ArcturusMengsk_SC2_Cine1.jpg")
         embed.set_thumbnail(url='attachment://ArcturusMengsk_SC2_Cine1.jpg')
-        embed.add_field(name='.add or .a', value="Add yourself to be ranked", inline=True)
-        embed.add_field(name='.match or .m', value="Add a new match to influence rating", inline=True)
-        embed.add_field(name='.stats or .s', value="Check the ratings of a member", inline=True)
-        embed.add_field(name='.editname or .en', value="Edit your name (for typos and clan changes)", inline=True)
+        embed.add_field(name='.add or .a',
+                        value="Enter your name to be ranked, Clan tag is optional, Bot Admins may add other users by "
+                              "specifying the unique Discord ID of the user (arguments: <Clan>Example *String* or "
+                              "<Clan>Example *String* discord_id *Integer*).", inline=True)
+        embed.add_field(name='.match or .m',
+                        value="Add a new match to influence rating, Bot Admins may add matches between two other "
+                              "users (arguments: <Clan>Example1 *String* Example1wins *Integer* "
+                              "<Clan>Example2 *String* Example2wins *Integer*)",
+                        inline=True)
+        embed.add_field(name='.stats or .s',
+                        value="Check the ratings of a member (arguments: 'player_name' *String*). Command checks if "
+                              "multiple similar names exist and will ask you to clarify if that is the case.",
+                        inline=True)
         embed.add_field(name='.help or .h', value='Shows this', inline=True)
         embed.add_field(name='.ping or .p', value='Bot latency (in ms)', inline=True)
         embed.add_field(name='.uptime or .up', value='Display how long bot has been running for', inline=True)
-        embed.add_field(name='.block or .bl', value="*Requires \'Bot Admin\' role* Blocks a user from inputting "
-                                                    "commands", inline=True)
-        embed.add_field(name='.unblock or .u', value="*Requires \'Bot Admin\' role* Un-blocks a user from inputting "
-                                                     "commands", inline=True)
-        embed.add_field(name='.admin_add or .aa', value='*Requires \'Bot Admin\' role* Used for adding a person other '
-                                                        'than yourself', inline=True)
-        embed.add_field(name='.delete or .d', value='*Requires \'Bot Admin\' role* Removes an erroneously entered name',
+        embed.add_field(name='.block or .bl',
+                        value="*Requires \'Bot Admin\' role* Blocks a user from inputting commands "
+                              "(arguments: 'discord_id' or '@user')", inline=True)
+        embed.add_field(name='.unblock or .u',
+                        value="*Requires \'Bot Admin\' role* Un-blocks a user from inputting commands"
+                              "(arguments: 'discord_id' or '@user')", inline=True)
+        embed.add_field(name='.delete or .d',
+                        value='*Requires \'Bot Admin\' role* Removes an erroneously entered name (arguments: '
+                              '"player_name" *String*)', inline=True)
+        embed.add_field(name='.editname or .en',
+                        value='Edit your name (for typos and clan changes) (arguments: "player_name" *String*)',
                         inline=True)
-        embed.add_field(name='.editelo or .ee', value='*Requires \'Bot Admin\' role* Edits the Elo of a player',
-                        inline=True)
-        embed.add_field(name='.editsigma or .es', value='*Requires \'Bot Admin\' role* Edits the Sigma of a player',
-                        inline=True)
-        embed.add_field(name='.backupratings or .br', value="*Requires \'Bot Admin\' role* Backup Current Elo ratings",
-                        inline=True)
-        embed.add_field(name='.restoreratings or .rr', value='*Requires \'Bot Admin\' role* Restore Elo from backup '
-                                                             'date', inline=True)
-        embed.add_field(name='.listmembers or .lm', value='*Requires \'Bot Admin\' role* List all members being ranked',
-                        inline=True)
-        embed.add_field(name='.filecontents or .fc', value='*Requires \'Bot Admin\' role* Displays contents of Elo '
-                                                           'files', inline=True)
+        embed.add_field(name='.editrating or .er',
+                        value='*Requires \'Bot Admin\' role* Edits the Elo of a player '
+                              '(arguments: "player_name" *String* "new_elo" *Float*)', inline=True)
+        embed.add_field(name='.editsigma or .es',
+                        value='*Requires \'Bot Admin\' role* Edits the Sigma of a player '
+                              '(arguments: "player_name" *String* "new_sigma" *Float*)', inline=True)
+        embed.add_field(name='.restore or .r',
+                        value='*Requires \'Bot Admin\' role* Restore database from previous date (WARNING: can '
+                              'potentially cause problems) (server specific, arguments will be prompted)', inline=True)
+        embed.add_field(name='.listmembers or .lm',
+                        value='*Requires \'Bot Admin\' role* List all members being ranked '
+                              '(server specific, takes no arguments)', inline=True)
+        embed.add_field(name='.files or .f',
+                        value='*Requires \'Bot Admin\' role* Displays contents of database files '
+                              '(server specific, takes no arguments)', inline=True)
+        embed.add_field(name='.invite or .i',
+                        value='Returns the invite link for the bot', inline=True)
         embed.set_footer(icon_url=ctx.author.avatar_url,
                          text='Requested by {} on {}'.format(ctx.author, datetime.date.today().strftime("%m-%d-%Y")))
         await ctx.author.send(file=file, embed=embed)
@@ -1156,37 +1199,28 @@ if __name__ == '__main__':
         if message.author.name == client.user.name:
             return
 
-        if str(message.content) == '.reset_settings' or str(message.content) == '.setup':
+        if message.guild.owner_id == message.author.id:
             await client.process_commands(message)
             return
 
         try:
             async with aiosqlite.connect(guild_settings_path) as db:
-                cs = await db.execute("select bot_channel_id from guilds where guild_id = ?", (message.guild.id,))
-                bot_channel_id = await cs.fetchone()
-                if bot_channel_id is None:
-                    pass
-                if bot_channel_id[0] != message.channel.id:
-                    return
-        except Exception:
-            pass
-
-        try:
-            async with aiosqlite.connect(blocked_ids_path) as db:
-                async with db.execute(f"select discord_id from bans_{message.guild.id}") as bans:
-                    if bans is None:
+                async with db.execute_fetchall("select bot_channel_id from guilds where guild_id = ?",
+                                               (message.guild.id,)) as c:
+                    if c[0][0] != message.channel.id:
                         return
-                    async for row in bans:
-                        if message.author.id == row[0]:
-                            await message.delete()
-                            return
+            async with aiosqlite.connect(blocked_ids_path) as db:
+                async with db.execute_fetchall(f"select count(*) from bans_{message.guild.id} where discord_id = ?",
+                                               (message.author.id,)) as c:
+                    if c[0][0]:
+                        await message.delete()
+                        return
         except Exception:
             pass
 
         if message.content.startswith(prefix):
             await client.process_commands(message)
             await leaderboard(message)
-            return
 
 
     @client.command("shutdown")
@@ -1196,32 +1230,123 @@ if __name__ == '__main__':
         await client.close()
 
 
+    @client.command("master_view")
+    @commands.is_owner()
+    async def master_file_viewer(ctx):
+        user = await client.fetch_user(ctx.author.id)
+        for path in paths:
+            file_write = f'./data/temp/{path}.txt'
+            with open(file_write, "a") as f:
+                async with aiosqlite.connect(f'./data/{path}.db') as db:
+                    async for line in db.iterdump():
+                        f.write(line + '\n')
+            await user.send(file=discord.File(file_write), delete_after=delete_delay)
+            os.remove(file_write)
+
+
     @client.event
     async def on_ready():
         print('Bot is active')
         await client.change_presence(status=discord.Status.online, activity=discord.Activity(
             type=3, name=f"{len(client.guilds)} servers. Type .help to get started"))
+        Backup()
+
+
+    @client.event
+    async def on_error(event, *args, **kwargs):
+        logger.warning(event)
+        embed = discord.Embed(title=':x: Event Error', colour=0xe74c3c)  # Red
+        embed.add_field(name='Event', value=event)
+        embed.description = '```py\n%s\n```' % traceback.format_exc()
+        embed.timestamp = datetime.datetime.utcnow()
+
+        Bobo = await client.fetch_user(813330702712045590)
+        await Bobo.send(embed=embed)
+        logging.exception("Got exception on main handler", event)
 
 
     @client.event
     async def on_command_error(ctx, error):
+        command_error_msg = f"Command \"{str(ctx.message.content).lstrip('.')}\" is not found"
+        if str(error) == command_error_msg:
+            return
         logger.debug(f"An error {error} occurred in {ctx.guild} invoked by {ctx.author} "
                      f"who inputted \"{ctx.message.content}\"")
-        logger.exception(error)
-        await ctx.send(f"An error has occurred {error}. Try .help. If you believe this to be a bug, "
+        embed = discord.Embed(title=':x: Event Error', colour=0xe74c3c)  # Red
+        embed.add_field(name='Event', value=error)
+        embed.description = '```py\n%s\n```' % traceback.format_exc()
+        embed.timestamp = datetime.datetime.utcnow()
+
+        bobo = await client.fetch_user(813330702712045590)
+        await bobo.send(embed=embed)
+        logger.exception("Got exception on main handler", error)
+        await ctx.send(f"An error has occurred. Try .help. If you believe this to be a bug, "
                        f"contact the bot developers", delete_after=15)
 
-    # possible future implementations of more client events
+    # update the guilds we are in
+    @client.event
+    async def on_guild_join(guild):
+        await client.change_presence(status=discord.Status.online, activity=discord.Activity(
+            type=3, name=f"{len(client.guilds)} servers. Type .help to get started"))
+
+
+    @client.event
+    async def on_guild_remove(guild):
+        await client.change_presence(status=discord.Status.online, activity=discord.Activity(
+            type=3, name=f"{len(client.guilds)} servers. Type .help to get started"))
+
+
+    @client.event
+    async def on_guild_channel_delete(channel):
+        try:
+            async with aiosqlite.connect(guild_settings_path) as db:
+                async with db.execute_fetchall("select bot_channel_id, leaderboard_channel_id from guilds "
+                                               "where guild_id = ?", (channel.guild.id,)) as cursor:
+                    if channel.id in cursor[0]:
+                        user = await client.fetch_user(channel.guild.owner_id)
+                        await user.send("It appears that a bot channel has been deleted! If you wish to create a new "
+                                        "channel, please use .resetsettings to clear your server settings, then use "
+                                        ".setup to reinitialize the bot's settings. All data stored in the player and "
+                                        "ratings databases will not be removed unless the bot is removed from the "
+                                        "server.")
+        except IndexError:
+            pass
+
+    @client.event
+    async def on_guild_role_delete(role):
+        try:
+            async with aiosqlite.connect(guild_settings_path) as db:
+                async with db.execute_fetchall("select bot_admin_id from guilds where guild_id = ?",
+                                               (role.guild.id,)) as cursor:
+                    if role.id in cursor[0]:
+                        user = await client.fetch_user(role.guild.owner_id)
+                        await user.send("It appears that the bot admin role has been deleted! If you wish to create a "
+                                        "new role, please use .resetsettings to clear your server settings, then use "
+                                        ".setup to reinitialize the bot's settings. All data stored in the player and "
+                                        "ratings databases will not be removed unless the bot is removed from the "
+                                        "server.")
+        except IndexError:
+            pass
+        
     # @client.event
-    # async def on_guild_channel_delete(channel):
-    #     print(channel.id)
+    # async def on_member_remove(member):
+    #    print(member)
 
     # @client.event
     # async def on_guild_channel_update(before, after):
-    #     print(after.id)
-    #     pseudo code
-    #     if after.id == bot_channel_id
-    #     channel.set_permissions(use_external_emojis true
+    #    print(before)
+    #    print(before.overwrites)
+    #    print(before.id)
+    #    print(after)
+    #    print(after.overwrites)
+    #    print(after.id)
+    #    async with aiosqlite.connect(guild_settings_path) as db:
+    #        async with db.execute_fetchall("select bot_channel_id, leaderboard_channel_id from guilds where "
+    #                                       "guild_id = ?", (before.guild.id,)) as result:
+    #           if after.id == result[0][0] or after.id == result[0][1]:
+    #               print(after)
+    #   if after.id == bot_channel_id
+    #   channel.set_permissions(use_external_emojis true
 
     # This could potentially be needed to resolve conflicts in the
     # databases
