@@ -29,12 +29,6 @@ The "Bot Admin" role is used to oversee most of the Bot's operations, through vi
 (.file_contents or .fc) of each table, adjusting ratings and sigma if there are erroneous matches entered, and banning/
 unbanning troublesome users from issuing commands to the bot.
 
-
-In the event of any issues, please contact me at my email address: alons3253@gmail.com or on discord using my ID and
-tag supplied below.
-
-If you have any questions, comments, suggestions, or any other inquiries, please feel free to contact me via the aforementioned avenues. Thanks!
-
 All commands have the option of either supplying their arguments in one line or waiting until prompted to provide them,
 i.e. typing ".add <Clan>Example" versus typing ".add" then typing "<Clan>Example".
 
