@@ -1,5 +1,5 @@
 # comp-elo-discord-bot
-Used for saving and updating ELO information for ranked 1v1s for the Risk Legacy Arcade game in Starcraft II
+Used for saving and updating ELO information for ranked 1v1s
 
 How to get started using the bot:
 
