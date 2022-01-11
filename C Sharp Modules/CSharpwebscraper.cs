@@ -104,7 +104,7 @@ namespace CSharpwebscraper
                 String url = "https://finance.yahoo.com/quote/" + ticker + "?p=" + ticker;
                 HtmlDocument doc = web.Load(url);
                 Stock_Info.Add(ticker);
-                var Quote = doc.DocumentNode.SelectNodes("//span[@class='Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)']").ToList();
+                var Quote = doc.DocumentNode.SelectNodes("//fin-streamer[@class='Fw(b) Fz(36px) Mb(-4px) D(ib)']").ToList();
                 foreach (var item in Quote)
                 {
                     string price = item.InnerText;
