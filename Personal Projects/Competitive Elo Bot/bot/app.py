@@ -1277,8 +1277,8 @@ if __name__ == '__main__':
         embed.description = '```py\n%s\n```' % traceback.format_exc()
         embed.timestamp = datetime.datetime.utcnow()
 
-        bobo = await client.fetch_user(813330702712045590)
-        await bobo.send(embed=embed)
+        owner = await client.fetch_user(923410656064065628)
+        await owner.send(embed=embed)
         logger.exception("Got exception on main handler", error)
         await ctx.send(f"An error has occurred. Try .help. If you believe this to be a bug, "
                        f"contact the bot developers", delete_after=15)
@@ -1327,7 +1327,7 @@ if __name__ == '__main__':
                                         "server.")
         except IndexError:
             pass
-        
+
     # @client.event
     # async def on_member_remove(member):
     #    print(member)
