@@ -52,7 +52,7 @@ namespace CSharpTradeExecutor
                                     Bracket(stopLossStopPrice: stopLossStopPrice, takeProfitLimitPrice: takeProfitLimitPrice,
                                     stopLossLimitPrice: stopLossLimitPrice));
             }
-            if (side == "sell")
+            else if (side == "sell")
             {
                 await tradingClient.PostOrderAsync(MarketOrder.Sell(symbol, round_lot).WithDuration(TimeInForce.Gtc).
                                     Bracket(stopLossStopPrice: stopLossStopPrice, takeProfitLimitPrice: takeProfitLimitPrice, 
