@@ -17,6 +17,28 @@ async def initialize_guild_settings():
         await db.commit()
 
 
+class dropGuildSettings:
+    def __init__(self, guild_id: int = None):
+        self.id = guild_id
+
+    async def drop_tables(self):
+        try:
+            async with connect(blocked_ids_path) as db1:
+                await db1.execute(f"drop table if exists bans_{self.id}")
+                await db1.commit()
+            async with connect(ratings_path) as db2:
+                await db2.execute(f"drop table if exists ratings_{self.id}")
+                await db2.commit()
+            async with connect(ratings_master_path) as db3:
+                await db3.execute(f"drop table if exists players_{self.id}")
+                await db3.commit()
+            async with connect(matches_path) as db4:
+                await db4.execute(f"drop table if exists matches_{self.id}")
+                await db4.commit()
+        except Exception as e:
+            print(e)
+
+
 class createGuildSettings:
     def __init__(self, guild_id: int = None):
         self.id = guild_id
