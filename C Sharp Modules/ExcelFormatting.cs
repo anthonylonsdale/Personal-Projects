@@ -11,28 +11,38 @@ namespace Excel_Interop
             Excel.Application excelApp = new Excel.Application
             {
                 Visible = false,
-                DisplayAlerts = false
+                DisplayAlerts = true
             };
 
             Excel.Workbooks xlWorkbooks = excelApp.Workbooks;
-            Excel.Workbook xlWorkbook = xlWorkbooks.Open(filename);
+            Excel.Workbook xlWorkbook = xlWorkbooks.Open(filename, 0, false, 1, "", "", true, Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
 
-            foreach ( Excel.Worksheet worksheet in xlWorkbook.Worksheets )
+            try
             {
-                worksheet.Columns.AutoFit();
-                worksheet.Rows.AutoFit();
+                foreach (Excel.Worksheet worksheet in xlWorkbook.Worksheets)
+                {
+                    worksheet.Columns.AutoFit();
+                    worksheet.Rows.AutoFit();
+                }
             }
+            catch (Exception Ex)
+            {
+                Console.Write("Exception caught: {0}", Ex);
+            }
+            finally
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
 
-            
-            xlWorkbook.Close(SaveChanges: true, Filename: filename);
-            excelApp.Quit();
+                System.Runtime.InteropServices.Marshal.FinalReleaseComObject(xlWorkbooks);
 
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+                xlWorkbook.Close(true, Type.Missing, Type.Missing);
+                //xlWorkbook.Close(SaveChanges: true, Filename: filename);
+                System.Runtime.InteropServices.Marshal.FinalReleaseComObject(xlWorkbook);
 
-            System.Runtime.InteropServices.Marshal.FinalReleaseComObject(xlWorkbooks);
-            System.Runtime.InteropServices.Marshal.FinalReleaseComObject(xlWorkbook);
-            System.Runtime.InteropServices.Marshal.FinalReleaseComObject(excelApp);
+                excelApp.Quit();
+                System.Runtime.InteropServices.Marshal.FinalReleaseComObject(excelApp);
+            }
         }
 
         public static void Main(String args)
