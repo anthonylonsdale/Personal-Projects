@@ -1,0 +1,582 @@
+2022-05-21 18:55:00,629 - root - CRITICAL - Performing maintenance checks on databases
+2022-05-21 18:55:00,988 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "LIBOR Yields (05-13-2022).xlsx" is being removed
+2022-05-21 18:55:00,989 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "US T-Bond Yields (05-16-2022).xlsx" is being removed
+2022-05-21 18:55:00,991 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "DUK Options Data 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:00,993 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "MS Options Data 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:00,995 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "SPGI Options Data 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:01,000 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "DUK Intraday 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:01,002 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "MS Intraday 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:01,004 - ALGO.verify_file_integrity - DEBUG - Error: Excel xlsx file; not supported, file "SPGI Intraday 2022-05-16.xlsx" is being removed
+2022-05-21 18:55:01,004 - ALGO.db_initializer - DEBUG - Initialization of Databases
+2022-05-21 18:55:01,019 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\accounts.db: ok
+2022-05-21 18:55:01,020 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\indicators.db: ok
+2022-05-21 18:55:01,032 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\options.db: ok
+2022-05-21 18:55:01,033 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\positions.db: ok
+2022-05-21 18:55:01,034 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\quotes.db: ok
+2022-05-21 18:55:01,035 - root - DEBUG - DATABASE INTEGRITY CHECK FOR C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Databases\trades.db: ok
+2022-05-21 18:55:01,035 - root - CRITICAL - No database issues were detected
+2022-05-21 18:55:01,039 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): paper-api.alpaca.markets:443
+2022-05-21 18:55:01,392 - urllib3.connectionpool - DEBUG - https://paper-api.alpaca.markets:443 "GET /v2/account HTTP/1.1" 200 764
+2022-05-21 18:55:01,396 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): paper-api.alpaca.markets:443
+2022-05-21 18:55:01,542 - urllib3.connectionpool - DEBUG - https://paper-api.alpaca.markets:443 "GET /v2/account HTTP/1.1" 200 764
+2022-05-21 18:55:01,542 - root - DEBUG - A valid Alpaca trading account was found
+2022-05-21 18:55:01,593 - urllib3.connectionpool - DEBUG - https://paper-api.alpaca.markets:443 "GET /v2/account HTTP/1.1" 200 764
+2022-05-21 18:55:01,637 - urllib3.connectionpool - DEBUG - https://paper-api.alpaca.markets:443 "GET /v2/clock HTTP/1.1" 200 148
+2022-05-21 18:55:04,894 - root - DEBUG - OBV data not found
+2022-05-21 18:55:05,679 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.nasdaq.com:443
+2022-05-21 18:55:06,397 - urllib3.connectionpool - DEBUG - https://api.nasdaq.com:443 "GET /api/screener/stocks?tableonly=true&limit=25&offset=0&download=true HTTP/1.1" 200 None
+2022-05-21 18:55:06,914 - urllib3.connectionpool - DEBUG - https://paper-api.alpaca.markets:443 "GET /v2/assets HTTP/1.1" 200 None
+2022-05-21 18:55:08,167 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,173 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,175 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,181 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,186 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,198 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,198 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,200 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,210 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,210 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,213 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,214 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:08,359 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TWTR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1127
+2022-05-21 18:55:08,371 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ETSY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1174
+2022-05-21 18:55:08,398 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UAA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1108
+2022-05-21 18:55:08,410 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SYY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1105
+2022-05-21 18:55:08,418 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CFG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1210
+2022-05-21 18:55:08,430 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1185
+2022-05-21 18:55:08,437 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CDNS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1107
+2022-05-21 18:55:08,456 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1127
+2022-05-21 18:55:08,480 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EMR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1280
+2022-05-21 18:55:08,491 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PEP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:08,511 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1140
+2022-05-21 18:55:08,511 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DIS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1142
+2022-05-21 18:55:10,457 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,471 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,485 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,487 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,492 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,493 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,493 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,494 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,494 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,495 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,496 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,496 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,688 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NVDA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1152
+2022-05-21 18:55:10,695 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1099
+2022-05-21 18:55:10,696 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MCHP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1305
+2022-05-21 18:55:10,696 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ABT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1127
+2022-05-21 18:55:10,696 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1070
+2022-05-21 18:55:10,706 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MU?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1119
+2022-05-21 18:55:10,711 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FOXA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1112
+2022-05-21 18:55:10,716 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WELL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1117
+2022-05-21 18:55:10,732 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DHR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1160
+2022-05-21 18:55:10,733 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SPGI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1141
+2022-05-21 18:55:10,736 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IVZ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1219
+2022-05-21 18:55:10,781 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,796 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/RF?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1083
+2022-05-21 18:55:10,837 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,850 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,871 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,874 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,881 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,894 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,895 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,898 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,903 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,909 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:10,910 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,025 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TSLA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1149
+2022-05-21 18:55:11,039 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,080 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ZTS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1150
+2022-05-21 18:55:11,083 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IBM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1227
+2022-05-21 18:55:11,086 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/INTC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1215
+2022-05-21 18:55:11,089 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BSX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1100
+2022-05-21 18:55:11,104 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/QCOM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1118
+2022-05-21 18:55:11,121 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/D?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1090
+2022-05-21 18:55:11,121 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FAST?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1150
+2022-05-21 18:55:11,122 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:11,137 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SWKS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1128
+2022-05-21 18:55:11,144 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,144 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,145 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DHI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1228
+2022-05-21 18:55:11,152 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TFC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1264
+2022-05-21 18:55:11,166 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,219 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CME?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1143
+2022-05-21 18:55:11,246 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,251 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,255 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,260 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,264 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,282 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,283 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,285 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,286 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,395 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1311
+2022-05-21 18:55:11,411 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,456 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/VTR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1085
+2022-05-21 18:55:11,467 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1148
+2022-05-21 18:55:11,468 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FCX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1122
+2022-05-21 18:55:11,470 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MDLZ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1111
+2022-05-21 18:55:11,477 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NLOK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1076
+2022-05-21 18:55:11,478 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UAL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1124
+2022-05-21 18:55:11,483 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ROST?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1115
+2022-05-21 18:55:11,514 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CTRA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1292
+2022-05-21 18:55:11,542 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SLB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1093
+2022-05-21 18:55:11,543 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NTAP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1082
+2022-05-21 18:55:11,550 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,550 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,552 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/T?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1074
+2022-05-21 18:55:11,568 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,602 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1141
+2022-05-21 18:55:11,617 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,619 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,626 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,626 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,635 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,635 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,641 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,660 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,660 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,821 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NWSA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1087
+2022-05-21 18:55:11,835 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,841 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ANET?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1131
+2022-05-21 18:55:11,842 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1300
+2022-05-21 18:55:11,864 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KEY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1095
+2022-05-21 18:55:11,865 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KMI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1148
+2022-05-21 18:55:11,889 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MET?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1253
+2022-05-21 18:55:11,894 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EBAY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1123
+2022-05-21 18:55:11,907 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,920 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,922 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,925 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1151
+2022-05-21 18:55:11,926 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/VTRS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1063
+2022-05-21 18:55:11,926 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MCD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1125
+2022-05-21 18:55:11,949 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UNP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1128
+2022-05-21 18:55:11,950 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HAS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1191
+2022-05-21 18:55:11,966 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,979 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:11,996 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,028 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,029 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,030 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,030 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TTWO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1187
+2022-05-21 18:55:12,031 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,031 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,047 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,085 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ICE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1124
+2022-05-21 18:55:12,101 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,180 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CMCSA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1105
+2022-05-21 18:55:12,193 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BAC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1107
+2022-05-21 18:55:12,207 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DLTR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1134
+2022-05-21 18:55:12,208 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,216 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GILD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1069
+2022-05-21 18:55:12,227 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,231 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1144
+2022-05-21 18:55:12,245 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1139
+2022-05-21 18:55:12,245 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NXPI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1111
+2022-05-21 18:55:12,262 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,272 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/JCI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1144
+2022-05-21 18:55:12,273 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CSX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:12,277 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,280 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MDT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:12,286 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SPG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1114
+2022-05-21 18:55:12,287 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,306 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,320 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NEE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1108
+2022-05-21 18:55:12,341 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,361 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,368 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,375 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,378 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,378 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,440 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMZN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1134
+2022-05-21 18:55:12,449 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AIG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1116
+2022-05-21 18:55:12,468 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,469 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,471 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMAT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1113
+2022-05-21 18:55:12,485 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,549 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SYF?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1196
+2022-05-21 18:55:12,557 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IRM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1103
+2022-05-21 18:55:12,557 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LVS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1136
+2022-05-21 18:55:12,558 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LNT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1195
+2022-05-21 18:55:12,562 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MTCH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1134
+2022-05-21 18:55:12,577 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HBAN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1049
+2022-05-21 18:55:12,579 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KHC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1121
+2022-05-21 18:55:12,625 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1097
+2022-05-21 18:55:12,637 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AVGO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1142
+2022-05-21 18:55:12,647 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DRE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1285
+2022-05-21 18:55:12,647 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ADBE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1156
+2022-05-21 18:55:12,649 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,668 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,693 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,693 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DVN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1177
+2022-05-21 18:55:12,695 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,708 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,715 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,720 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,733 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,742 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,742 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,744 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,745 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,898 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WBD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1099
+2022-05-21 18:55:12,907 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/COP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1309
+2022-05-21 18:55:12,910 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MRNA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1164
+2022-05-21 18:55:12,912 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EXPE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1157
+2022-05-21 18:55:12,920 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PENN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1162
+2022-05-21 18:55:12,946 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PPL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1052
+2022-05-21 18:55:12,947 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CF?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1308
+2022-05-21 18:55:12,955 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:12,965 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1338
+2022-05-21 18:55:12,984 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ED?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1271
+2022-05-21 18:55:13,005 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DUK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1265
+2022-05-21 18:55:13,025 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1236
+2022-05-21 18:55:13,028 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,038 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,064 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,076 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,082 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,088 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,089 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,091 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,093 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,097 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,238 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DOW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1086
+2022-05-21 18:55:13,240 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CAG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1165
+2022-05-21 18:55:13,244 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WBA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1320
+2022-05-21 18:55:13,249 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/VZ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1095
+2022-05-21 18:55:13,279 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LKQ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1309
+2022-05-21 18:55:13,279 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PEAK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1272
+2022-05-21 18:55:13,321 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CVS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1148
+2022-05-21 18:55:13,325 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMCR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1068
+2022-05-21 18:55:13,327 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BBWI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1129
+2022-05-21 18:55:13,340 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,357 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/C?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1199
+2022-05-21 18:55:13,381 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WYNN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1185
+2022-05-21 18:55:13,390 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LOW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1132
+2022-05-21 18:55:13,392 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,394 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,412 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,428 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,433 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,456 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,457 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,461 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,463 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,465 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,470 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,529 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NLSN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1058
+2022-05-21 18:55:13,543 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,610 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/JNPR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1146
+2022-05-21 18:55:13,619 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1123
+2022-05-21 18:55:13,637 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FANG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1319
+2022-05-21 18:55:13,638 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,652 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,655 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,661 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MGM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1106
+2022-05-21 18:55:13,676 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/APA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1156
+2022-05-21 18:55:13,677 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/COF?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1363
+2022-05-21 18:55:13,686 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TPR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1156
+2022-05-21 18:55:13,687 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1104
+2022-05-21 18:55:13,696 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CSCO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:13,700 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,716 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/F?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1133
+2022-05-21 18:55:13,731 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1160
+2022-05-21 18:55:13,750 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,756 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HST?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1071
+2022-05-21 18:55:13,808 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,808 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,810 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,811 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,812 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,812 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,813 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,878 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ETN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1270
+2022-05-21 18:55:13,894 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TGT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1328
+2022-05-21 18:55:13,905 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,908 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UPS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1308
+2022-05-21 18:55:13,926 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,927 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,969 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1173
+2022-05-21 18:55:13,984 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:13,985 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CRM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1139
+2022-05-21 18:55:13,994 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/O?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1181
+2022-05-21 18:55:14,013 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PRU?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1124
+2022-05-21 18:55:14,029 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,033 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CNC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1101
+2022-05-21 18:55:14,034 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,035 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,045 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/VFC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1112
+2022-05-21 18:55:14,056 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1275
+2022-05-21 18:55:14,079 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,080 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,082 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PFE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1260
+2022-05-21 18:55:14,088 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CTVA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1285
+2022-05-21 18:55:14,101 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1123
+2022-05-21 18:55:14,131 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BKR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1140
+2022-05-21 18:55:14,151 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,161 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,162 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CAT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1159
+2022-05-21 18:55:14,170 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,172 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,174 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,180 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,228 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CARR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1181
+2022-05-21 18:55:14,241 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/XEL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1086
+2022-05-21 18:55:14,248 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/KIM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1095
+2022-05-21 18:55:14,274 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/VLO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1339
+2022-05-21 18:55:14,286 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,292 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,292 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,293 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HAL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1076
+2022-05-21 18:55:14,301 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,308 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,315 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1185
+2022-05-21 18:55:14,323 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ORCL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1111
+2022-05-21 18:55:14,334 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1112
+2022-05-21 18:55:14,364 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,364 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,365 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,368 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/APH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1112
+2022-05-21 18:55:14,375 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ACN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1130
+2022-05-21 18:55:14,384 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HIG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1094
+2022-05-21 18:55:14,416 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,418 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,418 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,431 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1175
+2022-05-21 18:55:14,446 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,451 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1149
+2022-05-21 18:55:14,466 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,503 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CVX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1338
+2022-05-21 18:55:14,514 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EXC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1248
+2022-05-21 18:55:14,529 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,534 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,564 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MNST?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1072
+2022-05-21 18:55:14,578 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,599 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AMGN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1302
+2022-05-21 18:55:14,608 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/RTX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1332
+2022-05-21 18:55:14,631 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,631 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,638 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WRB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1073
+2022-05-21 18:55:14,645 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TXN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1241
+2022-05-21 18:55:14,654 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MRO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1282
+2022-05-21 18:55:14,654 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LUV?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1089
+2022-05-21 18:55:14,668 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UNH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1162
+2022-05-21 18:55:14,681 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/JPM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1142
+2022-05-21 18:55:14,689 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MMM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1309
+2022-05-21 18:55:14,690 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CTSH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1325
+2022-05-21 18:55:14,705 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NEM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1130
+2022-05-21 18:55:14,720 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,777 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/OTIS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1278
+2022-05-21 18:55:14,783 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,796 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,796 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,796 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,804 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,809 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,810 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,810 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,811 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,860 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1198
+2022-05-21 18:55:14,878 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,903 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WFC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1213
+2022-05-21 18:55:14,915 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NFLX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1144
+2022-05-21 18:55:14,933 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,935 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:14,981 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DISH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1135
+2022-05-21 18:55:14,991 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HON?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1286
+2022-05-21 18:55:14,991 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PYPL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1156
+2022-05-21 18:55:14,991 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PGR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1109
+2022-05-21 18:55:14,999 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TMUS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1171
+2022-05-21 18:55:15,007 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PSX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1343
+2022-05-21 18:55:15,015 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WRK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1280
+2022-05-21 18:55:15,034 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PARA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1133
+2022-05-21 18:55:15,067 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/JNJ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1124
+2022-05-21 18:55:15,069 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,094 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1146
+2022-05-21 18:55:15,108 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,116 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ADM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1292
+2022-05-21 18:55:15,130 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,137 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,148 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,148 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,157 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,163 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,163 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,165 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,166 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,189 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CNP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1289
+2022-05-21 18:55:15,207 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,311 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IPG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1100
+2022-05-21 18:55:15,325 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,326 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FISV?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1127
+2022-05-21 18:55:15,335 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/COST?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1282
+2022-05-21 18:55:15,347 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NCLH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1126
+2022-05-21 18:55:15,351 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/STT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1097
+2022-05-21 18:55:15,351 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LEN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1152
+2022-05-21 18:55:15,364 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BBY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1106
+2022-05-21 18:55:15,364 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,376 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BALL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1122
+2022-05-21 18:55:15,387 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/USB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1084
+2022-05-21 18:55:15,409 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,414 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HD?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1105
+2022-05-21 18:55:15,418 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ADP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1125
+2022-05-21 18:55:15,429 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AFL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1300
+2022-05-21 18:55:15,455 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,457 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,464 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,464 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ENPH?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1135
+2022-05-21 18:55:15,485 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,490 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,491 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,506 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,508 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,521 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,524 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,652 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WMB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1090
+2022-05-21 18:55:15,667 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,675 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TSN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1092
+2022-05-21 18:55:15,678 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ADI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1118
+2022-05-21 18:55:15,694 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PFG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1104
+2022-05-21 18:55:15,694 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ATVI?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1074
+2022-05-21 18:55:15,696 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/UA?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1139
+2022-05-21 18:55:15,698 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BMY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1078
+2022-05-21 18:55:15,722 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/V?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1298
+2022-05-21 18:55:15,750 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MPC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1323
+2022-05-21 18:55:15,754 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SCHW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1303
+2022-05-21 18:55:15,754 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GIS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1088
+2022-05-21 18:55:15,759 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,772 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/XOM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1288
+2022-05-21 18:55:15,772 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,780 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,814 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,834 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,838 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,849 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,852 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,857 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,858 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,859 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,930 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GLW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1076
+2022-05-21 18:55:15,945 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:15,991 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HWM?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1198
+2022-05-21 18:55:16,001 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1108
+2022-05-21 18:55:16,003 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FIS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1102
+2022-05-21 18:55:16,010 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/DAL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1104
+2022-05-21 18:55:16,038 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BRO?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1292
+2022-05-21 18:55:16,040 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HLT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1151
+2022-05-21 18:55:16,050 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/RCL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1163
+2022-05-21 18:55:16,052 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,072 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,095 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,096 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1087
+2022-05-21 18:55:16,099 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,107 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/OXY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1166
+2022-05-21 18:55:16,128 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,135 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,135 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,136 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HPQ?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1083
+2022-05-21 18:55:16,156 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MRK?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1125
+2022-05-21 18:55:16,158 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,169 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,173 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CBRE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1106
+2022-05-21 18:55:16,176 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,199 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,199 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,238 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CZR?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1161
+2022-05-21 18:55:16,255 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,283 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/HPE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1128
+2022-05-21 18:55:16,297 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,318 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/EOG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1167
+2022-05-21 18:55:16,327 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WDC?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1128
+2022-05-21 18:55:16,340 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FITB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1090
+2022-05-21 18:55:16,360 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,361 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/TJX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1317
+2022-05-21 18:55:16,367 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,367 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,374 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AEP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1215
+2022-05-21 18:55:16,375 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MOS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1166
+2022-05-21 18:55:16,397 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NKE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1155
+2022-05-21 18:55:16,404 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/IP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1074
+2022-05-21 18:55:16,405 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/BEN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1082
+2022-05-21 18:55:16,413 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,438 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,449 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/L?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1128
+2022-05-21 18:55:16,459 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SBUX?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1271
+2022-05-21 18:55:16,476 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,479 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,487 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,491 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,500 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,500 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,523 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/K?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1093
+2022-05-21 18:55:16,539 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,583 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/WMT?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1274
+2022-05-21 18:55:16,600 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,631 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1118
+2022-05-21 18:55:16,645 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,646 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/A?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1094
+2022-05-21 18:55:16,660 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LIN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1139
+2022-05-21 18:55:16,660 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NWL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1062
+2022-05-21 18:55:16,669 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/FTV?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1109
+2022-05-21 18:55:16,680 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+2022-05-21 18:55:16,681 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/ABBV?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1105
+2022-05-21 18:55:16,690 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AXP?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1137
+2022-05-21 18:55:16,709 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/SHW?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1358
+2022-05-21 18:55:16,721 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LLY?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1270
+2022-05-21 18:55:16,735 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CCL?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1147
+2022-05-21 18:55:16,789 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/LUMN?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1057
+2022-05-21 18:55:16,869 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NUE?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1183
+2022-05-21 18:55:16,870 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NRG?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1201
+2022-05-21 18:55:16,917 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/CPB?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits HTTP/1.1" 200 1093
+2022-05-21 18:55:18,536 - ALGO.bond_yield_fetch_module - DEBUG - Initialization of bond gathering
+2022-05-21 18:55:18,536 - ALGO.db_initializer - DEBUG - Initialization of Databases
+2022-05-21 18:55:18,554 - root - DEBUG - Table: DUK Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,554 - root - DEBUG - Table: DUK Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,559 - root - DEBUG - Table: DUK Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,559 - root - DEBUG - Table: DUK Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,564 - root - DEBUG - Table: SPGI Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,564 - root - DEBUG - Table: SPGI Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,569 - root - DEBUG - Table: SPGI Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,569 - root - DEBUG - Table: SPGI Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,573 - root - DEBUG - Table: SPGI Calls 2022-05-27 was dropped from options.db
+2022-05-21 18:55:18,578 - root - DEBUG - Table: SPGI Puts 2022-05-27 was dropped from options.db
+2022-05-21 18:55:18,582 - root - DEBUG - Table: DUK Calls 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,586 - root - DEBUG - Table: DUK Puts 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,591 - root - DEBUG - Table: MS Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,591 - root - DEBUG - Table: MS Calls 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,595 - root - DEBUG - Table: MS Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,596 - root - DEBUG - Table: MS Puts 2022-05-20 was dropped from options.db
+2022-05-21 18:55:18,600 - root - DEBUG - Table: SPGI Calls 2022-06-03 was dropped from options.db
+2022-05-21 18:55:18,604 - root - DEBUG - Table: SPGI Puts 2022-06-03 was dropped from options.db
+2022-05-21 18:55:18,608 - root - DEBUG - Table: DUK Calls 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,613 - root - DEBUG - Table: DUK Puts 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,618 - root - DEBUG - Table: SPGI Calls 2022-06-10 was dropped from options.db
+2022-05-21 18:55:18,624 - root - DEBUG - Table: SPGI Puts 2022-06-10 was dropped from options.db
+2022-05-21 18:55:18,629 - root - DEBUG - Table: MS Calls 2022-05-27 was dropped from options.db
+2022-05-21 18:55:18,633 - root - DEBUG - Table: MS Puts 2022-05-27 was dropped from options.db
+2022-05-21 18:55:18,638 - root - DEBUG - Table: SPGI Calls 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,642 - root - DEBUG - Table: SPGI Puts 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,647 - root - DEBUG - Table: SPGI Calls 2022-06-24 was dropped from options.db
+2022-05-21 18:55:18,651 - root - DEBUG - Table: SPGI Puts 2022-06-24 was dropped from options.db
+2022-05-21 18:55:18,655 - root - DEBUG - Table: MS Calls 2022-06-03 was dropped from options.db
+2022-05-21 18:55:18,659 - root - DEBUG - Table: MS Puts 2022-06-03 was dropped from options.db
+2022-05-21 18:55:18,664 - root - DEBUG - Table: SPGI Calls 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,668 - root - DEBUG - Table: SPGI Puts 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,672 - root - DEBUG - Table: SPGI Calls 2022-08-19 was dropped from options.db
+2022-05-21 18:55:18,676 - root - DEBUG - Table: SPGI Puts 2022-08-19 was dropped from options.db
+2022-05-21 18:55:18,680 - root - DEBUG - Table: MS Calls 2022-06-10 was dropped from options.db
+2022-05-21 18:55:18,684 - root - DEBUG - Table: MS Puts 2022-06-10 was dropped from options.db
+2022-05-21 18:55:18,689 - root - DEBUG - Table: MS Calls 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,693 - root - DEBUG - Table: MS Puts 2022-06-17 was dropped from options.db
+2022-05-21 18:55:18,698 - root - DEBUG - Table: MS Calls 2022-06-24 was dropped from options.db
+2022-05-21 18:55:18,703 - root - DEBUG - Table: MS Puts 2022-06-24 was dropped from options.db
+2022-05-21 18:55:18,707 - root - DEBUG - Table: MS Calls 2022-07-01 was dropped from options.db
+2022-05-21 18:55:18,712 - root - DEBUG - Table: MS Puts 2022-07-01 was dropped from options.db
+2022-05-21 18:55:18,716 - root - DEBUG - Table: MS Calls 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,720 - root - DEBUG - Table: MS Puts 2022-07-15 was dropped from options.db
+2022-05-21 18:55:18,725 - root - DEBUG - Table: MS Calls 2022-08-19 was dropped from options.db
+2022-05-21 18:55:18,729 - root - DEBUG - Table: MS Puts 2022-08-19 was dropped from options.db
+2022-05-21 18:55:18,757 - root - DEBUG - information already fetched: []
+2022-05-21 18:55:27,079 - root - DEBUG - C:\Users\fabio\PycharmProjects\AlgoTrader\ALGO\Daily Stock Analysis\Bonds\US T-Bond Yields (05-20-2022).xlsx is being formatted
